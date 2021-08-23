@@ -12,6 +12,8 @@ namespace DependencyQueue
     [TestFixture]
     public class DependencyQueueEntryBuilderTests
     {
+        #if FALSE
+
         [Test]
         public void NewEntry()
         {
@@ -35,5 +37,7 @@ namespace DependencyQueue
 
             entry.Value.Should().BeSameAs(value);
         }
+
+        #endif
     }
 }
