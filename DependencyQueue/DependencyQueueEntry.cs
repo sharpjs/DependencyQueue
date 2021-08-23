@@ -66,6 +66,7 @@ namespace DependencyQueue
         private readonly SortedSet<string> _provides;
         private readonly SortedSet<string> _requires;
 
+        // Invoked via DependencyQueueEntryBuilder<T>
         internal void AddProvides(IEnumerable<string> names)
         {
             RequireValidNames(names);
@@ -79,6 +80,7 @@ namespace DependencyQueue
             }
         }
 
+        // Invoked via DependencyQueueEntryBuilder<T>
         internal void AddRequires(IEnumerable<string> names)
         {
             RequireValidNames(names);
@@ -98,6 +100,7 @@ namespace DependencyQueue
             }
         }
 
+        // Invoked by DependencyQueue<T> when a required topic is complete
         internal void RemoveRequires(string name)
         {
             RequireValidName(name);
