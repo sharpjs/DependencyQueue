@@ -151,15 +151,7 @@ namespace DependencyQueue
 
         private DependencyQueueEntry<T> RequireCurrentEntry()
         {
-            return _entry ?? throw OnNoCurrentEntry();
-        }
-
-        private static Exception OnNoCurrentEntry()
-        {
-            return new InvalidOperationException(
-                "The builder does not have a current entry.  " +
-                "Use NewEntry() to begin building an entry."
-            );
+            return _entry ?? throw Errors.NoCurrentEntry();
         }
     }
 }

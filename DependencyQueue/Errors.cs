@@ -15,5 +15,11 @@ namespace DependencyQueue
 
         internal static Exception ArgumentContainsEmpty(string name)
             => new ArgumentException("Argument cannot contain an mepty item.", name);
+
+        internal static Exception NoCurrentEntry()
+            => new InvalidOperationException(
+                "The builder does not have a current entry.  " +
+                "Use the NewEntry method to begin building an entry."
+            );
     }
 }
