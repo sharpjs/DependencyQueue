@@ -32,10 +32,8 @@ namespace DependencyQueue
         /// <exception cref="ArgumentException">
         ///   <paramref name="name"/> is empty.
         /// </exception>
-        internal DependencyQueueEntry(string name, T value, StringComparer? comparer = null)
+        internal DependencyQueueEntry(string name, T value, StringComparer comparer)
         {
-            comparer ??= StringComparer.OrdinalIgnoreCase; // TODO: Remove
-
             RequireValidName(name);
             RequireComparer(comparer);
 

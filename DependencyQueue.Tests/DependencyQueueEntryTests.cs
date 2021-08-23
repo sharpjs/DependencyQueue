@@ -5,7 +5,6 @@ using NUnit.Framework;
 namespace DependencyQueue
 {
     using static FluentActions;
-    using Entry = DependencyQueueEntry<object>;
 
     [TestFixture]
     public class DependencyQueueEntryTests
@@ -210,6 +209,13 @@ namespace DependencyQueue
             var entry = new Entry("a", null!);
 
             entry.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
+        }
+
+        private class Entry : DependencyQueueEntry<object>
+        {
+            internal Entry(string name, object value)
+                : base(name, value, StringComparer.OrdinalIgnoreCase)
+            { }
         }
     }
 }
