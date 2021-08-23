@@ -20,6 +20,9 @@ namespace DependencyQueue
         // Topics keyed by name
         private readonly Dictionary<string, DependencyQueueTopic<T>> _topics;
 
+        // Comparer for topic names
+        private readonly StringComparer _comparer;
+
         // Object to lock
         private readonly object _lock;
 
@@ -31,15 +34,15 @@ namespace DependencyQueue
         ///   optionally with the specified topic name comparer.
         /// </summary>
         /// <param name="comparer">
-        ///   The comparer to use to compare topic names.  If
+        ///   The comparer to use to for topic names.  If
         ///   <paramref name="comparer"/> is <see langword="null"/>, the queue
-        ///   will compare topic names using case-sensitive, ordinal comparison.
+        ///   will compare topic names using case-sensitive ordinal comparison.
         ///   See <see cref="StringComparer"/> for typical comparers.
         /// </param>
-        public DependencyQueue(IEqualityComparer<string>? comparer = null)
+        public DependencyQueue(StringComparer? comparer = null)
         {
             _ready  = new();
-            _topics = new(comparer ?? StringComparer.Ordinal);
+            _topics = new(_comparer ??= StringComparer.Ordinal);
             _lock   = new();
         }
 
@@ -62,6 +65,11 @@ namespace DependencyQueue
         /// </remarks>
         internal IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
             => _topics;
+
+        /// <summary>
+        ///   Gets the comparer for topic names.
+        /// </summary>
+        public StringComparer Comparer => _comparer;
 
         /// <summary>
         ///   Creates a builder that can create entries for the queue.
