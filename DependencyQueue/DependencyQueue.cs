@@ -78,18 +78,11 @@ namespace DependencyQueue
         ///   A builder that can create entries for the queue.
         /// </returns>
         /// <remarks>
-        ///   <para>
-        ///     This method is equivalent to the
-        ///     <see cref="DependencyQueueEntryBuilder{T}.DependencyQueueEntryBuilder"/>
-        ///     constructor.
-        ///   </para>
-        ///   <para>
-        ///     ⚠<strong>Warning:</strong> This method is thread-safe, but the
-        ///     builder it returns is <strong>not thread-safe</strong>.
-        ///   </para>
+        ///   ⚠ <strong>Warning:</strong>
+        ///   The builder this method returns is not thread-safe.
         /// </remarks>
         public DependencyQueueEntryBuilder<T> CreateEntryBuilder()
-            => new DependencyQueueEntryBuilder<T>();
+            => new DependencyQueueEntryBuilder<T>(this);
 
         /// <summary>
         ///   Adds the specified entry to the queue.

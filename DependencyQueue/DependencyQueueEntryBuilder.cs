@@ -14,17 +14,32 @@ namespace DependencyQueue
         // The current entry being built
         private DependencyQueueEntry<T>? _entry;
 
+        // The default queue for Enqueue
+        private readonly DependencyQueue<T> _queue;
+
         /// <summary>
         ///   Initializes a new <see cref="DependencyQueueEntryBuilder{T}"/>
-        ///   instance.
+        ///   instance for the specified queue.
         /// </summary>
-        /// <remarks>
-        ///   This constructor is equivalent to the
-        ///   <see cref="DependencyQueue{T}.CreateEntryBuilder"/> method.
-        /// </remarks>
-        public DependencyQueueEntryBuilder() { }
+        /// <param name="queue">
+        ///   The queue to which the builder will enqueue entries.
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="queue"/> is <see langword="null"/>.
+        /// </exception>
+        internal DependencyQueueEntryBuilder(DependencyQueue<T> queue)
+        {
+            if (queue is null)
+                throw Errors.ArgumentNull(nameof(queue));
 
-        // For testing
+            _queue = queue;
+        }
+
+        /// <summary>
+        ///   ⚠ <strong>For testing only.</strong>
+        ///   Gets the current entry being built, or <see langword="null"/> if
+        ///   there is no current etry.
+        /// </summary>
         internal DependencyQueueEntry<T>? CurrentEntry => _entry;
 
         /// <summary>
@@ -51,7 +66,7 @@ namespace DependencyQueue
         /// </exception>
         public DependencyQueueEntryBuilder<T> NewEntry(string name, T value)
         {
-            _entry = new(name, value, StringComparer.OrdinalIgnoreCase); // TODO
+            _entry = new(name, value, _queue.Comparer);
             return this;
         }
 
@@ -110,11 +125,10 @@ namespace DependencyQueue
             => AddRequires((IEnumerable<string>) names);
 
         /// <summary>
-        ///   Completes building the current entry and optionally adds it to
-        ///   the specified queue.
+        ///   Completes building the current entry and adds it to the queue.
         /// </summary>
         /// <returns>
-        ///   The completed entry.
+        ///   The builder, to enable chaining of method invocations.
         /// </returns>
         /// <remarks>
         ///   <para>
@@ -127,12 +141,12 @@ namespace DependencyQueue
         ///   The builder does not have a current entry.
         ///   Use <see cref="NewEntry"/> to begin building an entry.
         /// </exception>
-        public DependencyQueueEntry<T> AcceptEntry(DependencyQueue<T>? queue = null)
+        public DependencyQueueEntryBuilder<T> Enqueue()
         {
             var entry = RequireCurrentEntry();
-            queue?.Enqueue(entry);
+            _queue.Enqueue(entry);
             _entry = null;
-            return entry;
+            return this;
         }
 
         private DependencyQueueEntry<T> RequireCurrentEntry()
