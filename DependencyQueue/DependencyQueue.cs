@@ -9,7 +9,7 @@ namespace DependencyQueue
     ///   A thread-safe generic queue that dequeues in dependency order.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of objects contained in the queue.
+    ///   The type of values contained in queue entries.
     /// </typeparam>
     /// <seealso href="https://en.wikipedia.org/wiki/Dependency_graph"/>
     public class DependencyQueue<T>

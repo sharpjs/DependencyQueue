@@ -9,6 +9,9 @@ namespace DependencyQueue
     /// <typeparam name="T">
     ///   The type of object contained in an entry.
     /// </typeparam>
+    /// <remarks>
+    ///   Members of this type are <strong>not</strong> thread-safe.
+    /// </remarks>
     public class DependencyQueueEntryBuilder<T>
     {
         // The current entry being built
