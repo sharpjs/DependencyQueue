@@ -179,47 +179,50 @@ namespace DependencyQueue
             if (entry is null)
                 throw new ArgumentNullException(nameof(entry));
 
-            // Whether to wake waiting threads to allow one to dequeue the next entry
-            var wake = false;
-
-            foreach (var name in entry.Provides)
+            lock (_lock)
             {
-                var topic = _topics[name];
+                // Whether to wake waiting threads to allow one to dequeue the next entry
+                var wake = false;
 
-                // Mark this entry as done
-                topic.MutableProvidedBy.Remove(entry);
-
-                // Check if all of topic's entries are completed
-                if (topic.MutableProvidedBy.Count != 0)
-                    continue;
-
-                // All of topic's entries are completed; mark topic itself as completed
-                _topics.Remove(name);
-
-                // Check if all topics are completed
-                if (_topics.Count == 0)
-                    // No more topics; wake sleeping workers so they can exit
-                    wake = true;
-
-                // Update dependents
-                foreach (var dependent in topic.RequiredBy)
+                foreach (var name in entry.Provides)
                 {
-                    // Mark requirement as met
-                    dependent.RemoveRequires(name);
+                    var topic = _topics[name];
 
-                    // Check if all dependent's requirements are met
-                    if (dependent.Requires.Count != 0)
+                    // Mark this entry as done
+                    topic.MutableProvidedBy.Remove(entry);
+
+                    // Check if all of topic's entries are completed
+                    if (topic.MutableProvidedBy.Count != 0)
                         continue;
 
-                    // All of dependent's requirements are met; it becomes ready
-                    _ready.Enqueue(dependent);
-                    wake = true;
-                }
-            }
+                    // All of topic's entries are completed; mark topic itself as completed
+                    _topics.Remove(name);
 
-            // If necessary, wake up waiting threads so that one can dequeue the next entry
-            if (wake)
-                Monitor.PulseAll(_lock);
+                    // Check if all topics are completed
+                    if (_topics.Count == 0)
+                        // No more topics; wake sleeping workers so they can exit
+                        wake = true;
+
+                    // Update dependents
+                    foreach (var dependent in topic.RequiredBy)
+                    {
+                        // Mark requirement as met
+                        dependent.RemoveRequires(name);
+
+                        // Check if all dependent's requirements are met
+                        if (dependent.Requires.Count != 0)
+                            continue;
+
+                        // All of dependent's requirements are met; it becomes ready
+                        _ready.Enqueue(dependent);
+                        wake = true;
+                    }
+                }
+
+                // If necessary, wake up waiting threads so that one can dequeue the next entry
+                if (wake)
+                    Monitor.PulseAll(_lock);
+            }
         }
 
         /// <summary>
