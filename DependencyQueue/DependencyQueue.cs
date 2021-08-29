@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DependencyQueue
 {
@@ -243,6 +244,44 @@ namespace DependencyQueue
             return _topics.TryGetValue(name, out var topic)
                 ? topic
                 : _topics[name] = new DependencyQueueTopic<T>(name);
+        }
+
+        public void Run<TData>(
+            Action<DependencyQueueContext<T, TData>> worker,
+            TData                                    data,
+            int?                                     parallelism = null)
+        {
+            var contexts = MakeContexts(data, parallelism);
+            Parallel.ForEach(contexts, worker);
+        }
+
+        public Task RunAsync<TData>(
+            Func<DependencyQueueContext<T, TData>, Task> worker,
+            TData                                        data,
+            int?                                         parallelism  = null,
+            CancellationToken                            cancellation = default)
+        {
+            var contexts = MakeContexts(data, parallelism, cancellation);
+            return Task.WhenAll(contexts.Select(worker));
+        }
+
+        private DependencyQueueContext<T, TData>[] MakeContexts<TData>(
+            TData             data,
+            int?              parallelism,
+            CancellationToken cancellation = default)
+        {
+            var count = parallelism ?? Environment.ProcessorCount;
+            if (count < 1)
+                throw Errors.ArgumentOutOfRange(nameof(parallelism));
+
+            var contexts = new DependencyQueueContext<T, TData>[count];
+            var runId    = Guid.NewGuid();
+            var workerId = 1;
+
+            for (var i = 0; i < contexts.Length; i++)
+                contexts[i] = new(this, runId, workerId++, data, cancellation);
+
+            return contexts;
         }
     }
 }
