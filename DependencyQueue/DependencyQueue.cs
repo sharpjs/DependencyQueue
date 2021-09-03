@@ -51,8 +51,8 @@ namespace DependencyQueue
         ///   Gets the collection of entries that are ready to dequeue.
         /// </summary>
         /// <remarks>
-        ///   ⚠<strong>Warning:</strong> This property is thread-safe, but the
-        ///   collection it returns is <strong>not thread-safe</strong>.
+        ///   ⚠ <strong>Warning:</strong>
+        ///   The collection this property returns is not thread-safe.
         /// </remarks>
         public IReadOnlyCollection<DependencyQueueEntry<T>> ReadyEntries
             => _ready;
@@ -61,8 +61,8 @@ namespace DependencyQueue
         ///   Gets the dictionary that maps topic names to topics.
         /// </summary>
         /// <remarks>
-        ///   ⚠<strong>Warning:</strong> This property is thread-safe, but the
-        ///   dictionary it returns is <strong>not thread-safe</strong>.
+        ///   ⚠ <strong>Warning:</strong>
+        ///   The collection this property returns is not thread-safe.
         /// </remarks>
         internal IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
             => _topics;
@@ -175,6 +175,16 @@ namespace DependencyQueue
             }
         }
 
+        /// <summary>
+        ///   Marks the specified entry as done.
+        /// </summary>
+        /// <param name="entry">
+        ///   The entry to mark as done.
+        /// </param>
+        /// <remarks>
+        ///   If <paramref name="entry"/> completes a topic, any entries that
+        ///   depend solely upon that topic become ready to dequeue.
+        /// </remarks>
         public void Complete(DependencyQueueEntry<T> entry)
         {
             if (entry is null)
@@ -246,15 +256,59 @@ namespace DependencyQueue
                 : _topics[name] = new DependencyQueueTopic<T>(name);
         }
 
+        /// <summary>
+        ///   Invokes one or more workers to process entries from the queue
+        ///   in dependency order.
+        /// </summary>
+        /// <typeparam name="TData">
+        ///   The type of arbitrary data to provide to invocations of
+        ///   <paramref name="worker"/>.
+        /// </typeparam>
+        /// <param name="worker">
+        ///   A delegate that implements worker processing.
+        ///   This method may invoke the delegate multiple times.
+        /// </param>
+        /// <param name="data">
+        ///   Arbitrary data to provide to invocations of
+        ///   <paramref name="worker"/>
+        /// </param>
+        /// <param name="parallelism">
+        ///   The number of parallel invocations of <paramref name="worker"/>.
+        ///   The default is <see cref="Environment.ProcessorCount"/>.
+        /// </param>
         public void Run<TData>(
             Action<DependencyQueueContext<T, TData>> worker,
             TData                                    data,
             int?                                     parallelism = null)
         {
             var contexts = MakeContexts(data, parallelism);
+
             Parallel.ForEach(contexts, worker);
         }
 
+        /// <summary>
+        ///   Invokes one or more workers asynchronously to process entries
+        ///   from the queue in dependency order.
+        /// </summary>
+        /// <typeparam name="TData">
+        ///   The type of arbitrary data to provide to invocations of
+        ///   <paramref name="worker"/>.
+        /// </typeparam>
+        /// <param name="worker">
+        ///   An asynchronous delegate that implements worker processing.
+        ///   This method may invoke the delegate multiple times.
+        /// </param>
+        /// <param name="data">
+        ///   Arbitrary data to provide to invocations of
+        ///   <paramref name="worker"/>
+        /// </param>
+        /// <param name="parallelism">
+        ///   The number of parallel invocations of <paramref name="worker"/>.
+        ///   The default is <see cref="Environment.ProcessorCount"/>.
+        /// </param>
+        /// <returns>
+        ///   A task that represents the asynchronous operation.
+        /// </returns>
         public Task RunAsync<TData>(
             Func<DependencyQueueContext<T, TData>, Task> worker,
             TData                                        data,
@@ -262,6 +316,7 @@ namespace DependencyQueue
             CancellationToken                            cancellation = default)
         {
             var contexts = MakeContexts(data, parallelism, cancellation);
+
             return Task.WhenAll(contexts.Select(worker));
         }
 
