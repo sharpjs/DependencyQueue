@@ -6,9 +6,12 @@ using System.Text;
 namespace DependencyQueue
 {
     /// <summary>
-    ///   A name which dependency-graph nodes can provide or require in order
-    ///   to express edges in the graph.
+    ///   A name which queue entries can provide or require in order to express
+    ///   edges in a dependency graph.
     /// </summary>
+    /// <typeparam name="T">
+    ///   The type of values contained in queue entries.
+    /// </typeparam>
     public class DependencyQueueTopic<T>
     {
         /// <summary>

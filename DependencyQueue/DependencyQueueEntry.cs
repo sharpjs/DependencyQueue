@@ -8,7 +8,7 @@ namespace DependencyQueue
     ///   An entry in a <see cref="DependencyQueue{T}"/>.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of values contained in queue entries.
+    ///   The type of value contained in the entry.
     /// </typeparam>
     public class DependencyQueueEntry<T>
     {
