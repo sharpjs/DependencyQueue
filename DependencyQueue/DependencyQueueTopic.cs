@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,9 +23,9 @@ namespace DependencyQueue
         internal DependencyQueueTopic(string name)
         {
             if (name is null)
-                throw new ArgumentNullException(nameof(name));
+                throw Errors.ArgumentNull(nameof(name));
             if (name.Length == 0)
-                throw new ArgumentException("Argument cannot be empty.", nameof(name));
+                throw Errors.ArgumentEmpty(nameof(name));
 
             Name              = name;
             MutableProvidedBy = new();

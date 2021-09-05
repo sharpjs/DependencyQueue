@@ -100,7 +100,7 @@ namespace DependencyQueue
         public void Enqueue(DependencyQueueEntry<T> entry)
         {
             if (entry is null)
-                throw new ArgumentNullException(nameof(entry));
+                throw Errors.ArgumentNull(nameof(entry));
 
             lock (_lock)
             {
@@ -188,7 +188,7 @@ namespace DependencyQueue
         public void Complete(DependencyQueueEntry<T> entry)
         {
             if (entry is null)
-                throw new ArgumentNullException(nameof(entry));
+                throw Errors.ArgumentNull(nameof(entry));
 
             lock (_lock)
             {
