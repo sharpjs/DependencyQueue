@@ -92,8 +92,10 @@ namespace DependencyQueue
         /// </returns>
         public DependencyQueueEntry<T>? GetNextEntry()
         {
-            if (_entry is not null)
-                _queue.Complete(_entry);
+            var entry = _entry;
+
+            if (entry is not null)
+                _queue.Complete(entry);
 
             return _entry =_queue.TryDequeue();
         }
@@ -109,8 +111,10 @@ namespace DependencyQueue
         /// </returns>
         public Task<DependencyQueueEntry<T>?> GetNextEntryAsync()
         {
-            if (_entry is not null)
-                _queue.Complete(_entry);
+            var entry = _entry;
+
+            if (entry is not null)
+                _queue.Complete(entry);
 
             return Task.FromResult( _entry =_queue.TryDequeue() ); // TODO: Actual async
         }
