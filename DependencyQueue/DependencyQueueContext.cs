@@ -16,7 +16,7 @@ namespace DependencyQueue
     public class DependencyQueueContext<T, TData>
     {
         // The queue from which to dequeue entries
-        private readonly DependencyQueue<T> _queue;
+        private readonly IDependencyQueue<T> _queue;
 
         // The current entry
         private DependencyQueueEntry<T>? _entry;
@@ -43,16 +43,16 @@ namespace DependencyQueue
         ///   A token to monitor for cancellation requests.
         /// </param>
         internal DependencyQueueContext(
-            DependencyQueue<T> queue,
-            Guid               runId,
-            int                workerId,
-            TData              data,
-            CancellationToken  cancellation = default)
+            IDependencyQueue<T> queue,
+            Guid                runId,
+            int                 workerId,
+            TData               data,
+            CancellationToken   cancellation = default)
         {
             if (queue is null)
                 throw Errors.ArgumentNull(nameof(queue));
             if (workerId < 1)
-                throw Errors.ArgumentOutOfRange(nameof(queue));
+                throw Errors.ArgumentOutOfRange(nameof(workerId));
 
             _queue            = queue;
             RunId             = runId;
@@ -97,7 +97,7 @@ namespace DependencyQueue
             if (entry is not null)
                 _queue.Complete(entry);
 
-            return _entry =_queue.TryDequeue();
+            return _entry = _queue.TryDequeue();
         }
 
         /// <summary>
@@ -109,14 +109,14 @@ namespace DependencyQueue
         ///   entry to process or <see langword="null"/> if no more entries
         ///   remain to be processed.
         /// </returns>
-        public Task<DependencyQueueEntry<T>?> GetNextEntryAsync()
+        public async Task<DependencyQueueEntry<T>?> GetNextEntryAsync()
         {
             var entry = _entry;
 
             if (entry is not null)
                 _queue.Complete(entry);
 
-            return Task.FromResult( _entry =_queue.TryDequeue() ); // TODO: Actual async
+            return _entry = await _queue.TryDequeueAsync(cancellation: CancellationToken);
         }
     }
 }

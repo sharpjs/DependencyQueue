@@ -13,7 +13,7 @@ namespace DependencyQueue
     ///   The type of values contained in queue entries.
     /// </typeparam>
     /// <seealso href="https://en.wikipedia.org/wiki/Dependency_graph"/>
-    public class DependencyQueue<T>
+    public class DependencyQueue<T> : IDependencyQueue<T>
     {
         // Entries that are ready to dequeue
         private readonly Queue<DependencyQueueEntry<T>> _ready;
@@ -173,6 +173,14 @@ namespace DependencyQueue
                     Monitor.Wait(_lock, OneSecond);
                 }
             }
+        }
+
+        public Task<DependencyQueueEntry<T>?> TryDequeueAsync(
+            Func<T, bool>?    predicate    = null,
+            CancellationToken cancellation = default)
+        {
+            // TODO: Real async
+            return Task.FromResult( TryDequeue(predicate) );
         }
 
         /// <summary>
