@@ -26,6 +26,14 @@ namespace DependencyQueue
         }
 
         [Test]
+        public void Construct_NullComparer()
+        {
+            Invoking(() => new Entry("x", new(), null!))
+                .Should().ThrowExactly<ArgumentNullException>()
+                .Where(e => e.ParamName == "comparer");
+        }
+
+        [Test]
         public void Name_Get()
         {
             var entry = new Entry("x", new());
@@ -193,6 +201,49 @@ namespace DependencyQueue
         }
 
         [Test]
+        public void RemoveRequires_NullName()
+        {
+            new Entry("x", new())
+                .Invoking(e => e.RemoveRequires(null!))
+                .Should().ThrowExactly<ArgumentNullException>()
+                .Where(e => e.ParamName == "name");
+        }
+
+        [Test]
+        public void RemoveRequires_EmptyName()
+        {
+            new Entry("x", new())
+                .Invoking(e => e.RemoveRequires(""))
+                .Should().ThrowExactly<ArgumentException>()
+                .Where(e => e.ParamName == "name");
+        }
+
+        [Test]
+        public void RemoveRequires_Ok()
+        {
+            var entry = new Entry("x", new());
+
+            entry.AddRequires(new[] { "a" });
+            entry.RemoveRequires("A");
+
+            entry.Provides.Should().BeEquivalentTo("x");
+            entry.Requires.Should().BeEmpty();
+        }
+
+        [Test]
+        public void RemoveRequires_Duplicate()
+        {
+            var entry = new Entry("x", new());
+
+            entry.AddRequires(new[] { "a" });
+            entry.RemoveRequires("A");
+            entry.RemoveRequires("A");
+
+            entry.Provides.Should().BeEquivalentTo("x");
+            entry.Requires.Should().BeEmpty();
+        }
+
+        [Test]
         public void ToString_Ok()
         {
             var entry = new Entry("a", "foo");
@@ -215,6 +266,10 @@ namespace DependencyQueue
         {
             internal Entry(string name, object value)
                 : base(name, value, StringComparer.OrdinalIgnoreCase)
+            { }
+
+            internal Entry(string name, object value, StringComparer comparer)
+                : base(name, value, comparer)
             { }
         }
     }
