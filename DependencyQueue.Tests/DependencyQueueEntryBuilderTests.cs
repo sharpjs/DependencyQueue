@@ -6,8 +6,7 @@ using NUnit.Framework;
 
 namespace DependencyQueue
 {
-    using Entry        = DependencyQueueEntry        <object>;
-    using EntryBuilder = DependencyQueueEntryBuilder <object>;
+    using static FluentActions;
 
     [TestFixture]
     public class DependencyQueueEntryBuilderTests

@@ -12,7 +12,7 @@ namespace DependencyQueue
         [Test]
         public void Construct_NullName()
         {
-            Invoking(() => new Entry(null!, new()))
+            Invoking(() => new Entry(null!))
                 .Should().ThrowExactly<ArgumentNullException>()
                 .Where(e => e.ParamName == "name");
         }
@@ -20,7 +20,7 @@ namespace DependencyQueue
         [Test]
         public void Construct_EmptyName()
         {
-            Invoking(() => new Entry("", new()))
+            Invoking(() => new Entry(""))
                 .Should().ThrowExactly<ArgumentException>()
                 .Where(e => e.ParamName == "name");
         }
@@ -36,7 +36,7 @@ namespace DependencyQueue
         [Test]
         public void Name_Get()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.Name.Should().Be("x");
         }
@@ -44,7 +44,7 @@ namespace DependencyQueue
         [Test]
         public void Value_Get()
         {
-            var value = new object();
+            var value = new Value();
 
             var entry = new Entry("x", value);
 
@@ -54,7 +54,7 @@ namespace DependencyQueue
         [Test]
         public void Provides_Get()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.Provides.Should().NotBeNull().And.BeEquivalentTo("x");
         }
@@ -62,7 +62,7 @@ namespace DependencyQueue
         [Test]
         public void Requires_Get()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.Requires.Should().NotBeNull().And.BeEmpty();
         }
@@ -70,7 +70,7 @@ namespace DependencyQueue
         [Test]
         public void AddProvides_NullNameCollection()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.AddProvides(null!))
                 .Should().ThrowExactly<ArgumentNullException>()
                 .Where(e => e.ParamName == "names");
@@ -79,7 +79,7 @@ namespace DependencyQueue
         [Test]
         public void AddProvides_NullName()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.AddProvides(new[] { null as string }!))
                 .Should().ThrowExactly<ArgumentException>()
                 .Where(e => e.ParamName == "names");
@@ -88,7 +88,7 @@ namespace DependencyQueue
         [Test]
         public void AddProvides_EmptyName()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.AddProvides(new[] { "" }))
                 .Should().ThrowExactly<ArgumentException>()
                 .Where(e => e.ParamName == "names");
@@ -97,7 +97,7 @@ namespace DependencyQueue
         [Test]
         public void AddProvides_Ok()
         {
-            var entry = new Entry("b", new());
+            var entry = new Entry("b");
 
             entry.AddProvides(new[] { "A", "C" });
 
@@ -108,7 +108,7 @@ namespace DependencyQueue
         [Test]
         public void AddProvides_Duplicate()
         {
-            var entry = new Entry("a", new());
+            var entry = new Entry("a");
 
             entry.AddProvides(new[] { "A", "a", "A" });
 
@@ -119,7 +119,7 @@ namespace DependencyQueue
         [Test]
         public void AddProvides_Required()
         {
-            var entry = new Entry("b", new());
+            var entry = new Entry("b");
 
             entry.AddRequires(new[] { "a" });
             entry.AddProvides(new[] { "A" });
@@ -131,7 +131,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_NullNameCollection()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.AddRequires(null!))
                 .Should().ThrowExactly<ArgumentNullException>()
                 .Where(e => e.ParamName == "names");
@@ -140,7 +140,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_NullName()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.AddRequires(new[] { null as string }!))
                 .Should().ThrowExactly<ArgumentException>()
                 .Where(e => e.ParamName == "names");
@@ -149,7 +149,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_EmptyName()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.AddRequires(new[] { "" }))
                 .Should().ThrowExactly<ArgumentException>()
                 .Where(e => e.ParamName == "names");
@@ -158,7 +158,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_Ok()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.AddRequires(new[] { "A", "b", "C" });
 
@@ -169,7 +169,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_Duplicate()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.AddRequires(new[] { "a", "A" });
 
@@ -180,7 +180,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_Provided()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.AddProvides(new[] { "A" });
             entry.AddRequires(new[] { "a" });
@@ -192,7 +192,7 @@ namespace DependencyQueue
         [Test]
         public void AddRequires_OwnName()
         {
-            var entry = new Entry("a", new());
+            var entry = new Entry("a");
 
             entry.AddRequires(new[] { "A" });
 
@@ -203,7 +203,7 @@ namespace DependencyQueue
         [Test]
         public void RemoveRequires_NullName()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.RemoveRequires(null!))
                 .Should().ThrowExactly<ArgumentNullException>()
                 .Where(e => e.ParamName == "name");
@@ -212,7 +212,7 @@ namespace DependencyQueue
         [Test]
         public void RemoveRequires_EmptyName()
         {
-            new Entry("x", new())
+            new Entry("x")
                 .Invoking(e => e.RemoveRequires(""))
                 .Should().ThrowExactly<ArgumentException>()
                 .Where(e => e.ParamName == "name");
@@ -221,7 +221,7 @@ namespace DependencyQueue
         [Test]
         public void RemoveRequires_Ok()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.AddRequires(new[] { "a" });
             entry.RemoveRequires("A");
@@ -233,7 +233,7 @@ namespace DependencyQueue
         [Test]
         public void RemoveRequires_Duplicate()
         {
-            var entry = new Entry("x", new());
+            var entry = new Entry("x");
 
             entry.AddRequires(new[] { "a" });
             entry.RemoveRequires("A");
@@ -246,12 +246,16 @@ namespace DependencyQueue
         [Test]
         public void ToString_Ok()
         {
-            var entry = new Entry("a", "foo");
+            var entry = new Entry("a");
 
             entry.AddProvides(new[] { "b", "c" });
             entry.AddRequires(new[] { "x", "y" });
 
-            entry.ToString().Should().Be("a (Provides: a, b, c; Requires: x, y) {foo}");
+            var expected = string.Concat(
+                "a (Provides: a, b, c; Requires: x, y) {", entry.Value.ToString(), "}"
+            );
+
+            entry.ToString().Should().Be(expected);
         }
 
         [Test]
@@ -260,17 +264,6 @@ namespace DependencyQueue
             var entry = new Entry("a", null!);
 
             entry.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
-        }
-
-        private class Entry : DependencyQueueEntry<object>
-        {
-            internal Entry(string name, object value)
-                : base(name, value, StringComparer.OrdinalIgnoreCase)
-            { }
-
-            internal Entry(string name, object value, StringComparer comparer)
-                : base(name, value, comparer)
-            { }
         }
     }
 }

@@ -9,15 +9,6 @@ namespace DependencyQueue
 {
     using static FluentActions;
 
-    using Context = DependencyQueueContext<
-        DependencyQueueContextTests.Value,
-        DependencyQueueContextTests.Data
-    >;
-
-    using IQueue = IDependencyQueue<
-        DependencyQueueContextTests.Value
-    >;
-
     [TestFixture]
     public class DependencyQueueContextTests
     {
@@ -181,16 +172,6 @@ namespace DependencyQueue
 
                 Context = new(Queue.Object, RunId, WorkerId, Data, Cancellation.Token);
             }
-        }
-
-        internal class Value { }
-        internal class Data  { }
-
-        private class Entry : DependencyQueueEntry<Value>
-        {
-            internal Entry(string name, Value value)
-                : base(name, value, StringComparer.Ordinal)
-            { }
         }
     }
 }

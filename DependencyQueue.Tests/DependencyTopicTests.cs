@@ -5,7 +5,6 @@ using NUnit.Framework;
 namespace DependencyQueue
 {
     using static FluentActions;
-    using Topic = DependencyQueueTopic<object>;
 
     [TestFixture]
     public class DependencyTopicTests
@@ -115,13 +114,6 @@ namespace DependencyQueue
             topic.ToString().Should().Be(
                 "a (ProvidedBy: b; RequiredBy: c, d)"
             );
-        }
-
-        private class Entry : DependencyQueueEntry<object>
-        {
-            internal Entry(string name, object value)
-                : base(name, value, StringComparer.OrdinalIgnoreCase)
-            { }
         }
     }
 }
