@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
-using Subatomix.Testing;
 
 namespace DependencyQueue
 {
@@ -154,24 +153,6 @@ namespace DependencyQueue
             result.Should().BeSameAs(entry1);
         }
 
-        private class TestHarness : TestHarnessBase
-        {
-            public Context      Context  { get; }
-
-            public Mock<IQueue> Queue    { get; }
-            public Guid         RunId    { get; }
-            public int          WorkerId { get; }
-            public Data         Data     { get; }
-
-            public TestHarness()
-            {
-                Queue    = Mocks.Create<IQueue>();
-                RunId    = Guid.NewGuid();
-                WorkerId = Random.Next(1, 100);
-                Data     = new();
-
-                Context = new(Queue.Object, RunId, WorkerId, Data, Cancellation.Token);
-            }
-        }
+        private class TestHarness : QueueTestHarness { }
     }
 }
