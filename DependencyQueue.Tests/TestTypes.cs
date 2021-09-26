@@ -31,6 +31,13 @@ namespace DependencyQueue
 
     interface IQueue : IDependencyQueue<Value> { }
 
+    class Queue : DependencyQueue<Value>
+    {
+        internal Queue(StringComparer? comparer = null)
+            : base(comparer)
+        { }
+    }
+
     class Topic : DependencyQueueTopic<Value>
     {
         internal Topic(string name)
