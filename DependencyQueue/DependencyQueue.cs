@@ -43,7 +43,7 @@ namespace DependencyQueue
         public DependencyQueue(StringComparer? comparer = null)
         {
             _ready  = new();
-            _topics = new(_comparer ??= StringComparer.Ordinal);
+            _topics = new(_comparer = comparer ?? StringComparer.Ordinal);
             _lock   = new();
         }
 
