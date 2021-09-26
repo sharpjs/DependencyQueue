@@ -59,18 +59,18 @@ namespace DependencyQueue
     class Context : DependencyQueueContext<Value, Data>
     {
         internal Context(
-            IDependencyQueue<Value> queue,
-            Guid                    runId,
-            int                     workerId,
-            Data                    data,
-            CancellationToken       cancellation = default)
+            IQueue            queue,
+            Guid              runId,
+            int               workerId,
+            Data              data,
+            CancellationToken cancellation = default)
             : base(queue, runId, workerId, data, cancellation)
         { }
     }
 
     class Builder : DependencyQueueEntryBuilder<Value>
     {
-        internal Builder(DependencyQueue<Value> queue)
+        internal Builder(IQueue queue)
             : base(queue)
         { }
     }

@@ -18,7 +18,7 @@ namespace DependencyQueue
         private DependencyQueueEntry<T>? _entry;
 
         // The default queue for Enqueue
-        private readonly DependencyQueue<T> _queue;
+        private readonly IDependencyQueue<T> _queue;
 
         /// <summary>
         ///   Initializes a new <see cref="DependencyQueueEntryBuilder{T}"/>
@@ -30,7 +30,7 @@ namespace DependencyQueue
         /// <exception cref="ArgumentNullException">
         ///   <paramref name="queue"/> is <see langword="null"/>.
         /// </exception>
-        internal DependencyQueueEntryBuilder(DependencyQueue<T> queue)
+        internal DependencyQueueEntryBuilder(IDependencyQueue<T> queue)
         {
             if (queue is null)
                 throw Errors.ArgumentNull(nameof(queue));
