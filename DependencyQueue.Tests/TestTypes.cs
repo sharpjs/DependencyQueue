@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using NUnit.Framework;
 
@@ -11,9 +12,10 @@ namespace DependencyQueue
     {
         internal static StringComparer Comparer
             => StringComparer.OrdinalIgnoreCase;
-    }
 
-    interface IQueue : IDependencyQueue<Value> { }
+        internal static IEnumerable<T> Enumerable<T>(params T[] items)
+            => items;
+    }
 
     class Value
     {
@@ -26,6 +28,8 @@ namespace DependencyQueue
         public override string ToString()
             => Invariant($"Data{GetHashCode():X4}");
     }
+
+    interface IQueue : IDependencyQueue<Value> { }
 
     class Topic : DependencyQueueTopic<Value>
     {

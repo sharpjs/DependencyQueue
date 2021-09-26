@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -160,7 +159,7 @@ namespace DependencyQueue
                 .CurrentEntry;
 
             h.Queue
-                .Setup(q => q.Enqueue(entry0))
+                .Setup(q => q.Enqueue(entry0!))
                 .Verifiable();
 
             var entry1 = h.Builder
@@ -169,9 +168,6 @@ namespace DependencyQueue
 
             entry1.Should().BeNull();
         }
-
-        private static IEnumerable<T> Enumerable<T>(params T[] items)
-            => items;
 
         private class TestHarness : QueueTestHarness
         {
