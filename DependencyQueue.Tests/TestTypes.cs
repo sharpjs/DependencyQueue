@@ -5,6 +5,13 @@ using NUnit.Framework;
 namespace DependencyQueue
 {
     using static FormattableString;
+    using static TestGlobals;
+
+    static class TestGlobals
+    {
+        internal static StringComparer Comparer
+            => StringComparer.OrdinalIgnoreCase;
+    }
 
     interface IQueue : IDependencyQueue<Value> { }
 
@@ -30,15 +37,15 @@ namespace DependencyQueue
     class Entry : DependencyQueueEntry<Value>
     {
         internal Entry()
-            : base(GenerateName(), new(), StringComparer.OrdinalIgnoreCase)
+            : base(GenerateName(), new(), Comparer)
         { }
 
         internal Entry(string name)
-            : base(name, new(), StringComparer.OrdinalIgnoreCase)
+            : base(name, new(), Comparer)
         { }
 
         internal Entry(string name, Value value)
-            : base(name, value, StringComparer.OrdinalIgnoreCase)
+            : base(name, value, Comparer)
         { }
 
         internal Entry(string name, Value value, StringComparer comparer)
