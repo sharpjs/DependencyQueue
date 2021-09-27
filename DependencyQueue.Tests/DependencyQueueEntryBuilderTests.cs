@@ -24,6 +24,7 @@ namespace DependencyQueue
             using var h = new TestHarness();
 
             h.Builder.CurrentEntry.Should().BeNull();
+            h.Builder.Queue       .Should().BeSameAs(h.Queue.Object);
         }
 
         [Test]

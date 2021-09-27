@@ -17,7 +17,7 @@ namespace DependencyQueue
         // The current entry being built
         private DependencyQueueEntry<T>? _entry;
 
-        // The default queue for Enqueue
+        // The queue to which the builder will enqueue entries
         private readonly IDependencyQueue<T> _queue;
 
         /// <summary>
@@ -44,6 +44,12 @@ namespace DependencyQueue
         ///   there is no current etry.
         /// </summary>
         internal DependencyQueueEntry<T>? CurrentEntry => _entry;
+
+        /// <summary>
+        ///   ⚠ <strong>For testing only.</strong>
+        ///   Gets the queue to which the builder will enqueue entries.
+        /// </summary>
+        internal IDependencyQueue<T>? Queue => _queue;
 
         /// <summary>
         ///   Begins building a new entry with the specified name and value.
