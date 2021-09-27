@@ -80,7 +80,7 @@ jobs:
           --results-directory:${{ runner.temp }}/coverage/raw
 
       - name: Prepare Coverage Report
-        uses: danielpalme/ReportGenerator-GitHub-Action@4.8.13
+        uses: danielpalme/ReportGenerator-GitHub-Action@4.8.12
         #url: https://github.com/danielpalme/ReportGenerator-GitHub-Action
         with:
           reports: ${{ runner.temp }}/coverage/raw/**/coverage.opencover.xml
