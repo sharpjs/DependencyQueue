@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -10,6 +11,9 @@ using NUnit.Framework;
 namespace DependencyQueue
 {
     using static TestGlobals;
+
+    using Context_ = DependencyQueueContext <Value, Data>;
+    using Entry_   = DependencyQueueEntry   <Value>;
 
     [TestFixture]
     public class DependencyQueueTests
@@ -507,6 +511,145 @@ namespace DependencyQueue
                 .Invoking(q => q.Complete(null!))
                 .Should().ThrowExactly<ArgumentNullException>()
                 .Where(e => e.ParamName == "entry");
+        }
+
+        // TODO: Do we need to test more of Complete, specifically what it does
+        // to the Topics and ReadEvents collections?
+
+        [Test]
+        public void Run_InvalidParallelism()
+        {
+            void WorkerMain(Context_ _) { };
+
+            new Queue()
+                .Invoking(q => q.Run(WorkerMain, new Data(), parallelism: 0))
+                .Should().ThrowExactly<ArgumentOutOfRangeException>()
+                .Where(e => e.ParamName == "parallelism");
+        }
+
+        [Test]
+        public void Run_Ok()
+        {
+            var queue   = new Queue();
+            var entryA  = new Entry("a");
+            var entryB0 = new Entry("b0");
+            var entryB1 = new Entry("b1");
+            var entryC  = new Entry("c");
+
+            entryA .AddRequires(Enumerable("b"));
+            entryA .AddRequires(Enumerable("c"));
+            entryB0.AddProvides(Enumerable("b"));
+            entryB1.AddProvides(Enumerable("b"));
+
+            queue.Enqueue(entryA);
+            queue.Enqueue(entryB0);
+            queue.Enqueue(entryB1);
+            queue.Enqueue(entryC);
+
+            var data    = new Data();
+            var workers = new ConcurrentBag<Context_>();
+            var entries = new ConcurrentBag<Entry_>();
+
+            void WorkerMain(Context_ context)
+            {
+                workers.Add(context);
+
+                for (;;)
+                {
+                    var entry = context.GetNextEntry();
+                    if (entry is null) break;
+                    Thread.Sleep(25.Milliseconds());
+                    entries.Add(entry);
+                }
+            }
+
+            queue.Run(WorkerMain, data, 3);
+
+            workers.Should().HaveCount(3);
+
+            var runId = workers.First().RunId;
+            runId.Should().NotBeEmpty();
+
+            workers.Should().OnlyContain(c => c.RunId             == runId);
+            workers.Should().OnlyContain(c => c.Data              == data);
+            workers.Should().OnlyContain(c => c.CancellationToken == default);
+            workers.Should().Contain(c => c.WorkerId == 1);
+            workers.Should().Contain(c => c.WorkerId == 2);
+            workers.Should().Contain(c => c.WorkerId == 3);
+
+            entries.Should().BeEquivalentTo(entryA, entryB0, entryB1, entryC);
+
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
+        }
+
+        [Test]
+        public void RunAsync_InvalidParallelism()
+        {
+            Task WorkerMain(Context_ _) => Task.CompletedTask;
+
+            new Queue()
+                .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
+                .Should().ThrowExactly<ArgumentOutOfRangeException>()
+                .Where(e => e.ParamName == "parallelism");
+        }
+
+        [Test]
+        public async Task RunAsync()
+        {
+            using var cts = new CancellationTokenSource();
+
+            var queue   = new Queue();
+            var entryA  = new Entry("a");
+            var entryB0 = new Entry("b0");
+            var entryB1 = new Entry("b1");
+            var entryC  = new Entry("c");
+
+            entryA .AddRequires(Enumerable("b"));
+            entryA .AddRequires(Enumerable("c"));
+            entryB0.AddProvides(Enumerable("b"));
+            entryB1.AddProvides(Enumerable("b"));
+
+            queue.Enqueue(entryA);
+            queue.Enqueue(entryB0);
+            queue.Enqueue(entryB1);
+            queue.Enqueue(entryC);
+
+            var data    = new Data();
+            var workers = new ConcurrentBag<Context_>();
+            var entries = new ConcurrentBag<Entry_>();
+
+            async Task WorkerMainAsync(Context_ context)
+            {
+                workers.Add(context);
+
+                for (;;)
+                {
+                    var entry = await context.GetNextEntryAsync();
+                    if (entry is null) break;
+                    await Task.Delay(25.Milliseconds());
+                    entries.Add(entry);
+                }
+            }
+
+            await queue.RunAsync(WorkerMainAsync, data, cancellation: cts.Token);
+
+            workers.Should().HaveCount(Environment.ProcessorCount);
+
+            var runId = workers.First().RunId;
+            runId.Should().NotBeEmpty();
+
+            workers.Should().OnlyContain(c => c.RunId             == runId);
+            workers.Should().OnlyContain(c => c.Data              == data);
+            workers.Should().OnlyContain(c => c.CancellationToken == cts.Token);
+
+            for (var i = 1; i < workers.Count; i++)
+                workers.Should().Contain(c => c.WorkerId == i);
+
+            entries.Should().BeEquivalentTo(entryA, entryB0, entryB1, entryC);
+
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
         }
     }
 }
