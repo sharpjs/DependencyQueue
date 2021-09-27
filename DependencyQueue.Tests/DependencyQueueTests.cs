@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using FluentAssertions.Common;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 
@@ -16,37 +15,25 @@ namespace DependencyQueue
     public class DependencyQueueTests
     {
         [Test]
-        public void Comparer_Get_Default()
+        public void Construct_DefaultComparer()
         {
             var queue = new Queue();
 
-            queue.Comparer.Should().BeSameAs(StringComparer.Ordinal);
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
+            queue.Comparer    .Should().BeSameAs(StringComparer.Ordinal);
         }
 
         [Test]
-        public void Comparer_Get_NotDefault()
+        public void Construct_ExplicitComparer()
         {
             var comparer = StringComparer.InvariantCultureIgnoreCase;
 
             var queue = new Queue(comparer);
 
-            queue.Comparer.Should().BeSameAs(comparer);
-        }
-
-        [Test]
-        public void ReadyEntries_Get()
-        {
-            var queue = new Queue();
-
+            queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
-        }
-
-        [Test]
-        public void Topics_Get()
-        {
-            var queue = new Queue();
-
-            queue.Topics.Should().BeEmpty();
+            queue.Comparer    .Should().BeSameAs(comparer);
         }
 
         [Test]
@@ -56,8 +43,8 @@ namespace DependencyQueue
 
             var builder = queue.CreateEntryBuilder();
 
-            builder.Should().NotBeNull().And.BeOfType<DependencyQueueEntryBuilder<Value>>();
-            // TODO: Prove it targets this queue
+            builder      .Should().NotBeNull();
+            builder.Queue.Should().BeSameAs(queue);
         }
 
         [Test]
@@ -79,11 +66,11 @@ namespace DependencyQueue
 
             queue.Enqueue(entry);
 
-            queue.Topics.Should().HaveCount(2);
+            queue.Topics      .Should().HaveCount(2);
+            queue.ReadyEntries.Should().Equal(entry);
+
             queue.ShouldHaveTopic("a", providedBy: new[] { entry });
             queue.ShouldHaveTopic("b", providedBy: new[] { entry });
-
-            queue.ReadyEntries.Should().BeEquivalentTo(entry);
         }
 
         [Test]
@@ -96,30 +83,36 @@ namespace DependencyQueue
 
             queue.Enqueue(entry);
 
-            queue.Topics.Should().HaveCount(2);
+            queue.Topics      .Should().HaveCount(2);
+            queue.ReadyEntries.Should().BeEmpty();
+
             queue.ShouldHaveTopic("a", providedBy: new[] { entry });
             queue.ShouldHaveTopic("b", requiredBy: new[] { entry });
-
-            queue.ReadyEntries.Should().BeEmpty();
         }
 
         [Test]
-        public void Enqueue_DependentEntryPair()
+        public void Enqueue_InterdependentEntityNetwork()
         {
-            var queue  = new Queue();
-            var entryA = new Entry("a");
-            var entryB = new Entry("b");
+            var queue   = new Queue();
+            var entryA  = new Entry("a");
+            var entryB0 = new Entry("b0");
+            var entryB1 = new Entry("b1");
 
-            entryA.AddRequires(Enumerable("b"));
+            entryA .AddRequires(Enumerable("b"));
+            entryB0.AddProvides(Enumerable("b"));
+            entryB1.AddProvides(Enumerable("b"));
 
             queue.Enqueue(entryA);
-            queue.Enqueue(entryB);
+            queue.Enqueue(entryB0);
+            queue.Enqueue(entryB1);
 
-            queue.Topics.Should().HaveCount(2);
-            queue.ShouldHaveTopic("a", providedBy: new[] { entryA });
-            queue.ShouldHaveTopic("b", providedBy: new[] { entryB }, requiredBy: new[] { entryA });
+            queue.Topics      .Should().HaveCount(4);
+            queue.ReadyEntries.Should().Equal(entryB0, entryB1);
 
-            queue.ReadyEntries.Should().BeEquivalentTo(entryB);
+            queue.ShouldHaveTopic("a",  providedBy: new[] { entryA });
+            queue.ShouldHaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
+            queue.ShouldHaveTopic("b0", providedBy: new[] { entryB0 });
+            queue.ShouldHaveTopic("b1", providedBy: new[] { entryB1 });
         }
 
         [Test]
@@ -128,17 +121,26 @@ namespace DependencyQueue
             var queue = new Queue();
 
             queue.TryDequeue().Should().BeNull();
+
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
         }
 
         [Test]
         public void TryDequeue_Ending()
         {
             var queue = new Queue();
+            var entry = new Entry("a");
 
-            queue.Enqueue(new Entry("a"));
+            queue.Enqueue(entry);
             queue.SetEnding();
 
             queue.TryDequeue().Should().BeNull();
+
+            queue.Topics.Should().HaveCount(1);
+            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+
+            queue.ReadyEntries.Should().Equal(entry);
         }
 
         [Test]
@@ -150,42 +152,82 @@ namespace DependencyQueue
             queue.Enqueue(entry);
 
             queue.TryDequeue().Should().BeSameAs(entry);
+
+            queue.Topics      .Should().HaveCount(1);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
         }
 
         [Test]
-        public void TryDequeue_NotReady()
+        public void TryDequeue_WaitForRequiredEntries()
         {
-            var queue  = new Queue();
-            var entryA = new Entry("a");
-            var entryB = new Entry("b");
+            var queue   = new Queue();
+            var entryA  = new Entry("a");
+            var entryB0 = new Entry("b0");
+            var entryB1 = new Entry("b1");
+            var entryC  = new Entry("c");
 
-            entryA.AddRequires(Enumerable("b"));
+            entryA .AddRequires(Enumerable("b"));
+            entryA .AddRequires(Enumerable("c"));
+            entryB0.AddProvides(Enumerable("b"));
+            entryB1.AddProvides(Enumerable("b"));
 
             queue.Enqueue(entryA);
-            queue.Enqueue(entryB);
+            queue.Enqueue(entryB0);
+            queue.Enqueue(entryB1);
+            queue.Enqueue(entryC);
 
-            queue.TryDequeue().Should().BeSameAs(entryB);
+            queue.TryDequeue().Should().BeSameAs(entryB0);
+            queue.TryDequeue().Should().BeSameAs(entryB1);
+            queue.TryDequeue().Should().BeSameAs(entryC);
+
+            queue.Topics      .Should().HaveCount(5);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a",  providedBy: new[] { entryA });
+            queue.ShouldHaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
+            queue.ShouldHaveTopic("b0", providedBy: new[] { entryB0 });
+            queue.ShouldHaveTopic("b1", providedBy: new[] { entryB1 });
+            queue.ShouldHaveTopic("c",  providedBy: new[] { entryC }, requiredBy: new[] { entryA });
 
             var stopwatch     = new Stopwatch();
             var dequeuedEntry = null as object;
 
-            void TryDequeueEntryA()
+            void TryDequeue()
             {
-                stopwatch.Start();
                 dequeuedEntry = queue.TryDequeue();
                 stopwatch.Stop();
             }
 
-            void CompleteEntryBAfter500ms()
+            void CompleteEntryB0()
             {
-                Thread.Sleep(500.Milliseconds());
-                queue.Complete(entryB);
+                Thread.Sleep(450.Milliseconds());
+                queue.Complete(entryB0);
             }
 
-            Parallel.Invoke(TryDequeueEntryA, CompleteEntryBAfter500ms);
+            void CompleteEntryB1()
+            {
+                Thread.Sleep(650.Milliseconds());
+                queue.Complete(entryB1);
+            }
+
+            void CompleteEntryC()
+            {
+                Thread.Sleep(500.Milliseconds());
+                queue.Complete(entryC);
+            }
+
+            stopwatch.Start();
+            Parallel.Invoke(TryDequeue, CompleteEntryB0, CompleteEntryB1, CompleteEntryC);
 
             dequeuedEntry    .Should().BeSameAs(entryA);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(500.Milliseconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(650.Milliseconds());
+
+            queue.Topics      .Should().HaveCount(1);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a", providedBy: new[] { entryA });
         }
 
         [Test]
@@ -211,8 +253,260 @@ namespace DependencyQueue
             stopwatch.Stop();
 
             dequeuedEntry    .Should().BeSameAs(entry);
-            testedValues     .Should().HaveCount(2).And.BeEquivalentTo(entry.Value, entry.Value);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(800.Milliseconds());
+            testedValues     .Should().Equal(entry.Value, entry.Value);
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(1.Seconds());
+
+            queue.Topics      .Should().HaveCount(1);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+        }
+
+        [Test]
+        public void TryDequeue_Exhausted()
+        {
+            var queue  = new Queue();
+            var entryA = new Entry("a");
+            var entryB = new Entry("b");
+
+            entryA.AddRequires(Enumerable("b"));
+
+            queue.Enqueue(entryA);
+            queue.Enqueue(entryB);
+
+            queue.TryDequeue().Should().BeSameAs(entryB);
+
+            var stopwatch       = new Stopwatch();
+            var dequeuedEntries = new ConcurrentBag<object?>();
+
+            void TryDequeue()
+            {
+                var dequeuedEntry = queue.TryDequeue();
+                dequeuedEntries.Add(dequeuedEntry);
+                if (dequeuedEntry is not null)
+                    queue.Complete(dequeuedEntry);
+            }
+
+            void CompleteEntryB()
+            {
+                Thread.Sleep(125.Milliseconds());
+                queue.Complete(entryB);
+            }
+
+            stopwatch.Start();
+            Parallel.Invoke(TryDequeue, TryDequeue, CompleteEntryB);
+
+            dequeuedEntries.Should().BeEquivalentTo(entryA, null);
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(125.Milliseconds());
+
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
+        }
+
+        [Test]
+        public async Task TryDequeueAsync_Initial()
+        {
+            var queue = new Queue();
+
+            (await queue.TryDequeueAsync()).Should().BeNull();
+
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
+        }
+
+        [Test]
+        public async Task TryDequeueAsync_Ending()
+        {
+            var queue = new Queue();
+            var entry = new Entry("a");
+
+            queue.Enqueue(entry);
+            queue.SetEnding();
+
+            (await queue.TryDequeueAsync()).Should().BeNull();
+
+            queue.Topics.Should().HaveCount(1);
+            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+
+            queue.ReadyEntries.Should().Equal(entry);
+        }
+
+        [Test]
+        public async Task TryDequeueAsync_Ok()
+        {
+            var queue = new Queue();
+            var entry = new Entry("a");
+
+            queue.Enqueue(entry);
+
+            (await queue.TryDequeueAsync()).Should().BeSameAs(entry);
+
+            queue.Topics      .Should().HaveCount(1);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+        }
+
+        [Test]
+        public async Task TryDequeueAsync_WaitForRequiredEntries()
+        {
+            var queue   = new Queue();
+            var entryA  = new Entry("a");
+            var entryB0 = new Entry("b0");
+            var entryB1 = new Entry("b1");
+            var entryC  = new Entry("c");
+
+            entryA .AddRequires(Enumerable("b"));
+            entryA .AddRequires(Enumerable("c"));
+            entryB0.AddProvides(Enumerable("b"));
+            entryB1.AddProvides(Enumerable("b"));
+
+            queue.Enqueue(entryA);
+            queue.Enqueue(entryB0);
+            queue.Enqueue(entryB1);
+            queue.Enqueue(entryC);
+
+            (await queue.TryDequeueAsync()).Should().BeSameAs(entryB0);
+            (await queue.TryDequeueAsync()).Should().BeSameAs(entryB1);
+            (await queue.TryDequeueAsync()).Should().BeSameAs(entryC);
+
+            queue.Topics      .Should().HaveCount(5);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a",  providedBy: new[] { entryA });
+            queue.ShouldHaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
+            queue.ShouldHaveTopic("b0", providedBy: new[] { entryB0 });
+            queue.ShouldHaveTopic("b1", providedBy: new[] { entryB1 });
+            queue.ShouldHaveTopic("c",  providedBy: new[] { entryC }, requiredBy: new[] { entryA });
+
+            var stopwatch     = new Stopwatch();
+            var dequeuedEntry = null as object;
+
+            async Task TryDequeueAsync()
+            {
+                dequeuedEntry = await queue.TryDequeueAsync();
+                stopwatch.Stop();
+            }
+
+            async Task CompleteEntryB0Async()
+            {
+                await Task.Delay(450.Milliseconds());
+                queue.Complete(entryB0);
+            }
+
+            async Task CompleteEntryB1Async()
+            {
+                await Task.Delay(650.Milliseconds());
+                queue.Complete(entryB1);
+            }
+
+            async Task CompleteEntryCAsync()
+            {
+                await Task.Delay(500.Milliseconds());
+                queue.Complete(entryC);
+            }
+
+            stopwatch.Start();
+            await Task.WhenAll(
+                Task.Run(TryDequeueAsync),
+                Task.Run(CompleteEntryB0Async),
+                Task.Run(CompleteEntryB1Async),
+                Task.Run(CompleteEntryCAsync)
+            );
+
+            dequeuedEntry    .Should().BeSameAs(entryA);
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(650.Milliseconds());
+
+            queue.Topics      .Should().HaveCount(1);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a", providedBy: new[] { entryA });
+        }
+
+        [Test]
+        public async Task TryDequeueAsync_PredicateReturnsFalseAsync()
+        {
+            var queue = new Queue();
+            var entry = new Entry("a");
+
+            queue.Enqueue(entry);
+
+            var testedValues = new ConcurrentQueue<Value>();
+
+            bool ReturnTrueOnSecondInvocation(Value value)
+            {
+                var isFirstInvocation = testedValues.IsEmpty;
+                testedValues.Enqueue(value);
+                return !isFirstInvocation;
+            }
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var dequeuedEntry = await queue.TryDequeueAsync(ReturnTrueOnSecondInvocation);
+            stopwatch.Stop();
+
+            dequeuedEntry    .Should().BeSameAs(entry);
+            testedValues     .Should().Equal(entry.Value, entry.Value);
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(1.Seconds());
+
+            queue.Topics      .Should().HaveCount(1);
+            queue.ReadyEntries.Should().BeEmpty();
+
+            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+        }
+
+        [Test]
+        public async Task TryDequeueAsync_Exhausted()
+        {
+            var queue  = new Queue();
+            var entryA = new Entry("a");
+            var entryB = new Entry("b");
+
+            entryA.AddRequires(Enumerable("b"));
+
+            queue.Enqueue(entryA);
+            queue.Enqueue(entryB);
+
+            (await queue.TryDequeueAsync()).Should().BeSameAs(entryB);
+
+            var stopwatch       = new Stopwatch();
+            var dequeuedEntries = new ConcurrentBag<object?>();
+
+            async Task TryDequeueAsync()
+            {
+                var dequeuedEntry = await queue.TryDequeueAsync();
+                dequeuedEntries.Add(dequeuedEntry);
+                if (dequeuedEntry is not null)
+                    queue.Complete(dequeuedEntry);
+            }
+
+            async Task CompleteEntryBAsync()
+            {
+                await Task.Delay(125.Milliseconds());
+                queue.Complete(entryB);
+            }
+
+            stopwatch.Start();
+            await Task.WhenAll(
+                Task.Run(TryDequeueAsync),
+                Task.Run(TryDequeueAsync),
+                Task.Run(CompleteEntryBAsync)
+            );
+
+            dequeuedEntries.Should().BeEquivalentTo(entryA, null);
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(125.Milliseconds());
+
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
+        }
+
+        [Test]
+        public void Complete_NullEntry()
+        {
+            new Queue()
+                .Invoking(q => q.Complete(null!))
+                .Should().ThrowExactly<ArgumentNullException>()
+                .Where(e => e.ParamName == "entry");
         }
     }
 }

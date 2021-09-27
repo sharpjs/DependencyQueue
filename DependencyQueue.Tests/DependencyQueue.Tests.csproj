@@ -4,6 +4,8 @@
     <Description>Tests for DependencyQueue</Description>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>DependencyQueue</RootNamespace>
+    <!-- Do not warn about missing Async suffix in this assembly -->
+    <NoWarn>IDE1006;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
