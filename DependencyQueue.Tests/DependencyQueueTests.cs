@@ -226,7 +226,7 @@ namespace DependencyQueue
             Parallel.Invoke(TryDequeue, CompleteEntryB0, CompleteEntryB1, CompleteEntryC);
 
             dequeuedEntry    .Should().BeSameAs(entryA);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(650.Milliseconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(600.Milliseconds());
 
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
@@ -258,7 +258,7 @@ namespace DependencyQueue
 
             dequeuedEntry    .Should().BeSameAs(entry);
             testedValues     .Should().Equal(entry.Value, entry.Value);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(1.Seconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(950.Milliseconds());
 
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
@@ -301,7 +301,7 @@ namespace DependencyQueue
             Parallel.Invoke(TryDequeue, TryDequeue, CompleteEntryB);
 
             dequeuedEntries.Should().BeEquivalentTo(entryA, null);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(125.Milliseconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(75.Milliseconds());
 
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
@@ -419,7 +419,7 @@ namespace DependencyQueue
             );
 
             dequeuedEntry    .Should().BeSameAs(entryA);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(650.Milliseconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(600.Milliseconds());
 
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
@@ -451,7 +451,7 @@ namespace DependencyQueue
 
             dequeuedEntry    .Should().BeSameAs(entry);
             testedValues     .Should().Equal(entry.Value, entry.Value);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(1.Seconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(900.Milliseconds());
 
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
@@ -498,7 +498,7 @@ namespace DependencyQueue
             );
 
             dequeuedEntries.Should().BeEquivalentTo(entryA, null);
-            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(125.Milliseconds());
+            stopwatch.Elapsed.Should().BeGreaterOrEqualTo(75.Milliseconds());
 
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
