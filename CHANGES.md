@@ -13,4 +13,4 @@ Future release.
 -->
 
 ## [1.0.0](https://github.com/sharpjs/DependencyQueue/tree/release/1.0.0)
-Initial release.
+Future release.
