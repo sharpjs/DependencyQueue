@@ -130,7 +130,7 @@ namespace DependencyQueue
         /// </returns>
         /// <remarks>
         ///   <para>
-        ///     This method blocks until the next entry is ready to dequeue
+        ///     This method returns when the next entry is ready to dequeue
         ///     <strong>and</strong> the <paramref name="predicate"/> returns
         ///     <see langword="true"/> for the entry's
         ///     <see cref="DependencyQueueEntry{T}.Value"/>.
@@ -175,6 +175,38 @@ namespace DependencyQueue
             }
         }
 
+        /// <summary>
+        ///   Dequeues the next entry from the queue asynchronously.
+        /// </summary>
+        /// <param name="predicate">
+        ///   An optional delegate that receives an entry's
+        ///   <see cref="DependencyQueueEntry{T}.Value"/> and returns
+        ///   <see langword="true"/> to dequeue the entry or
+        ///   <see langword="false"/> to block until a later time.
+        /// </param>
+        /// <param name="cancellation">
+        ///   The token to monitor for cancellation requests.
+        /// </param>
+        /// <returns>
+        ///   A task that represents the asynchronous operation.  When the task
+        ///   completes, its <see cref="Task{T}.Result"/> property is set to
+        ///   the next entry from the queue, or <see langword="null"/> if no
+        ///   more entries remain.
+        /// </returns>
+        /// <remarks>
+        ///   <para>
+        ///     This method returns when the next entry is ready to dequeue
+        ///     <strong>and</strong> the <paramref name="predicate"/> returns
+        ///     <see langword="true"/> for the entry's
+        ///     <see cref="DependencyQueueEntry{T}.Value"/>.
+        ///     This method reevaluates that condition when another entry
+        ///     becomes ready to dequeue or when one second has elapsed since
+        ///     the previous evaluation.
+        ///   </para>
+        ///   <para>
+        ///     This method is thread-safe.
+        ///   </para>
+        /// </remarks>
         public Task<DependencyQueueEntry<T>?> TryDequeueAsync(
             Func<T, bool>?    predicate    = null,
             CancellationToken cancellation = default)
@@ -313,6 +345,9 @@ namespace DependencyQueue
         /// <param name="parallelism">
         ///   The number of parallel invocations of <paramref name="worker"/>.
         ///   The default is <see cref="Environment.ProcessorCount"/>.
+        /// </param>
+        /// <param name="cancellation">
+        ///   The token to monitor for cancellation requests.
         /// </param>
         /// <returns>
         ///   A task that represents the asynchronous operation.

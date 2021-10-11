@@ -14,7 +14,7 @@ namespace DependencyQueue
     public class DependencyQueueTopic<T>
     {
         /// <summary>
-        ///   Initializes a new <see cref="DependencyQueueTopic"/> instance
+        ///   Initializes a new <see cref="DependencyQueueTopic{T}"/> instance
         ///   with the specified name.
         /// </summary>
         /// <param name="name">
