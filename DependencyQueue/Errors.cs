@@ -24,5 +24,11 @@ namespace DependencyQueue
                 "The builder does not have a current entry.  " +
                 "Use the NewEntry method to begin building an entry."
             );
+
+        internal static Exception NotValid()
+            => new InvalidOperationException(
+                "The queue state is invalid or has not been validated.  " +
+                "Use the Validate method and correct any errors it returns."
+            );
     }
 }

@@ -26,6 +26,7 @@ namespace DependencyQueue
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
             queue.Comparer    .Should().BeSameAs(StringComparer.Ordinal);
+            queue             .Should().BeValid();
         }
 
         [Test]
@@ -38,6 +39,7 @@ namespace DependencyQueue
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
             queue.Comparer    .Should().BeSameAs(comparer);
+            queue             .Should().BeValid();
         }
 
         [Test]
@@ -73,8 +75,8 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(2);
             queue.ReadyEntries.Should().Equal(entry);
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
-            queue.ShouldHaveTopic("b", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("b", providedBy: new[] { entry });
         }
 
         [Test]
@@ -90,8 +92,8 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(2);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
-            queue.ShouldHaveTopic("b", requiredBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("b", requiredBy: new[] { entry });
         }
 
         [Test]
@@ -113,16 +115,27 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(4);
             queue.ReadyEntries.Should().Equal(entryB0, entryB1);
 
-            queue.ShouldHaveTopic("a",  providedBy: new[] { entryA });
-            queue.ShouldHaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
-            queue.ShouldHaveTopic("b0", providedBy: new[] { entryB0 });
-            queue.ShouldHaveTopic("b1", providedBy: new[] { entryB1 });
+            queue.Should().HaveTopic("a",  providedBy: new[] { entryA });
+            queue.Should().HaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
+            queue.Should().HaveTopic("b0", providedBy: new[] { entryB0 });
+            queue.Should().HaveTopic("b1", providedBy: new[] { entryB1 });
         }
 
         [Test]
-        public void TryDequeue_Initial()
+        public void TryDequeue_NotValidated()
         {
             var queue = new Queue();
+
+            queue.Invoking(q => q.TryDequeue())
+                .Should().Throw<InvalidOperationException>();
+        }
+
+        [Test]
+        public void TryDequeue_Validated()
+        {
+            var queue = new Queue();
+
+            queue.Should().BeValid();
 
             queue.TryDequeue().Should().BeNull();
 
@@ -137,12 +150,13 @@ namespace DependencyQueue
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
+            queue.Should().BeValid();
             queue.SetEnding();
 
             queue.TryDequeue().Should().BeNull();
 
             queue.Topics.Should().HaveCount(1);
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
 
             queue.ReadyEntries.Should().Equal(entry);
         }
@@ -154,13 +168,14 @@ namespace DependencyQueue
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
+            queue.Should().BeValid();
 
             queue.TryDequeue().Should().BeSameAs(entry);
 
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
         }
 
         [Test]
@@ -181,6 +196,7 @@ namespace DependencyQueue
             queue.Enqueue(entryB0);
             queue.Enqueue(entryB1);
             queue.Enqueue(entryC);
+            queue.Should().BeValid();
 
             queue.TryDequeue().Should().BeSameAs(entryB0);
             queue.TryDequeue().Should().BeSameAs(entryB1);
@@ -189,11 +205,11 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(5);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a",  providedBy: new[] { entryA });
-            queue.ShouldHaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
-            queue.ShouldHaveTopic("b0", providedBy: new[] { entryB0 });
-            queue.ShouldHaveTopic("b1", providedBy: new[] { entryB1 });
-            queue.ShouldHaveTopic("c",  providedBy: new[] { entryC }, requiredBy: new[] { entryA });
+            queue.Should().HaveTopic("a",  providedBy: new[] { entryA });
+            queue.Should().HaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
+            queue.Should().HaveTopic("b0", providedBy: new[] { entryB0 });
+            queue.Should().HaveTopic("b1", providedBy: new[] { entryB1 });
+            queue.Should().HaveTopic("c",  providedBy: new[] { entryC }, requiredBy: new[] { entryA });
 
             var stopwatch     = new Stopwatch();
             var dequeuedEntry = null as object;
@@ -231,7 +247,7 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entryA });
+            queue.Should().HaveTopic("a", providedBy: new[] { entryA });
         }
 
         [Test]
@@ -241,6 +257,7 @@ namespace DependencyQueue
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
+            queue.Should().BeValid();
 
             var testedValues = new ConcurrentQueue<Value>();
 
@@ -263,7 +280,7 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
         }
 
         [Test]
@@ -277,6 +294,7 @@ namespace DependencyQueue
 
             queue.Enqueue(entryA);
             queue.Enqueue(entryB);
+            queue.Should().BeValid();
 
             queue.TryDequeue().Should().BeSameAs(entryB);
 
@@ -312,6 +330,8 @@ namespace DependencyQueue
         {
             var queue = new Queue();
 
+            queue.Should().BeValid();
+
             (await queue.TryDequeueAsync()).Should().BeNull();
 
             queue.Topics      .Should().BeEmpty();
@@ -325,12 +345,13 @@ namespace DependencyQueue
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
+            queue.Should().BeValid();
             queue.SetEnding();
 
             (await queue.TryDequeueAsync()).Should().BeNull();
 
             queue.Topics.Should().HaveCount(1);
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
 
             queue.ReadyEntries.Should().Equal(entry);
         }
@@ -342,13 +363,14 @@ namespace DependencyQueue
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
+            queue.Should().BeValid();
 
             (await queue.TryDequeueAsync()).Should().BeSameAs(entry);
 
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
         }
 
         [Test]
@@ -369,6 +391,7 @@ namespace DependencyQueue
             queue.Enqueue(entryB0);
             queue.Enqueue(entryB1);
             queue.Enqueue(entryC);
+            queue.Should().BeValid();
 
             (await queue.TryDequeueAsync()).Should().BeSameAs(entryB0);
             (await queue.TryDequeueAsync()).Should().BeSameAs(entryB1);
@@ -377,11 +400,11 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(5);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a",  providedBy: new[] { entryA });
-            queue.ShouldHaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
-            queue.ShouldHaveTopic("b0", providedBy: new[] { entryB0 });
-            queue.ShouldHaveTopic("b1", providedBy: new[] { entryB1 });
-            queue.ShouldHaveTopic("c",  providedBy: new[] { entryC }, requiredBy: new[] { entryA });
+            queue.Should().HaveTopic("a",  providedBy: new[] { entryA });
+            queue.Should().HaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
+            queue.Should().HaveTopic("b0", providedBy: new[] { entryB0 });
+            queue.Should().HaveTopic("b1", providedBy: new[] { entryB1 });
+            queue.Should().HaveTopic("c",  providedBy: new[] { entryC }, requiredBy: new[] { entryA });
 
             var stopwatch     = new Stopwatch();
             var dequeuedEntry = null as object;
@@ -424,7 +447,7 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entryA });
+            queue.Should().HaveTopic("a", providedBy: new[] { entryA });
         }
 
         [Test]
@@ -434,6 +457,7 @@ namespace DependencyQueue
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
+            queue.Should().BeValid();
 
             var testedValues = new ConcurrentQueue<Value>();
 
@@ -456,7 +480,7 @@ namespace DependencyQueue
             queue.Topics      .Should().HaveCount(1);
             queue.ReadyEntries.Should().BeEmpty();
 
-            queue.ShouldHaveTopic("a", providedBy: new[] { entry });
+            queue.Should().HaveTopic("a", providedBy: new[] { entry });
         }
 
         [Test]
@@ -470,6 +494,7 @@ namespace DependencyQueue
 
             queue.Enqueue(entryA);
             queue.Enqueue(entryB);
+            queue.Should().BeValid();
 
             (await queue.TryDequeueAsync()).Should().BeSameAs(entryB);
 
@@ -521,7 +546,10 @@ namespace DependencyQueue
         {
             void WorkerMain(Context_ _) { };
 
-            new Queue()
+            var queue = new Queue();
+            queue.Should().BeValid();
+
+            queue
                 .Invoking(q => q.Run(WorkerMain, new Data(), parallelism: 0))
                 .Should().ThrowExactly<ArgumentOutOfRangeException>()
                 .Where(e => e.ParamName == "parallelism");
@@ -545,6 +573,7 @@ namespace DependencyQueue
             queue.Enqueue(entryB0);
             queue.Enqueue(entryB1);
             queue.Enqueue(entryC);
+            queue.Should().BeValid();
 
             var data    = new Data();
             var workers = new ConcurrentBag<Context_>();
@@ -588,7 +617,10 @@ namespace DependencyQueue
         {
             Task WorkerMain(Context_ _) => Task.CompletedTask;
 
-            new Queue()
+            var queue = new Queue();
+            queue.Should().BeValid();
+
+            queue
                 .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
                 .Should().ThrowExactly<ArgumentOutOfRangeException>()
                 .Where(e => e.ParamName == "parallelism");
@@ -614,6 +646,7 @@ namespace DependencyQueue
             queue.Enqueue(entryB0);
             queue.Enqueue(entryB1);
             queue.Enqueue(entryC);
+            queue.Should().BeValid();
 
             var data    = new Data();
             var workers = new ConcurrentBag<Context_>();

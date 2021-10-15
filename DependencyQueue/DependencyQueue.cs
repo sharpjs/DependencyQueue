@@ -27,6 +27,9 @@ namespace DependencyQueue
         // Object to lock
         private readonly object _lock;
 
+        // Whether queue state is valid
+        private bool _isValid;
+
         // Whether queue processing is terminating
         private bool _isEnding;
 
@@ -112,6 +115,8 @@ namespace DependencyQueue
 
                 if (entry.Requires.Count == 0)
                     _ready.Enqueue(entry);
+
+                _isValid = false;
             }
         }
 
@@ -128,6 +133,10 @@ namespace DependencyQueue
         ///   The next entry from the queue, or <see langword="null"/> if no
         ///   more entries remain.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        ///   The queue state is invalid or has not been validated.  Use the
+        ///   <see cref="Validate"/> method and correct any errors it returns.
+        /// </exception>
         /// <remarks>
         ///   <para>
         ///     This method returns when the next entry is ready to dequeue
@@ -145,6 +154,9 @@ namespace DependencyQueue
         public DependencyQueueEntry<T>? TryDequeue(Func<T, bool>? predicate = null)
         {
             const int OneSecond = 1000; //ms
+
+            if (!_isValid)
+                throw Errors.NotValid();
 
             lock (_lock)
             {
@@ -316,6 +328,10 @@ namespace DependencyQueue
         ///   The number of parallel invocations of <paramref name="worker"/>.
         ///   The default is <see cref="Environment.ProcessorCount"/>.
         /// </param>
+        /// <exception cref="InvalidOperationException">
+        ///   The queue state is invalid or has not been validated.  Use the
+        ///   <see cref="Validate"/> method and correct any errors it returns.
+        /// </exception>
         public void Run<TData>(
             Action<DependencyQueueContext<T, TData>> worker,
             TData                                    data,
@@ -352,6 +368,10 @@ namespace DependencyQueue
         /// <returns>
         ///   A task that represents the asynchronous operation.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        ///   The queue state is invalid or has not been validated.  Use the
+        ///   <see cref="Validate"/> method and correct any errors it returns.
+        /// </exception>
         public Task RunAsync<TData>(
             Func<DependencyQueueContext<T, TData>, Task> worker,
             TData                                        data,
@@ -368,6 +388,9 @@ namespace DependencyQueue
             int?              parallelism,
             CancellationToken cancellation = default)
         {
+            if (!_isValid)
+                throw Errors.NotValid();
+
             var count = parallelism ?? Environment.ProcessorCount;
             if (count < 1)
                 throw Errors.ArgumentOutOfRange(nameof(parallelism));
@@ -380,6 +403,62 @@ namespace DependencyQueue
                 contexts[i] = new(this, runId, workerId++, data, cancellation);
 
             return contexts;
+        }
+
+        /// <summary>
+        ///   Checks whether the queue state is valid.
+        /// </summary>
+        /// <returns>
+        ///   If the queue state is valid, an empty list; otherwise, a list of
+        ///   errors that prevent the queue state from being valid.
+        /// </returns>
+        public IReadOnlyList<DependencyQueueError> Validate()
+        {
+            var errors = new List<DependencyQueueError>();
+
+            lock (_lock)
+            {
+                var cache = new Dictionary<string, HashSet<string>>(_topics.Count, _comparer);
+
+                foreach (var topic in _topics.Values)
+                {
+                    if (topic.ProvidedBy.Count == 0)
+                        errors.Add(DependencyQueueError.UndefinedTopic(topic));
+
+                    else if (GetTransitiveDependencies(topic, cache).Contains(topic.Name))
+                        errors.Add(DependencyQueueError.Cycle(topic));
+                }
+
+                _isValid = errors.Count == 0;
+            }
+
+            return errors;
+        }
+
+        private HashSet<string> GetTransitiveDependencies(
+            DependencyQueueTopic<T>             topic,
+            Dictionary<string, HashSet<string>> cache)
+        {
+            if (cache.TryGetValue(topic.Name, out var dependencies))
+                return dependencies;
+
+            dependencies = cache[topic.Name] = new(_comparer);
+
+            foreach (var provider in topic.MutableProvidedBy)
+            {
+                // Topic's same-named entry does not require itself
+                if (!_comparer.Equals(topic.Name, provider.Name))
+                    dependencies.Add(provider.Name);
+
+                // If transitive dependencies already computed, easy
+                var transitiveDependencies = GetTransitiveDependencies(
+                    _topics[provider.Name], cache
+                );
+
+                dependencies.UnionWith(transitiveDependencies);
+            }
+
+            return dependencies;
         }
     }
 }
