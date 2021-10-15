@@ -439,6 +439,8 @@ namespace DependencyQueue
             DependencyQueueTopic<T>             topic,
             Dictionary<string, HashSet<string>> cache)
         {
+            // TODO: This is wrong.
+
             if (cache.TryGetValue(topic.Name, out var dependencies))
                 return dependencies;
 
@@ -446,16 +448,21 @@ namespace DependencyQueue
 
             foreach (var provider in topic.MutableProvidedBy)
             {
-                // Topic's same-named entry does not require itself
-                if (!_comparer.Equals(topic.Name, provider.Name))
+                if (_comparer.Equals(provider.Name, topic.Name))
+                {
+                    foreach (var requiredName in provider.Requires)
+                    {
+                        var requiredTopic = _topics[requiredName];
+                        dependencies.Add(requiredName);
+                        dependencies.UnionWith(GetTransitiveDependencies(requiredTopic, cache));
+                    }
+                }
+                else
+                {
+                    var providerTopic = _topics[provider.Name];
                     dependencies.Add(provider.Name);
-
-                // If transitive dependencies already computed, easy
-                var transitiveDependencies = GetTransitiveDependencies(
-                    _topics[provider.Name], cache
-                );
-
-                dependencies.UnionWith(transitiveDependencies);
+                    dependencies.UnionWith(GetTransitiveDependencies(providerTopic, cache));
+                }
             }
 
             return dependencies;

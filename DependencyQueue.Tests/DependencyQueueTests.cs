@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -119,6 +120,60 @@ namespace DependencyQueue
             queue.Should().HaveTopic("b",  providedBy: new[] { entryB0, entryB1 }, requiredBy: new[] { entryA });
             queue.Should().HaveTopic("b0", providedBy: new[] { entryB0 });
             queue.Should().HaveTopic("b1", providedBy: new[] { entryB1 });
+        }
+
+        [Test]
+        public void Validate_Empty()
+        {
+            var queue = Queue();
+
+            queue.Validate().Should().BeEmpty();
+        }
+
+        [Test]
+        public void Validate_TopicRequiredButNotProvided()
+        {
+            var queue = Queue(Entry("a", requires: E("b")));
+
+            var errors = queue.Validate();
+
+            errors   .Should().HaveCount(1);
+            errors[0].Should().BeOfType<DependencyQueueUndefinedTopicError<Value>>()
+                .Which.Topic.Name.Should().Be("b");
+        }
+
+        [Test]
+        public void Validate_TopicRequiresItself()
+        {
+            var entryA = Entry("a", requires: E("b"));
+            var entryB = Entry("b", requires: E("a"));
+            var queue  = Queue(entryA, entryB);
+
+            var errors = queue.Validate();
+
+            errors   .Should().HaveCount(2);
+            errors[0].Should().BeOfType<DependencyQueueCycleError<Value>>()
+                .Which.Topic.Name.Should().Be("a");
+            errors[1].Should().BeOfType<DependencyQueueCycleError<Value>>()
+                .Which.Topic.Name.Should().Be("b");
+        }
+
+        [Test]
+        public void Validate_TopicProvidedByEntryThatRequiresTopic()
+        {
+            var entryA = Entry("a");
+            var entryB = Entry("b", provides: E("a"), requires: E("c"));
+            var entryC = Entry("c",                   requires: E("a"));
+            var queue  = Queue(entryA, entryB, entryC);
+
+            var errors = queue.Validate();
+
+            // TODO: This is wrong.
+            errors   .Should().HaveCount(2);
+            errors[0].Should().BeOfType<DependencyQueueCycleError<Value>>()
+                .Which.Topic.Name.Should().Be("a");
+            errors[1].Should().BeOfType<DependencyQueueCycleError<Value>>()
+                .Which.Topic.Name.Should().Be("b");
         }
 
         [Test]
@@ -684,5 +739,36 @@ namespace DependencyQueue
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
         }
+
+        private static readonly string[] None = { };
+
+        private static Queue Queue(params Entry[] entries)
+        {
+            var queue = new Queue();
+
+            foreach (var entry in entries)
+                queue.Enqueue(entry);
+
+            return queue;
+        }
+
+        private static Entry Entry(
+            string    name,
+            string[]? provides = null,
+            string[]? requires = null)
+        {
+            var entry = new Entry(name);
+
+            if (provides is not null)
+                entry.AddProvides(provides);
+
+            if (requires is not null)
+                entry.AddRequires(requires);
+
+            return entry;
+        }
+
+        internal static T[] E<T>(params T[] items)
+            => items;
     }
 }
