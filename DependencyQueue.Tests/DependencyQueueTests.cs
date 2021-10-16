@@ -143,24 +143,36 @@ namespace DependencyQueue
         }
 
         [Test]
-        public void Validate_TopicRequiresItself()
+        public void Validate_Cycle_Direct()
         {
+            //  [A]─→a─→[B]─→b
+            //   ↑           │
+            //   ╰───────────╯
+
             var entryA = Entry("a", requires: E("b"));
             var entryB = Entry("b", requires: E("a"));
             var queue  = Queue(entryA, entryB);
 
             var errors = queue.Validate();
 
-            errors   .Should().HaveCount(2);
-            errors[0].Should().BeOfType<DependencyQueueCycleError<Value>>()
-                .Which.Topic.Name.Should().Be("a");
-            errors[1].Should().BeOfType<DependencyQueueCycleError<Value>>()
-                .Which.Topic.Name.Should().Be("b");
+            errors   .Should().HaveCount(1);
+            errors[0].Should().Match<DependencyQueueCycleError<Value>>(e
+                => e.Topic.Name         == "b"
+                && e.RequiredTopic.Name == "a"
+                && e.ToString()         ==
+                    "An entry providing topic 'b' cannot require topic 'a' " +
+                    "because topic 'a' already requires topic 'b'."
+            );
         }
 
         [Test]
-        public void Validate_TopicProvidedByEntryThatRequiresTopic()
+        public void Validate_Cycle_Indirect()
         {
+            //   a←─[A]←─────╮
+            //       |       │
+            //       ↓       │
+            //  [B]─→b─→[C]─→c
+
             var entryA = Entry("a");
             var entryB = Entry("b", provides: E("a"), requires: E("c"));
             var entryC = Entry("c",                   requires: E("a"));
@@ -168,12 +180,9 @@ namespace DependencyQueue
 
             var errors = queue.Validate();
 
-            // TODO: This is wrong.
-            errors   .Should().HaveCount(2);
+            errors   .Should().HaveCount(1);
             errors[0].Should().BeOfType<DependencyQueueCycleError<Value>>()
-                .Which.Topic.Name.Should().Be("a");
-            errors[1].Should().BeOfType<DependencyQueueCycleError<Value>>()
-                .Which.Topic.Name.Should().Be("b");
+                .Which.Topic.Name.Should().Be("c");
         }
 
         [Test]

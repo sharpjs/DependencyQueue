@@ -418,15 +418,14 @@ namespace DependencyQueue
 
             lock (_lock)
             {
-                var cache = new Dictionary<string, HashSet<string>>(_topics.Count, _comparer);
+                var visited = new Dictionary<string, bool>(_topics.Count, _comparer);
 
                 foreach (var topic in _topics.Values)
                 {
                     if (topic.ProvidedBy.Count == 0)
                         errors.Add(DependencyQueueError.UndefinedTopic(topic));
-
-                    else if (GetTransitiveDependencies(topic, cache).Contains(topic.Name))
-                        errors.Add(DependencyQueueError.Cycle(topic));
+                    else 
+                        DetectCycles(topic, topic, visited, errors);
                 }
 
                 _isValid = errors.Count == 0;
@@ -435,37 +434,26 @@ namespace DependencyQueue
             return errors;
         }
 
-        private HashSet<string> GetTransitiveDependencies(
-            DependencyQueueTopic<T>             topic,
-            Dictionary<string, HashSet<string>> cache)
+        private void DetectCycles(
+            DependencyQueueTopic<T>    sourceTopic,
+            DependencyQueueTopic<T>    topic,
+            Dictionary<string, bool>   visited,
+            List<DependencyQueueError> errors)
         {
-            // TODO: This is wrong.
-
-            if (cache.TryGetValue(topic.Name, out var dependencies))
-                return dependencies;
-
-            dependencies = cache[topic.Name] = new(_comparer);
-
-            foreach (var provider in topic.MutableProvidedBy)
+            if (!visited.TryGetValue(topic.Name, out var done))
             {
-                if (_comparer.Equals(provider.Name, topic.Name))
-                {
-                    foreach (var requiredName in provider.Requires)
-                    {
-                        var requiredTopic = _topics[requiredName];
-                        dependencies.Add(requiredName);
-                        dependencies.UnionWith(GetTransitiveDependencies(requiredTopic, cache));
-                    }
-                }
-                else
-                {
-                    var providerTopic = _topics[provider.Name];
-                    dependencies.Add(provider.Name);
-                    dependencies.UnionWith(GetTransitiveDependencies(providerTopic, cache));
-                }
-            }
+                visited[topic.Name] = false; // in progress
 
-            return dependencies;
+                foreach (var provider in topic.MutableProvidedBy)
+                    foreach (var name in provider.Requires)
+                        DetectCycles(topic, _topics[name], visited, errors);
+
+                visited[topic.Name] = true; // done
+            }
+            else if (!done)
+            {
+                errors.Add(DependencyQueueError.Cycle(sourceTopic, topic));
+            }
         }
     }
 }

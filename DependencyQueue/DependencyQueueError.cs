@@ -36,11 +36,14 @@ namespace DependencyQueue
         /// <typeparam name="T">
         ///   The type of values contained in queue entries.
         /// </typeparam>
-        /// <param name="topic">
-        ///   The undefined topic.
+        /// <param name="topicA">
+        ///   The topic that depends on itself.
+        /// </param>
+        /// <param name="topicB">
+        ///   The topic through which the self-dependency was discovered.
         /// </param>
         public static DependencyQueueCycleError<T>
-            Cycle<T>(DependencyQueueTopic<T> topic)
-            => new(topic, DependencyQueueErrorType.Cycle);
+            Cycle<T>(DependencyQueueTopic<T> topicA, DependencyQueueTopic<T> topicB)
+            => new(topicA, topicB, DependencyQueueErrorType.Cycle);
     }
 }

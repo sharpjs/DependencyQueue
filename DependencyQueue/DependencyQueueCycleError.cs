@@ -1,3 +1,5 @@
+using System;
+
 namespace DependencyQueue
 {
     /// <summary>
@@ -11,14 +13,29 @@ namespace DependencyQueue
     {
         internal DependencyQueueCycleError(
             DependencyQueueTopic<T>  topic,
+            DependencyQueueTopic<T>  requiredTopic,
             DependencyQueueErrorType kind)
             : base(topic, kind)
-        { }
+        {
+            if (requiredTopic is null)
+                throw new ArgumentNullException(nameof(requiredTopic));
+
+            RequiredTopic = requiredTopic;
+        }
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return string.Format("Topic '{0}' depends upon itself.", Topic.Name);
+            return string.Format(
+                "An entry providing topic '{0}' cannot require topic '{1}' " +
+                "because topic '{1}' already requires topic '{0}'.",
+                Topic.Name, RequiredTopic.Name
+            );
         }
+
+        /// <summary>
+        ///   Gets the topic whose requirement creates a cycle.
+        /// </summary>
+        public DependencyQueueTopic<T> RequiredTopic { get; }
     }
 }
