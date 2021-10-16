@@ -1,17 +1,19 @@
 namespace DependencyQueue
 {
     /// <summary>
-    ///   Types of errors related to a <see cref="DependencyQueue{T}"/>.
+    ///   Types of <see cref="DependencyQueue{T}"/> validation errors.
     /// </summary>
     public enum DependencyQueueErrorType
     {
         /// <summary>
-        ///   The topic name is undefined.
+        ///   One or more entries require a topic that no entries provide.
+        ///   The error object is a <see cref="DependencyQueueUnprovidedTopicError{T}"/>.
         /// </summary>
-        UndefinedTopic,
+        UnprovidedTopic,
 
         /// <summary>
         ///   The dependency graph contains a cycle.
+        ///   The error object is a <see cref="DependencyQueueCycleError{T}"/>.
         /// </summary>
         Cycle
     }

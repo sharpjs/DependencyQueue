@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -13,8 +12,8 @@ namespace DependencyQueue
 {
     using static TestGlobals;
 
-    using Context_ = DependencyQueueContext <Value, Data>;
-    using Entry_   = DependencyQueueEntry   <Value>;
+    using Context_ = DependencyQueueContext<Value, Data>;
+    using Entry_   = DependencyQueueEntry<Value>;
 
     [TestFixture]
     public class DependencyQueueTests
@@ -138,7 +137,7 @@ namespace DependencyQueue
             var errors = queue.Validate();
 
             errors   .Should().HaveCount(1);
-            errors[0].Should().BeOfType<DependencyQueueUndefinedTopicError<Value>>()
+            errors[0].Should().BeOfType<DependencyQueueUnprovidedTopicError<Value>>()
                 .Which.Topic.Name.Should().Be("b");
         }
 
@@ -146,7 +145,7 @@ namespace DependencyQueue
         public void Validate_Cycle_Direct()
         {
             //  [A]─→a─→[B]─→b
-            //   ↑           │
+            //   ↑           │<error
             //   ╰───────────╯
 
             var entryA = Entry("a", requires: E("b"));
@@ -157,11 +156,12 @@ namespace DependencyQueue
 
             errors   .Should().HaveCount(1);
             errors[0].Should().Match<DependencyQueueCycleError<Value>>(e
-                => e.Topic.Name         == "b"
+                => e.RequiringEntry     == entryB
                 && e.RequiredTopic.Name == "a"
                 && e.ToString()         ==
-                    "An entry providing topic 'b' cannot require topic 'a' " +
-                    "because topic 'a' already requires topic 'b'."
+                    "The entry 'b' cannot require topic 'a' because an entry " +
+                    "providing that topic already requires entry 'b'. " +
+                    "The dependency graph does not permit cycles."
             );
         }
 
@@ -169,7 +169,7 @@ namespace DependencyQueue
         public void Validate_Cycle_Indirect()
         {
             //   a←─[A]←─────╮
-            //       |       │
+            //       |       │<error
             //       ↓       │
             //  [B]─→b─→[C]─→c
 
@@ -181,8 +181,14 @@ namespace DependencyQueue
             var errors = queue.Validate();
 
             errors   .Should().HaveCount(1);
-            errors[0].Should().BeOfType<DependencyQueueCycleError<Value>>()
-                .Which.Topic.Name.Should().Be("c");
+            errors[0].Should().Match<DependencyQueueCycleError<Value>>(e
+                => e.RequiringEntry     == entryC
+                && e.RequiredTopic.Name == "a"
+                && e.ToString()         ==
+                    "The entry 'c' cannot require topic 'a' because an entry " +
+                    "providing that topic already requires entry 'c'. " +
+                    "The dependency graph does not permit cycles."
+            );
         }
 
         [Test]

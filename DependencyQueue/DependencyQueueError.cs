@@ -1,49 +1,59 @@
+using System;
+
 namespace DependencyQueue
 {
     /// <summary>
-    ///   An error related to a <see cref="DependencyQueue{T}"/>.
+    ///   A <see cref="DependencyQueue{T}"/> validation error.
     /// </summary>
-    public class DependencyQueueError
+    public abstract class DependencyQueueError
     {
-        private protected DependencyQueueError(DependencyQueueErrorType kind)
-        {
-            Type = kind;
-        }
+        private protected DependencyQueueError() { }
 
         /// <summary>
         ///   Gets the type of the error.
         /// </summary>
-        public DependencyQueueErrorType Type { get; }
+        public abstract DependencyQueueErrorType Type { get; }
 
         /// <summary>
         ///   Creates a <see cref="DependencyQueueError"/> instance to report
-        ///   an undefined topic.
+        ///   that one or more entries require a topic that no entries provide.
         /// </summary>
         /// <typeparam name="T">
         ///   The type of values contained in queue entries.
         /// </typeparam>
         /// <param name="topic">
-        ///   The undefined topic.
+        ///   The topic that is required but not provided.
         /// </param>
-        public static DependencyQueueUndefinedTopicError<T>
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="topic"/> is <see langword="null"/>.
+        /// </exception>
+        public static DependencyQueueUnprovidedTopicError<T>
             UndefinedTopic<T>(DependencyQueueTopic<T> topic)
-            => new(topic, DependencyQueueErrorType.UndefinedTopic);
+            => new(topic);
 
         /// <summary>
         ///   Creates a <see cref="DependencyQueueError"/> instance to report
-        ///   a topic that depends on itself.
+        ///   a cycle in the dependency graph.
         /// </summary>
         /// <typeparam name="T">
         ///   The type of values contained in queue entries.
         /// </typeparam>
-        /// <param name="topicA">
-        ///   The topic that depends on itself.
+        /// <param name="requiringEntry">
+        ///   The entry whose requirement of <paramref name="requiredTopic"/>
+        ///   creates a cycle in the dependency graph.
         /// </param>
-        /// <param name="topicB">
-        ///   The topic through which the self-dependency was discovered.
+        /// <param name="requiredTopic">
+        ///   The topic whose requirement by <paramref name="requiringEntry"/>
+        ///   creates a cycle in the dependency graph.
         /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="requiringEntry"/> and/or
+        ///   <paramref name="requiredTopic"/> is <see langword="null"/>.
+        /// </exception>
         public static DependencyQueueCycleError<T>
-            Cycle<T>(DependencyQueueTopic<T> topicA, DependencyQueueTopic<T> topicB)
-            => new(topicA, topicB, DependencyQueueErrorType.Cycle);
+            Cycle<T>(
+                DependencyQueueEntry<T> requiringEntry,
+                DependencyQueueTopic<T> requiredTopic)
+            => new(requiringEntry, requiredTopic);
     }
 }

@@ -425,7 +425,7 @@ namespace DependencyQueue
                     if (topic.ProvidedBy.Count == 0)
                         errors.Add(DependencyQueueError.UndefinedTopic(topic));
                     else 
-                        DetectCycles(topic, topic, visited, errors);
+                        DetectCycles(null, topic, visited, errors);
                 }
 
                 _isValid = errors.Count == 0;
@@ -435,7 +435,7 @@ namespace DependencyQueue
         }
 
         private void DetectCycles(
-            DependencyQueueTopic<T>    sourceTopic,
+            DependencyQueueEntry<T>?   requiringEntry,
             DependencyQueueTopic<T>    topic,
             Dictionary<string, bool>   visited,
             List<DependencyQueueError> errors)
@@ -444,15 +444,17 @@ namespace DependencyQueue
             {
                 visited[topic.Name] = false; // in progress
 
-                foreach (var provider in topic.MutableProvidedBy)
-                    foreach (var name in provider.Requires)
-                        DetectCycles(topic, _topics[name], visited, errors);
+                foreach (var entry in topic.MutableProvidedBy)
+                    foreach (var name in entry.Requires)
+                        DetectCycles(entry, _topics[name], visited, errors);
 
                 visited[topic.Name] = true; // done
             }
             else if (!done)
             {
-                errors.Add(DependencyQueueError.Cycle(sourceTopic, topic));
+                // NULLS: This block executes only in recursive invocations of
+                // this method, which always provide a non-null requiringEntry.
+                errors.Add(DependencyQueueError.Cycle(requiringEntry!, topic));
             }
         }
     }
