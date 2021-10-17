@@ -137,8 +137,9 @@ namespace DependencyQueue
             var errors = queue.Validate();
 
             errors   .Should().HaveCount(1);
-            errors[0].Should().BeOfType<DependencyQueueUnprovidedTopicError<Value>>()
-                .Which.Topic.Name.Should().Be("b");
+            errors[0].Should().Match<DependencyQueueUnprovidedTopicError<Value>>(e
+                => e.Topic.Name == "b"
+            );
         }
 
         [Test]
@@ -158,10 +159,6 @@ namespace DependencyQueue
             errors[0].Should().Match<DependencyQueueCycleError<Value>>(e
                 => e.RequiringEntry     == entryB
                 && e.RequiredTopic.Name == "a"
-                && e.ToString()         ==
-                    "The entry 'b' cannot require topic 'a' because an entry " +
-                    "providing that topic already requires entry 'b'. " +
-                    "The dependency graph does not permit cycles."
             );
         }
 
@@ -184,10 +181,6 @@ namespace DependencyQueue
             errors[0].Should().Match<DependencyQueueCycleError<Value>>(e
                 => e.RequiringEntry     == entryC
                 && e.RequiredTopic.Name == "a"
-                && e.ToString()         ==
-                    "The entry 'c' cannot require topic 'a' because an entry " +
-                    "providing that topic already requires entry 'c'. " +
-                    "The dependency graph does not permit cycles."
             );
         }
 
