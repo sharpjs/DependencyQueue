@@ -612,6 +612,18 @@ namespace DependencyQueue
         // to the Topics and ReadEvents collections?
 
         [Test]
+        public void Run_NotValidated()
+        {
+            void WorkerMain(Context_ _) { };
+
+            var queue = new Queue();
+
+            queue
+                .Invoking(q => q.Run(WorkerMain, new Data(), parallelism: 0))
+                .Should().ThrowExactly<InvalidOperationException>();
+        }
+
+        [Test]
         public void Run_InvalidParallelism()
         {
             void WorkerMain(Context_ _) { };
@@ -680,6 +692,18 @@ namespace DependencyQueue
 
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
+        }
+
+        [Test]
+        public void RunAsync_NotValidated()
+        {
+            Task WorkerMain(Context_ _) => Task.CompletedTask;
+
+            var queue = new Queue();
+
+            queue
+                .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
+                .Should().ThrowExactly<InvalidOperationException>();
         }
 
         [Test]
