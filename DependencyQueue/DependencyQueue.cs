@@ -81,7 +81,8 @@ namespace DependencyQueue
         /// </returns>
         /// <remarks>
         ///   ⚠ <strong>Warning:</strong>
-        ///   The builder this method returns is not thread-safe.
+        ///   The builder this method returns is not thread-safe.  To build
+        ///   entries in parallel, create one builder per thread.
         /// </remarks>
         public DependencyQueueEntryBuilder<T> CreateEntryBuilder()
             => new DependencyQueueEntryBuilder<T>(this);
