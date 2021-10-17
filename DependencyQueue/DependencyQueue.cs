@@ -18,8 +18,14 @@ namespace DependencyQueue
         // Entries that are ready to dequeue
         private readonly Queue<DependencyQueueEntry<T>> _ready;
 
+        // ...and a lazily-created, read-only view for public consumption
+        private SynchronizedReadOnlyCollection<DependencyQueueEntry<T>>? _publicReady;
+
         // Topics keyed by name
         private readonly Dictionary<string, DependencyQueueTopic<T>> _topics;
+
+        // ...and a lazily-created, read-only view for public consumption
+        private SynchronizedReadOnlyDictionary<string, DependencyQueueTopic<T>>? _publicTopics;
 
         // Comparer for topic names
         private readonly StringComparer _comparer;
@@ -53,22 +59,14 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the collection of entries that are ready to dequeue.
         /// </summary>
-        /// <remarks>
-        ///   ⚠ <strong>Warning:</strong>
-        ///   The collection this property returns is not thread-safe.
-        /// </remarks>
         public IReadOnlyCollection<DependencyQueueEntry<T>> ReadyEntries
-            => _ready;
+            => _ready.Synchronized(_lock, ref _publicReady);
 
         /// <summary>
         ///   Gets the dictionary that maps topic names to topics.
         /// </summary>
-        /// <remarks>
-        ///   ⚠ <strong>Warning:</strong>
-        ///   The collection this property returns is not thread-safe.
-        /// </remarks>
         internal IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
-            => _topics;
+            => _topics.Synchronized(_lock, ref _publicTopics);
 
         /// <summary>
         ///   Gets the comparer for topic names.
