@@ -1,20 +1,39 @@
+using System;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace DependencyQueue
 {
-    using Error     = DependencyQueueCycleError<Value>;
+    using static FluentActions;
+
+    using Error     = DependencyQueueError;
     using ErrorType = DependencyQueueErrorType;
 
     [TestFixture]
     public class DependencyQueueCycleErrorTests
     {
         [Test]
+        public void Create_NullRequiringEntry()
+        {
+            Invoking(() => Error.Cycle(null!, new Topic("b")))
+                .Should().Throw<ArgumentNullException>()
+                .Where(e => e.ParamName == "requiringEntry");
+        }
+
+        [Test]
+        public void Create_NullRequiredTopic()
+        {
+            Invoking(() => Error.Cycle(new Entry("a"), null!))
+                .Should().Throw<ArgumentNullException>()
+                .Where(e => e.ParamName == "requiredTopic");
+        }
+
+        [Test]
         public void Type_Get()
         {
             var entry = new Entry("a");
             var topic = new Topic("b");
-            var error = new Error(entry, topic);
+            var error = Error.Cycle(entry, topic);
 
             error.Type.Should().Be(ErrorType.Cycle);
         }
@@ -24,7 +43,7 @@ namespace DependencyQueue
         {
             var entry = new Entry("a");
             var topic = new Topic("b");
-            var error = new Error(entry, topic);
+            var error = Error.Cycle(entry, topic);
 
             error.RequiringEntry.Should().BeSameAs(entry);
         }
@@ -34,7 +53,7 @@ namespace DependencyQueue
         {
             var entry = new Entry("a");
             var topic = new Topic("b");
-            var error = new Error(entry, topic);
+            var error = Error.Cycle(entry, topic);
 
             error.RequiredTopic.Should().BeSameAs(topic);
         }
@@ -45,7 +64,7 @@ namespace DependencyQueue
         {
             var entry = new Entry("a");
             var topic = new Topic("b");
-            var error = new Error(entry, topic);
+            var error = Error.Cycle(entry, topic);
 
             error.ToString().Should().Be(
                 "The entry 'a' cannot require topic 'b' because " +
