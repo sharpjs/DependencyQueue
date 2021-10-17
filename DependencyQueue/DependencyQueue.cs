@@ -108,10 +108,10 @@ namespace DependencyQueue
             lock (_lock)
             {
                 foreach (var name in entry.Provides)
-                    GetTopic(name).MutableProvidedBy.Add(entry);
+                    GetTopic(name).InternalProvidedBy.Add(entry);
 
                 foreach (var name in entry.Requires)
-                    GetTopic(name).MutableRequiredBy.Add(entry);
+                    GetTopic(name).InternalRequiredBy.Add(entry);
 
                 if (entry.Requires.Count == 0)
                     _ready.Enqueue(entry);
@@ -252,10 +252,10 @@ namespace DependencyQueue
                     var topic = _topics[name];
 
                     // Mark this entry as done
-                    topic.MutableProvidedBy.Remove(entry);
+                    topic.InternalProvidedBy.Remove(entry);
 
                     // Check if all of topic's entries are completed
-                    if (topic.MutableProvidedBy.Count != 0)
+                    if (topic.InternalProvidedBy.Count != 0)
                         continue;
 
                     // All of topic's entries are completed; mark topic itself as completed
@@ -267,7 +267,7 @@ namespace DependencyQueue
                         wake = true;
 
                     // Update dependents
-                    foreach (var dependent in topic.RequiredBy)
+                    foreach (var dependent in topic.InternalRequiredBy)
                     {
                         // Mark requirement as met
                         dependent.RemoveRequires(name);
@@ -422,7 +422,7 @@ namespace DependencyQueue
 
                 foreach (var topic in _topics.Values)
                 {
-                    if (topic.ProvidedBy.Count == 0)
+                    if (topic.InternalProvidedBy.Count == 0)
                         errors.Add(DependencyQueueError.UnprovidedTopic(topic));
                     else 
                         DetectCycles(null, topic, visited, errors);
@@ -444,7 +444,7 @@ namespace DependencyQueue
             {
                 visited[topic.Name] = false; // in progress
 
-                foreach (var entry in topic.MutableProvidedBy)
+                foreach (var entry in topic.InternalProvidedBy)
                     foreach (var name in entry.Requires)
                         DetectCycles(entry, _topics[name], visited, errors);
 

@@ -40,8 +40,8 @@ namespace DependencyQueue
         {
             var topic = new Topic("a");
 
-            topic.       ProvidedBy.Should().BeEmpty();
-            topic.MutableProvidedBy.Should().BeEmpty();
+            topic.        ProvidedBy.Should().BeEmpty();
+            topic.InternalProvidedBy.Should().BeEmpty();
         }
 
         [Test]
@@ -49,8 +49,8 @@ namespace DependencyQueue
         {
             var topic = new Topic("a");
 
-            topic.       RequiredBy.Should().BeEmpty();
-            topic.MutableRequiredBy.Should().BeEmpty();
+            topic.        RequiredBy.Should().BeEmpty();
+            topic.InternalRequiredBy.Should().BeEmpty();
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace DependencyQueue
                 new Entry("a2", new())
             };
 
-            topic.MutableProvidedBy.AddRange(entries);
+            topic.InternalProvidedBy.AddRange(entries);
 
             topic.ProvidedBy.Should().Equal(entries);
         }
@@ -82,7 +82,7 @@ namespace DependencyQueue
                 new Entry("a2", new())
             };
 
-            topic.MutableRequiredBy.AddRange(entries);
+            topic.InternalRequiredBy.AddRange(entries);
 
             topic.RequiredBy.Should().Equal(entries);
         }
@@ -100,12 +100,12 @@ namespace DependencyQueue
         {
             var topic = new Topic("a");
 
-            topic.MutableProvidedBy.AddRange(new[]
+            topic.InternalProvidedBy.AddRange(new[]
             {
                 new Entry("b", new())
             });
 
-            topic.MutableRequiredBy.AddRange(new[]
+            topic.InternalRequiredBy.AddRange(new[]
             {
                 new Entry("c", new()),
                 new Entry("d", new())

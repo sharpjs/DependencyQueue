@@ -27,9 +27,9 @@ namespace DependencyQueue
             if (name.Length == 0)
                 throw Errors.ArgumentEmpty(nameof(name));
 
-            Name              = name;
-            MutableProvidedBy = new();
-            MutableRequiredBy = new();
+            Name               = name;
+            InternalProvidedBy = new();
+            InternalRequiredBy = new();
         }
 
         /// <summary>
@@ -40,18 +40,18 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the set of nodes that provide the topic.
         /// </summary>
-        public IReadOnlyList<DependencyQueueEntry<T>> ProvidedBy => MutableProvidedBy;
+        public IReadOnlyList<DependencyQueueEntry<T>> ProvidedBy => InternalProvidedBy;
 
         /// <summary>
         ///   Gets the set of nodes that require the topic.
         /// </summary>
-        public IReadOnlyList<DependencyQueueEntry<T>> RequiredBy => MutableRequiredBy;
+        public IReadOnlyList<DependencyQueueEntry<T>> RequiredBy => InternalRequiredBy;
 
         /// <inheritdoc cref="ProvidedBy"/>
-        internal List<DependencyQueueEntry<T>> MutableProvidedBy { get; }
+        internal List<DependencyQueueEntry<T>> InternalProvidedBy { get; }
 
         /// <inheritdoc cref="RequiredBy"/>
-        internal List<DependencyQueueEntry<T>> MutableRequiredBy { get; }
+        internal List<DependencyQueueEntry<T>> InternalRequiredBy { get; }
 
         /// <inheritdoc/>
         public override string ToString()
@@ -61,8 +61,8 @@ namespace DependencyQueue
                 ChunkB = "; RequiredBy: ",
                 ChunkC = ")";
 
-            var providedBy = ProvidedBy.Select(e => e.Name);
-            var requiredBy = RequiredBy.Select(e => e.Name);
+            var providedBy = InternalProvidedBy.Select(e => e.Name);
+            var requiredBy = InternalRequiredBy.Select(e => e.Name);
 
             var length
                 = ChunkA.Length
