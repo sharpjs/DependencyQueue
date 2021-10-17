@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = ".root", ".root.targets", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DependencyQueue", "DependencyQueue\DependencyQueue.csproj", "{EAD2CFD1-191F-4218-B148-0B4F59E7BA1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyQueue.Tests", "DependencyQueue.Tests\DependencyQueue.Tests.csproj", "{3D950AA2-635A-4BB1-8548-0F1B063D06CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DependencyQueue.Tests", "DependencyQueue.Tests\DependencyQueue.Tests.csproj", "{3D950AA2-635A-4BB1-8548-0F1B063D06CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
