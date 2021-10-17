@@ -423,7 +423,7 @@ namespace DependencyQueue
                 foreach (var topic in _topics.Values)
                 {
                     if (topic.ProvidedBy.Count == 0)
-                        errors.Add(DependencyQueueError.UndefinedTopic(topic));
+                        errors.Add(DependencyQueueError.UnprovidedTopic(topic));
                     else 
                         DetectCycles(null, topic, visited, errors);
                 }

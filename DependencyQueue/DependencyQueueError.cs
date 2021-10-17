@@ -28,7 +28,7 @@ namespace DependencyQueue
         ///   <paramref name="topic"/> is <see langword="null"/>.
         /// </exception>
         public static DependencyQueueUnprovidedTopicError<T>
-            UndefinedTopic<T>(DependencyQueueTopic<T> topic)
+            UnprovidedTopic<T>(DependencyQueueTopic<T> topic)
             => new(topic);
 
         /// <summary>

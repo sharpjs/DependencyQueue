@@ -15,7 +15,7 @@ namespace DependencyQueue
         [Test]
         public void Create_NullRequiredTopic()
         {
-            Invoking(() => Error.UndefinedTopic<Topic>(null!))
+            Invoking(() => Error.UnprovidedTopic<Topic>(null!))
                 .Should().Throw<ArgumentNullException>()
                 .Where(e => e.ParamName == "topic");
         }
@@ -24,7 +24,7 @@ namespace DependencyQueue
         public void Type_Get()
         {
             var topic = new Topic("a");
-            var error = Error.UndefinedTopic(topic);
+            var error = Error.UnprovidedTopic(topic);
 
             error.Type.Should().Be(ErrorType.UnprovidedTopic);
         }
@@ -33,7 +33,7 @@ namespace DependencyQueue
         public void Topic_Get()
         {
             var topic = new Topic("a");
-            var error = Error.UndefinedTopic(topic);
+            var error = Error.UnprovidedTopic(topic);
 
             error.Topic.Should().BeSameAs(topic);
         }
@@ -43,7 +43,7 @@ namespace DependencyQueue
         public void ToStringMethod()
         {
             var topic = new Topic("a");
-            var error = Error.UndefinedTopic(topic);
+            var error = Error.UnprovidedTopic(topic);
 
             error.ToString().Should().Be(
                 "The topic 'a' is required but not provided."
