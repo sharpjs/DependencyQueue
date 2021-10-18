@@ -749,8 +749,6 @@ namespace DependencyQueue
             queue.SimulateUnmanagedDispose();
         }
 
-        private static readonly string[] None = { };
-
         private static Queue Queue(params Entry[] entries)
         {
             var queue = new Queue();
