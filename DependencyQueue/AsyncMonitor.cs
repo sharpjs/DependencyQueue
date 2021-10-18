@@ -12,8 +12,8 @@ namespace DependencyQueue
     /// </summary>
     internal class AsyncMonitor : IDisposable
     {
-        // The exclusive lock itself
-        private readonly SemaphoreSlim _lock;
+        // The exclusively lockable thing itself
+        private readonly SemaphoreSlim _locker;
 
         // A fake task to implement pulse
         private TaskCompletionSource<Void> _pulser;
@@ -23,7 +23,7 @@ namespace DependencyQueue
         /// </summary>
         internal AsyncMonitor()
         {
-            _lock   = new(initialCount: 1, maxCount: 1);
+            _locker = new(initialCount: 1, maxCount: 1);
             _pulser = new();
         }
 
@@ -41,7 +41,7 @@ namespace DependencyQueue
         /// </remarks>
         public Lock Acquire()
         {
-            _lock.Wait();
+            _locker.Wait();
             return new(this);
         }
 
@@ -63,7 +63,7 @@ namespace DependencyQueue
         /// </remarks>
         public async Task<Lock> AcquireAsync(CancellationToken cancellation = default)
         {
-            await _lock.WaitAsync(cancellation);
+            await _locker.WaitAsync(cancellation);
             return new(this);
         }
 
@@ -83,7 +83,7 @@ namespace DependencyQueue
         /// </remarks>
         private void Release()
         {
-            _lock.Release();
+            _locker.Release();
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace DependencyQueue
             var timeoutTask = Task.Delay(timeoutMs);
             var reacquired  = false;
 
-            _lock.Release();
+            _locker.Release();
             try
             {
                 do
@@ -124,7 +124,7 @@ namespace DependencyQueue
                         break;
 
                     // Pulsed => reacquire immediately if possible; otherwise loop
-                    reacquired = _lock.Wait(0);
+                    reacquired = _locker.Wait(0);
                 }
                 while (!reacquired);
             }
@@ -132,7 +132,7 @@ namespace DependencyQueue
             {
                 // Timeout or exception => wait for reacquisition
                 if (!reacquired)
-                    _lock.Wait();
+                    _locker.Wait();
             }
         }
 
@@ -166,7 +166,7 @@ namespace DependencyQueue
             var timeoutTask = Task.Delay(timeoutMs, cancellation);
             var reacquired  = false;
 
-            _lock.Release();
+            _locker.Release();
             try
             {
                 do
@@ -179,7 +179,7 @@ namespace DependencyQueue
                         break;
 
                     // Pulsed => reacquire immediately if possible; otherwise loop
-                    reacquired = _lock.Wait(0);
+                    reacquired = _locker.Wait(0);
                 }
                 while (!reacquired);
             }
@@ -187,7 +187,7 @@ namespace DependencyQueue
             {
                 // Timeout or exception => wait for reacquisition
                 if (!reacquired)
-                    await _lock.WaitAsync(cancellation);
+                    await _locker.WaitAsync(cancellation);
             }
         }
 
@@ -242,7 +242,7 @@ namespace DependencyQueue
             if (!managed)
                 return;
 
-            _lock.Dispose();
+            _locker.Dispose();
         }
 
         /// <summary>
