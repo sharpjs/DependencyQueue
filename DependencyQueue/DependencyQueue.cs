@@ -30,8 +30,8 @@ namespace DependencyQueue
         // Comparer for topic names
         private readonly StringComparer _comparer;
 
-        // Lock that a thread must hold to access the queue
-        private readonly AsyncMonitor _lock;
+        // Thing that a thread must lock exclusively to access queue state
+        private readonly AsyncMonitor _monitor;
 
         // Whether queue state is valid
         private bool _isValid;
@@ -51,22 +51,22 @@ namespace DependencyQueue
         /// </param>
         public DependencyQueue(StringComparer? comparer = null)
         {
-            _ready  = new();
-            _topics = new(_comparer = comparer ?? StringComparer.Ordinal);
-            _lock   = new();
+            _ready   = new();
+            _topics  = new(_comparer = comparer ?? StringComparer.Ordinal);
+            _monitor = new();
         }
 
         /// <summary>
         ///   Gets the collection of entries that are ready to dequeue.
         /// </summary>
         public IReadOnlyCollection<DependencyQueueEntry<T>> ReadyEntries
-            => _ready.GetThreadSafeView(_lock, ref _publicReady);
+            => _ready.GetThreadSafeView(_monitor, ref _publicReady);
 
         /// <summary>
         ///   Gets the dictionary that maps topic names to topics.
         /// </summary>
         public IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
-            => _topics.GetThreadSafeView(_lock, ref _publicTopics);
+            => _topics.GetThreadSafeView(_monitor, ref _publicTopics);
 
         /// <summary>
         ///   Gets the comparer for topic names.
@@ -104,7 +104,7 @@ namespace DependencyQueue
             if (entry is null)
                 throw Errors.ArgumentNull(nameof(entry));
 
-            using var @lock = _lock.Acquire();
+            using var @lock = _monitor.Acquire();
 
             foreach (var name in entry.Provides)
                 GetTopic(name).InternalProvidedBy.Add(entry);
@@ -156,7 +156,7 @@ namespace DependencyQueue
             if (!_isValid)
                 throw Errors.NotValid();
 
-            using var @lock = _lock.Acquire();
+            using var @lock = _monitor.Acquire();
 
             for (;;)
             {
@@ -225,7 +225,7 @@ namespace DependencyQueue
             if (!_isValid)
                 throw Errors.NotValid();
 
-            using var @lock = await _lock.AcquireAsync(cancellation);
+            using var @lock = await _monitor.AcquireAsync(cancellation);
 
             for (;;)
             {
@@ -268,7 +268,7 @@ namespace DependencyQueue
             if (entry is null)
                 throw Errors.ArgumentNull(nameof(entry));
 
-            using var @lock = _lock.Acquire();
+            using var @lock = _monitor.Acquire();
 
             // Whether to wake waiting threads to allow one to dequeue the next entry
             var wake = false;
@@ -310,7 +310,7 @@ namespace DependencyQueue
 
             // If necessary, wake up waiting threads so that one can dequeue the next entry
             if (wake)
-                _lock.PulseAll();
+                _monitor.PulseAll();
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace DependencyQueue
         public void SetEnding()
         {
             _isEnding = true;
-            _lock.PulseAll();
+            _monitor.PulseAll();
         }
 
         // Gets or adds a topic of the specified name.
@@ -438,7 +438,7 @@ namespace DependencyQueue
         {
             var errors = new List<DependencyQueueError>();
 
-            using var @lock = _lock.Acquire();
+            using var @lock = _monitor.Acquire();
 
             var visited = new Dictionary<string, bool>(_topics.Count, _comparer);
 
@@ -515,7 +515,7 @@ namespace DependencyQueue
             if (!managed)
                 return;
 
-            _lock.Dispose();
+            _monitor.Dispose();
         }
     }
 }
