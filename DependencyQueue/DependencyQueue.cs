@@ -13,25 +13,25 @@ namespace DependencyQueue
     ///   The type of values contained in queue entries.
     /// </typeparam>
     /// <seealso href="https://en.wikipedia.org/wiki/Dependency_graph"/>
-    public class DependencyQueue<T> : IDependencyQueue<T>
+    public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     {
         // Entries that are ready to dequeue
         private readonly Queue<DependencyQueueEntry<T>> _ready;
 
         // ...and a lazily-created, read-only view for public consumption
-        private SynchronizedReadOnlyCollection<DependencyQueueEntry<T>>? _publicReady;
+        private ThreadSafeReadOnlyCollection<DependencyQueueEntry<T>>? _publicReady;
 
         // Topics keyed by name
         private readonly Dictionary<string, DependencyQueueTopic<T>> _topics;
 
         // ...and a lazily-created, read-only view for public consumption
-        private SynchronizedReadOnlyDictionary<string, DependencyQueueTopic<T>>? _publicTopics;
+        private ThreadSafeReadOnlyDictionary<string, DependencyQueueTopic<T>>? _publicTopics;
 
         // Comparer for topic names
         private readonly StringComparer _comparer;
 
-        // Object to lock
-        private readonly object _lock;
+        // Lock that a thread must hold to access the queue
+        private readonly AsyncMonitor _lock;
 
         // Whether queue state is valid
         private bool _isValid;
@@ -104,19 +104,18 @@ namespace DependencyQueue
             if (entry is null)
                 throw Errors.ArgumentNull(nameof(entry));
 
-            lock (_lock)
-            {
-                foreach (var name in entry.Provides)
-                    GetTopic(name).InternalProvidedBy.Add(entry);
+            using var @lock = _lock.Acquire();
 
-                foreach (var name in entry.Requires)
-                    GetTopic(name).InternalRequiredBy.Add(entry);
+            foreach (var name in entry.Provides)
+                GetTopic(name).InternalProvidedBy.Add(entry);
 
-                if (entry.Requires.Count == 0)
-                    _ready.Enqueue(entry);
+            foreach (var name in entry.Requires)
+                GetTopic(name).InternalRequiredBy.Add(entry);
 
-                _isValid = false;
-            }
+            if (entry.Requires.Count == 0)
+                _ready.Enqueue(entry);
+
+            _isValid = false;
         }
 
         /// <summary>
@@ -157,32 +156,31 @@ namespace DependencyQueue
             if (!_isValid)
                 throw Errors.NotValid();
 
-            lock (_lock)
+            using var @lock = _lock.Acquire();
+
+            for (;;)
             {
-                for (;;)
-                {
-                    // Check if processing is ending
-                    if (_isEnding)
-                        return null;
+                // Check if processing is ending
+                if (_isEnding)
+                    return null;
 
-                    // Check if all topics (and thus all entries) are completed
-                    if (!_topics.Any())
-                        return null;
+                // Check if all topics (and thus all entries) are completed
+                if (!_topics.Any())
+                    return null;
 
-                    // Check if the ready queue has an entry to dequeue
-                    if (_ready.Any())
-                        // Check if caller accepts teh entry
-                        if (predicate is null || predicate(_ready.Peek().Value))
-                            // Dequeue it
-                            return _ready.Dequeue();
+                // Check if the ready queue has an entry to dequeue
+                if (_ready.Any())
+                    // Check if caller accepts teh entry
+                    if (predicate is null || predicate(_ready.Peek().Value))
+                        // Dequeue it
+                        return _ready.Dequeue();
 
-                    // Some entries are in progress, and either there are no
-                    // more ready entries, or the predicate rejected the next
-                    // ready entry.  Wait for in-progress entries to complete
-                    // and unblock some ready entry(ies), or for one second to
-                    // elapse, after which the predicate might change its mind.
-                    Monitor.Wait(_lock, OneSecond);
-                }
+                // Some entries are in progress, and either there are no
+                // more ready entries, or the predicate rejected the next
+                // ready entry.  Wait for in-progress entries to complete
+                // and unblock some ready entry(ies), or for one second to
+                // elapse, after which the predicate might change its mind.
+                @lock.ReleaseUntilPulse(OneSecond);
             }
         }
 
@@ -218,12 +216,41 @@ namespace DependencyQueue
         ///     This method is thread-safe.
         ///   </para>
         /// </remarks>
-        public Task<DependencyQueueEntry<T>?> TryDequeueAsync(
+        public async Task<DependencyQueueEntry<T>?> TryDequeueAsync(
             Func<T, bool>?    predicate    = null,
             CancellationToken cancellation = default)
         {
-            // TODO: Real async
-            return Task.FromResult( TryDequeue(predicate) );
+            const int OneSecond = 1000; //ms
+
+            if (!_isValid)
+                throw Errors.NotValid();
+
+            using var @lock = await _lock.AcquireAsync(cancellation);
+
+            for (;;)
+            {
+                // Check if processing is ending
+                if (_isEnding)
+                    return null;
+
+                // Check if all topics (and thus all entries) are completed
+                if (!_topics.Any())
+                    return null;
+
+                // Check if the ready queue has an entry to dequeue
+                if (_ready.Any())
+                    // Check if caller accepts teh entry
+                    if (predicate is null || predicate(_ready.Peek().Value))
+                        // Dequeue it
+                        return _ready.Dequeue();
+
+                // Some entries are in progress, and either there are no
+                // more ready entries, or the predicate rejected the next
+                // ready entry.  Wait for in-progress entries to complete
+                // and unblock some ready entry(ies), or for one second to
+                // elapse, after which the predicate might change its mind.
+                await @lock.ReleaseUntilPulseAsync(OneSecond);
+            }
         }
 
         /// <summary>
@@ -241,50 +268,49 @@ namespace DependencyQueue
             if (entry is null)
                 throw Errors.ArgumentNull(nameof(entry));
 
-            lock (_lock)
+            using var @lock = _lock.Acquire();
+
+            // Whether to wake waiting threads to allow one to dequeue the next entry
+            var wake = false;
+
+            foreach (var name in entry.Provides)
             {
-                // Whether to wake waiting threads to allow one to dequeue the next entry
-                var wake = false;
+                var topic = _topics[name];
 
-                foreach (var name in entry.Provides)
+                // Mark this entry as done
+                topic.InternalProvidedBy.Remove(entry);
+
+                // Check if all of topic's entries are completed
+                if (topic.InternalProvidedBy.Count != 0)
+                    continue;
+
+                // All of topic's entries are completed; mark topic itself as completed
+                _topics.Remove(name);
+
+                // Check if all topics are completed
+                if (_topics.Count == 0)
+                    // No more topics; wake sleeping workers so they can exit
+                    wake = true;
+
+                // Update dependents
+                foreach (var dependent in topic.InternalRequiredBy)
                 {
-                    var topic = _topics[name];
+                    // Mark requirement as met
+                    dependent.RemoveRequires(name);
 
-                    // Mark this entry as done
-                    topic.InternalProvidedBy.Remove(entry);
-
-                    // Check if all of topic's entries are completed
-                    if (topic.InternalProvidedBy.Count != 0)
+                    // Check if all dependent's requirements are met
+                    if (dependent.Requires.Count != 0)
                         continue;
 
-                    // All of topic's entries are completed; mark topic itself as completed
-                    _topics.Remove(name);
-
-                    // Check if all topics are completed
-                    if (_topics.Count == 0)
-                        // No more topics; wake sleeping workers so they can exit
-                        wake = true;
-
-                    // Update dependents
-                    foreach (var dependent in topic.InternalRequiredBy)
-                    {
-                        // Mark requirement as met
-                        dependent.RemoveRequires(name);
-
-                        // Check if all dependent's requirements are met
-                        if (dependent.Requires.Count != 0)
-                            continue;
-
-                        // All of dependent's requirements are met; it becomes ready
-                        _ready.Enqueue(dependent);
-                        wake = true;
-                    }
+                    // All of dependent's requirements are met; it becomes ready
+                    _ready.Enqueue(dependent);
+                    wake = true;
                 }
-
-                // If necessary, wake up waiting threads so that one can dequeue the next entry
-                if (wake)
-                    Monitor.PulseAll(_lock);
             }
+
+            // If necessary, wake up waiting threads so that one can dequeue the next entry
+            if (wake)
+                _lock.PulseAll();
         }
 
         /// <summary>
@@ -292,11 +318,8 @@ namespace DependencyQueue
         /// </summary>
         public void SetEnding()
         {
-            lock (_lock)
-            {
-                _isEnding = true;
-                Monitor.PulseAll(_lock);
-            }
+            _isEnding = true;
+            _lock.PulseAll();
         }
 
         // Gets or adds a topic of the specified name.
@@ -415,20 +438,19 @@ namespace DependencyQueue
         {
             var errors = new List<DependencyQueueError>();
 
-            lock (_lock)
+            using var @lock = _lock.Acquire();
+
+            var visited = new Dictionary<string, bool>(_topics.Count, _comparer);
+
+            foreach (var topic in _topics.Values)
             {
-                var visited = new Dictionary<string, bool>(_topics.Count, _comparer);
-
-                foreach (var topic in _topics.Values)
-                {
-                    if (topic.InternalProvidedBy.Count == 0)
-                        errors.Add(DependencyQueueError.UnprovidedTopic(topic));
-                    else 
-                        DetectCycles(null, topic, visited, errors);
-                }
-
-                _isValid = errors.Count == 0;
+                if (topic.InternalProvidedBy.Count == 0)
+                    errors.Add(DependencyQueueError.UnprovidedTopic(topic));
+                else 
+                    DetectCycles(null, topic, visited, errors);
             }
+
+            _isValid = errors.Count == 0;
 
             return errors;
         }
@@ -455,6 +477,45 @@ namespace DependencyQueue
                 // this method, which always provide a non-null requiringEntry.
                 errors.Add(DependencyQueueError.Cycle(requiringEntry!, topic));
             }
+        }
+
+        /// <summary>
+        ///   Releases resources used by the object.
+        /// </summary>
+        /// <remarks>
+        ///   ⚠ <strong>Warning:</strong>
+        ///   This method is not thread-safe.  Do not invoke this method
+        ///   concurrently with other members of this instance.
+        /// </remarks>
+        public void Dispose()
+        {
+            Dispose(managed: true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///   Releases the unmanaged resources and, optionally, the managed
+        ///   resources used by the object.  Invoked by <see cref="Dispose()"/>.
+        ///   Derived classes should override this method to extend disposal
+        ///   behavior.
+        /// </summary>
+        /// <param name="managed">
+        ///   <see langword="true"/>
+        ///     to release both managed and unmanaged resources;
+        ///   <see langword="false"/>
+        ///     to release only unmanaged resources.
+        /// </param>
+        /// <remarks>
+        ///   ⚠ <strong>Warning:</strong>
+        ///   This method is not thread-safe.  Do not invoke this method
+        ///   concurrently with other members of this instance.
+        /// </remarks>
+        protected virtual void Dispose(bool managed)
+        {
+            if (!managed)
+                return;
+
+            _lock.Dispose();
         }
     }
 }

@@ -6,8 +6,8 @@ namespace DependencyQueue
 {
     using static ParallelTestHelpers;
 
-    using SroCollection = SynchronizedReadOnlyCollection<string>;
-    using SroDictionary = SynchronizedReadOnlyDictionary<string, string>;
+    using SroCollection = ThreadSafeReadOnlyCollection<string>;
+    using SroDictionary = ThreadSafeReadOnlyDictionary<string, string>;
 
     [TestFixture]
     public class CollectionExtensionsTests
@@ -17,11 +17,12 @@ namespace DependencyQueue
         [Test]
         public void Synchronized_Collection()
         {
-            var syncRoot = new object();
-            var inner    = new List<string>();
-            var outer    = null as SroCollection;
+            using var monitor = new AsyncMonitor();
 
-            SroCollection Create() => inner.Synchronized(syncRoot, ref outer);
+            var inner = new List<string>();
+            var outer = null as SroCollection;
+
+            SroCollection Create() => inner.Synchronized(monitor, ref outer);
 
             var outers = DoParallel(Create);
 
@@ -33,11 +34,12 @@ namespace DependencyQueue
         [Test]
         public void Synchronized_Dictionary()
         {
-            var syncRoot = new object();
-            var inner    = new Dictionary<string, string>();
-            var outer    = null as SroDictionary;
+            using var monitor = new AsyncMonitor();
 
-            SroDictionary Create() => inner.Synchronized(syncRoot, ref outer);
+            var inner = new Dictionary<string, string>();
+            var outer = null as SroDictionary;
+
+            SroDictionary Create() => inner.Synchronized(monitor, ref outer);
 
             var outers = DoParallel(Create);
 

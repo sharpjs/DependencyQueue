@@ -5,32 +5,32 @@ namespace DependencyQueue
 {
     internal static class CollectionExtensions
     {
-        internal static SynchronizedReadOnlyCollection<T>
+        internal static ThreadSafeReadOnlyCollection<T>
             Synchronized<T>(
-                this IReadOnlyCollection<T>            collection,
-                object                                 syncRoot,
-                ref SynchronizedReadOnlyCollection<T>? location)
+                this IReadOnlyCollection<T>          collection,
+                AsyncMonitor                         monitor,
+                ref ThreadSafeReadOnlyCollection<T>? location)
         {
             return location
                 ?? Interlocked.CompareExchange(
                     location1: ref location,
-                    value:     new(collection, syncRoot),
+                    value:     new(collection, monitor),
                     comparand: null
                 )
                 ?? location;
         }
 
-        internal static SynchronizedReadOnlyDictionary<TKey, TValue>
+        internal static ThreadSafeReadOnlyDictionary<TKey, TValue>
             Synchronized<TKey, TValue>(
-                this IReadOnlyDictionary<TKey, TValue>            dictionary,
-                object                                            syncRoot,
-                ref SynchronizedReadOnlyDictionary<TKey, TValue>? location)
+                this IReadOnlyDictionary<TKey, TValue>          dictionary,
+                AsyncMonitor                                    monitor,
+                ref ThreadSafeReadOnlyDictionary<TKey, TValue>? location)
             where TKey : notnull
         {
             return location
                 ?? Interlocked.CompareExchange(
                     location1: ref location,
-                    value:     new(dictionary, syncRoot),
+                    value:     new(dictionary, monitor),
                     comparand: null
                 )
                 ?? location;
