@@ -9,14 +9,14 @@ namespace DependencyQueue
         where TKey : notnull
     {
         private readonly IReadOnlyDictionary<TKey, TValue> _dictionary;
-        private readonly AsyncMonitor                      _lock;
+        private readonly AsyncMonitor                      _monitor;
 
         internal ThreadSafeDictionaryView(
             IReadOnlyDictionary<TKey, TValue> dictionary,
             AsyncMonitor                      monitor)
         {
             _dictionary = dictionary;
-            _lock       = monitor;
+            _monitor    = monitor;
         }
 
         /// <inheritdoc/>
@@ -24,7 +24,7 @@ namespace DependencyQueue
         {
             get
             {
-                using (_lock.Acquire())
+                using (_monitor.Acquire())
                     return _dictionary.Count;
             }
         }
@@ -34,7 +34,7 @@ namespace DependencyQueue
         {
             get
             {
-                using (_lock.Acquire())
+                using (_monitor.Acquire())
                     return _dictionary.Keys.ToArray();
             }
         }
@@ -44,7 +44,7 @@ namespace DependencyQueue
         {
             get
             {
-                using (_lock.Acquire())
+                using (_monitor.Acquire())
                     return _dictionary.Values.ToArray();
             }
         }
@@ -54,7 +54,7 @@ namespace DependencyQueue
         {
             get
             {
-                using (_lock.Acquire())
+                using (_monitor.Acquire())
                     return _dictionary[key];
             }
         }
@@ -62,27 +62,27 @@ namespace DependencyQueue
         /// <inheritdoc/>
         public bool ContainsKey(TKey key)
         {
-            using (_lock.Acquire()) return _dictionary.ContainsKey(key);
+            using (_monitor.Acquire()) return _dictionary.ContainsKey(key);
         }
 
         /// <inheritdoc/>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
-            using (_lock.Acquire())
+            using (_monitor.Acquire())
                 return _dictionary.TryGetValue(key, out value);
         }
 
         /// <inheritdoc/>
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            using (_lock.Acquire())
+            using (_monitor.Acquire())
                 return _dictionary.ToArray().AsEnumerable().GetEnumerator();
         }
 
         /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator()
         {
-            using (_lock.Acquire())
+            using (_monitor.Acquire())
                 return _dictionary.ToArray().GetEnumerator();
         }
     }
