@@ -65,7 +65,7 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the dictionary that maps topic names to topics.
         /// </summary>
-        internal IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
+        public IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
             => _topics.GetThreadSafeView(_lock, ref _publicTopics);
 
         /// <summary>
