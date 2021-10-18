@@ -7,8 +7,8 @@ namespace DependencyQueue
     using Void = ValueTuple;
 
     /// <summary>
-    ///   An exclusive lock primitive analogous to <see cref="Monitor"/> that
-    ///   supports both synchronous and asynchronous operations.
+    ///   An exclusively lockable primitive, analogous to <see cref="Monitor"/>,
+    ///   that supports both synchronous and asynchronous operations.
     /// </summary>
     internal class AsyncMonitor : IDisposable
     {
@@ -29,8 +29,12 @@ namespace DependencyQueue
 
         /// <summary>
         ///   Blocks the current thread until it acquires an exclusive lock on
-        ///   the object.
+        ///   the monitor.
         /// </summary>
+        /// <returns>
+        ///   A disposable object representing the lock held on the monitor.
+        ///   Disposing the object releases the lock.
+        /// </returns>
         /// <remarks>
         ///   This method is the equivalent of
         ///   <see cref="Monitor.Enter(object)"/>.
@@ -42,13 +46,16 @@ namespace DependencyQueue
         }
 
         /// <summary>
-        ///   Waits asynchronously to acquire an exclusive lock on the object.
+        ///   Waits asynchronously to acquire an exclusive lock on the monitor.
         /// </summary>
         /// <param name="cancellation">
         ///   The token to monitor for cancellation requests.
         /// </param>
         /// <returns>
-        ///   A task that represents the asynchronous operation.
+        ///   A task that represents the asynchronous operation.  When the task
+        ///   completes, its <see cref="Task{T}.Result"/> property is set to
+        ///   a disposable object representing the lock held on the monitor.
+        ///   Disposing the object releases the lock.
         /// </returns>
         /// <remarks>
         ///   This method is the asynchronous analog of
@@ -61,13 +68,13 @@ namespace DependencyQueue
         }
 
         /// <summary>
-        ///   Releases an exclusive lock on the object.
+        ///   Releases an exclusive lock on the monitor.
         /// </summary>
         /// <remarks>
         ///   <para>
         ///     ⚠ <strong>Warning:</strong>
         ///     This method must be called from a scope in which the current
-        ///     thread holds an exclusive lock on the object.
+        ///     thread holds an exclusive lock on the monitor.
         ///   </para>
         ///   <para>
         ///     This method is the asynchronous analog of
@@ -80,28 +87,28 @@ namespace DependencyQueue
         }
 
         /// <summary>
-        ///   Releases an exclusive lock on the object and blocks the current
-        ///   thread until it reacquires the lock.  The current thread will
-        ///   begin to reacquire the lock when signaled by <see cref="PulseAll"/>
-        ///   or when the specified timeout elapses.
+        ///   Releases an exclusive lock on the monitor and blocks the current
+        ///   thread until it reacquires the lock.  Lock reacquisition begins
+        ///   when signaled by <see cref="PulseAll"/> or when the specified
+        ///   timeout elapses.
         /// </summary>
-        /// <param name="msTimeout">
+        /// <param name="timeoutMs">
         ///   The timeout interval in milliseconds.
         /// </param>
         /// <remarks>
         ///   <para>
         ///     ⚠ <strong>Warning:</strong>
         ///     This method must be called from a scope in which the current
-        ///     thread holds an exclusive lock on the object.
+        ///     thread holds an exclusive lock on the monitor.
         ///   </para>
         ///   <para>
         ///     This method is the equivalent of
         ///     <see cref="Monitor.Wait(object, int)"/>.
         ///   </para>
         /// </remarks>
-        private void ReleaseUntilPulse(int msTimeout)
+        private void ReleaseUntilPulse(int timeoutMs)
         {
-            var timeoutTask = Task.Delay(msTimeout);
+            var timeoutTask = Task.Delay(timeoutMs);
             var reacquired  = false;
 
             _lock.Release();
@@ -130,12 +137,11 @@ namespace DependencyQueue
         }
 
         /// <summary>
-        ///   Releases an exclusive lock on the object and blocks the current
-        ///   thread until it reacquires the lock.  The current thread will
-        ///   begin to reacquire the lock when signaled by <see cref="PulseAll"/>
-        ///   or when the specified timeout elapses.
+        ///   Releases an exclusive lock on the monitor and waits asynchronously
+        ///   to reacquire the lock.  Lock reacquisition begins when signaled
+        ///   by <see cref="PulseAll"/> or when the specified timeout elapses.
         /// </summary>
-        /// <param name="msTimeout">
+        /// <param name="timeoutMs">
         ///   The timeout interval in milliseconds.
         /// </param>
         /// <param name="cancellation">
@@ -148,16 +154,16 @@ namespace DependencyQueue
         ///   <para>
         ///     ⚠ <strong>Warning:</strong>
         ///     This method must be called from a scope in which the current
-        ///     thread holds an exclusive lock on the object.
+        ///     thread holds an exclusive lock on the monitor.
         ///   </para>
         ///   <para>
         ///     This method is the asynchronous analog of
         ///     <see cref="Monitor.Wait(object, int)"/>.
         ///   </para>
         /// </remarks>
-        private async Task ReleaseUntilPulseAsync(int msTimeout, CancellationToken cancellation = default)
+        private async Task ReleaseUntilPulseAsync(int timeoutMs, CancellationToken cancellation = default)
         {
-            var timeoutTask = Task.Delay(msTimeout, cancellation);
+            var timeoutTask = Task.Delay(timeoutMs, cancellation);
             var reacquired  = false;
 
             _lock.Release();
@@ -186,7 +192,8 @@ namespace DependencyQueue
         }
 
         /// <summary>
-        ///   Causes threads waiting in <see cref="ReleaseUntilPulse(int)"/>
+        ///   Activates all execution contexts waiting for a pulse signal, so
+        ///   that one of them can acquire an exclusive lock on the monitor.
         /// </summary>
         /// <remarks>
         ///   This method is the equivalent of
@@ -200,7 +207,7 @@ namespace DependencyQueue
         }
 
         /// <summary>
-        ///   Releases resources used by the object.
+        ///   Releases resources used by the monitor.
         /// </summary>
         /// <remarks>
         ///   ⚠ <strong>Warning:</strong>
@@ -215,7 +222,7 @@ namespace DependencyQueue
 
         /// <summary>
         ///   Releases the unmanaged resources and, optionally, the managed
-        ///   resources used by the object.  Invoked by <see cref="Dispose()"/>.
+        ///   resources used by the monitor.  Invoked by <see cref="Dispose()"/>.
         ///   Derived classes should override this method to extend disposal
         ///   behavior.
         /// </summary>
@@ -250,12 +257,12 @@ namespace DependencyQueue
                 => _monitor = monitor;
 
             /// <inheritdoc cref="AsyncMonitor.ReleaseUntilPulse(int)"/>
-            public void ReleaseUntilPulse(int msTimeout)
-                => _monitor.ReleaseUntilPulse(msTimeout);
+            public void ReleaseUntilPulse(int timeoutMs)
+                => _monitor.ReleaseUntilPulse(timeoutMs);
 
             /// <inheritdoc cref="AsyncMonitor.ReleaseUntilPulseAsync(int, CancellationToken)"/>
-            public Task ReleaseUntilPulseAsync(int msTimeout, CancellationToken cancellation = default)
-                => _monitor.ReleaseUntilPulseAsync(msTimeout, cancellation);
+            public Task ReleaseUntilPulseAsync(int timeoutMs, CancellationToken cancellation = default)
+                => _monitor.ReleaseUntilPulseAsync(timeoutMs, cancellation);
 
             /// <inheritdoc cref="AsyncMonitor.Release"/>
             void IDisposable.Dispose()
