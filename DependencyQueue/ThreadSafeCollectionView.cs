@@ -4,12 +4,12 @@ using System.Linq;
 
 namespace DependencyQueue
 {
-    internal class ThreadSafeReadOnlyCollection<T> : IReadOnlyCollection<T>
+    internal class ThreadSafeCollectionView<T> : IReadOnlyCollection<T>
     {
         private readonly IReadOnlyCollection<T> _collection;
         private readonly AsyncMonitor           _lock;
 
-        internal ThreadSafeReadOnlyCollection(
+        internal ThreadSafeCollectionView(
             IReadOnlyCollection<T> collection,
             AsyncMonitor           monitor)
         {

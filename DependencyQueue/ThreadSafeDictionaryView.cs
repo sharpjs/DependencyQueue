@@ -5,13 +5,13 @@ using System.Linq;
 
 namespace DependencyQueue
 {
-    internal class ThreadSafeReadOnlyDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+    internal class ThreadSafeDictionaryView<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
         where TKey : notnull
     {
         private readonly IReadOnlyDictionary<TKey, TValue> _dictionary;
         private readonly AsyncMonitor                      _lock;
 
-        internal ThreadSafeReadOnlyDictionary(
+        internal ThreadSafeDictionaryView(
             IReadOnlyDictionary<TKey, TValue> dictionary,
             AsyncMonitor                      monitor)
         {

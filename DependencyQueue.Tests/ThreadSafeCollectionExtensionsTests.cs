@@ -6,11 +6,11 @@ namespace DependencyQueue
 {
     using static ParallelTestHelpers;
 
-    using SroCollection = ThreadSafeReadOnlyCollection<string>;
-    using SroDictionary = ThreadSafeReadOnlyDictionary<string, string>;
+    using CollectionView = ThreadSafeCollectionView<string>;
+    using DictionaryView = ThreadSafeDictionaryView<string, string>;
 
     [TestFixture]
-    public class CollectionExtensionsTests
+    public class ThreadSafeCollectionExtensionsTests
     {
         const int Parallelism = 16;
 
@@ -20,9 +20,9 @@ namespace DependencyQueue
             using var monitor = new AsyncMonitor();
 
             var inner = new List<string>();
-            var outer = null as SroCollection;
+            var outer = null as CollectionView;
 
-            SroCollection Create() => inner.Synchronized(monitor, ref outer);
+            CollectionView Create() => inner.GetThreadSafeView(monitor, ref outer);
 
             var outers = DoParallel(Create);
 
@@ -37,9 +37,9 @@ namespace DependencyQueue
             using var monitor = new AsyncMonitor();
 
             var inner = new Dictionary<string, string>();
-            var outer = null as SroDictionary;
+            var outer = null as DictionaryView;
 
-            SroDictionary Create() => inner.Synchronized(monitor, ref outer);
+            DictionaryView Create() => inner.GetThreadSafeView(monitor, ref outer);
 
             var outers = DoParallel(Create);
 

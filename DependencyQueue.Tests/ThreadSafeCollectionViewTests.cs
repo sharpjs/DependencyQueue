@@ -8,17 +8,18 @@ namespace DependencyQueue
 {
     using static ParallelTestHelpers;
 
-    using SroDictionary = ThreadSafeReadOnlyDictionary<string, string>;
-    using Item          = KeyValuePair<string, string>;
+    using CollectionView = ThreadSafeCollectionView<string>;
 
     [TestFixture]
-    public class ThreadSafeReadOnlyDictionaryTests
+    public class ThreadSafeCollectionViewTests
     {
         [Test]
         public void Count_Get()
         {
-            var inner = new Dictionary<string, string> { ["a"] = "a", ["b"] = "b" };
-            var outer = new SroDictionary(inner, new());
+            using var monitor = new AsyncMonitor();
+
+            var inner = new List<string> { "a", "b", "c" };
+            var outer = new CollectionView(inner, monitor);
 
             int GetCount() => outer.Count;
 
@@ -31,17 +32,19 @@ namespace DependencyQueue
         [Test]
         public void GetEnumerator_Generic()
         {
-            var items = new[] { new Item("a", "a"), new Item("b", "b") };
-            var inner = new Dictionary<string, string>(items);
-            var outer = new SroDictionary(inner, new());
+            using var monitor = new AsyncMonitor();
 
-            IEnumerator<Item> GetEnumerator() => outer.GetGenericEnumerator();
+            var items = new[]  { "a", "b", "c" };
+            var inner = new List<string>(items);
+            var outer = new CollectionView(inner, monitor);
+
+            IEnumerator<string> GetEnumerator() => outer.GetGenericEnumerator();
 
             var enumerators = DoParallel(GetEnumerator);
             enumerators.Should().HaveCount(Parallelism);
             enumerators.Should().OnlyHaveUniqueItems();
 
-            inner.Add("d", "d"); // to show that enumerators are snapshots
+            inner.Add("d"); // to show that enumerators are snapshots
 
             var arrays = DoParallel(enumerators, EnumerableExtensions.ToList);
             arrays.Should().HaveCount(Parallelism);
@@ -51,9 +54,11 @@ namespace DependencyQueue
         [Test]
         public void GetEnumerator_NonGeneric()
         {
-            var items = new[] { new Item("a", "a"), new Item("b", "b") };
-            var inner = new Dictionary<string, string>(items);
-            var outer = new SroDictionary(inner, new());
+            using var monitor = new AsyncMonitor();
+
+            var items = new[]  { "a", "b", "c" };
+            var inner = new List<string>(items);
+            var outer = new CollectionView(inner, monitor);
 
             IEnumerator GetEnumerator() => outer.GetNonGenericEnumerator();
 
@@ -61,7 +66,7 @@ namespace DependencyQueue
             enumerators.Should().HaveCount(Parallelism);
             enumerators.Should().OnlyHaveUniqueItems();
 
-            inner.Add("d", "d"); // to show that enumerators are snapshots
+            inner.Add("d"); // to show that enumerators are snapshots
 
             var arrays = DoParallel(enumerators, EnumerableExtensions.ToList);
             arrays.Should().HaveCount(Parallelism);
