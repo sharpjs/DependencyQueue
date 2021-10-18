@@ -21,7 +21,7 @@ namespace DependencyQueue
         [Test]
         public void Construct_DefaultComparer()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
 
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
@@ -34,7 +34,7 @@ namespace DependencyQueue
         {
             var comparer = StringComparer.InvariantCultureIgnoreCase;
 
-            var queue = new Queue(comparer);
+            using var queue = new Queue(comparer);
 
             queue.Topics      .Should().BeEmpty();
             queue.ReadyEntries.Should().BeEmpty();
@@ -45,7 +45,7 @@ namespace DependencyQueue
         [Test]
         public void CreateEntryBuilder()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
 
             var builder = queue.CreateEntryBuilder();
 
@@ -56,7 +56,9 @@ namespace DependencyQueue
         [Test]
         public void Enqueue_NullEntry()
         {
-            new Queue()
+            using var queue = new Queue();
+
+            queue
                 .Invoking(q => q.Enqueue(null!))
                 .Should().Throw<ArgumentNullException>()
                 .Where(e => e.ParamName == "entry");
@@ -65,9 +67,9 @@ namespace DependencyQueue
         [Test]
         public void Enqueue_IndependentEntry()
         {
-            var queue = new Queue();
-            var entry = new Entry("a");
+            using var queue = new Queue();
 
+            var entry = new Entry("a");
             entry.AddProvides(Enumerable("b"));
 
             queue.Enqueue(entry);
@@ -82,9 +84,9 @@ namespace DependencyQueue
         [Test]
         public void Enqueue_DependentEntry()
         {
-            var queue = new Queue();
-            var entry = new Entry("a");
+            using var queue = new Queue();
 
+            var entry = new Entry("a");
             entry.AddRequires(Enumerable("b"));
 
             queue.Enqueue(entry);
@@ -99,7 +101,8 @@ namespace DependencyQueue
         [Test]
         public void Enqueue_InterdependentEntityNetwork()
         {
-            var queue   = new Queue();
+            using var queue = new Queue();
+
             var entryA  = new Entry("a");
             var entryB0 = new Entry("b0");
             var entryB1 = new Entry("b1");
@@ -187,7 +190,7 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_NotValidated()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
 
             queue.Invoking(q => q.TryDequeue())
                 .Should().Throw<InvalidOperationException>();
@@ -196,7 +199,7 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_Validated()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
 
             queue.Should().BeValid();
 
@@ -209,7 +212,8 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_Ending()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
+
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
@@ -227,7 +231,8 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_Ok()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
+
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
@@ -244,7 +249,8 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_WaitForRequiredEntries()
         {
-            var queue   = new Queue();
+            using var queue = new Queue();
+
             var entryA  = new Entry("a");
             var entryB0 = new Entry("b0");
             var entryB1 = new Entry("b1");
@@ -316,7 +322,8 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_PredicateReturnsFalse()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
+
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
@@ -349,7 +356,8 @@ namespace DependencyQueue
         [Test]
         public void TryDequeue_Exhausted()
         {
-            var queue  = new Queue();
+            using var queue = new Queue();
+
             var entryA = new Entry("a");
             var entryB = new Entry("b");
 
@@ -391,7 +399,7 @@ namespace DependencyQueue
         [Test]
         public async Task TryDequeueAsync_Initial()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
 
             queue.Should().BeValid();
 
@@ -404,7 +412,8 @@ namespace DependencyQueue
         [Test]
         public async Task TryDequeueAsync_Ending()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
+
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
@@ -422,7 +431,8 @@ namespace DependencyQueue
         [Test]
         public async Task TryDequeueAsync_Ok()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
+
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
@@ -439,7 +449,8 @@ namespace DependencyQueue
         [Test]
         public async Task TryDequeueAsync_WaitForRequiredEntries()
         {
-            var queue   = new Queue();
+            using var queue = new Queue();
+
             var entryA  = new Entry("a");
             var entryB0 = new Entry("b0");
             var entryB1 = new Entry("b1");
@@ -516,7 +527,8 @@ namespace DependencyQueue
         [Test]
         public async Task TryDequeueAsync_PredicateReturnsFalseAsync()
         {
-            var queue = new Queue();
+            using var queue = new Queue();
+
             var entry = new Entry("a");
 
             queue.Enqueue(entry);
@@ -549,7 +561,8 @@ namespace DependencyQueue
         [Test]
         public async Task TryDequeueAsync_Exhausted()
         {
-            var queue  = new Queue();
+            using var queue = new Queue();
+
             var entryA = new Entry("a");
             var entryB = new Entry("b");
 
@@ -595,7 +608,9 @@ namespace DependencyQueue
         [Test]
         public void Complete_NullEntry()
         {
-            new Queue()
+            using var queue = new Queue();
+
+            queue
                 .Invoking(q => q.Complete(null!))
                 .Should().ThrowExactly<ArgumentNullException>()
                 .Where(e => e.ParamName == "entry");
@@ -609,7 +624,7 @@ namespace DependencyQueue
         {
             void WorkerMain(Context_ _) { };
 
-            var queue = new Queue();
+            using var queue = new Queue();
 
             queue
                 .Invoking(q => q.Run(WorkerMain, new Data(), parallelism: 0))
@@ -621,7 +636,8 @@ namespace DependencyQueue
         {
             void WorkerMain(Context_ _) { };
 
-            var queue = new Queue();
+            using var queue = new Queue();
+
             queue.Should().BeValid();
 
             queue
@@ -633,7 +649,8 @@ namespace DependencyQueue
         [Test]
         public void Run_Ok()
         {
-            var queue   = new Queue();
+            using var queue = new Queue();
+
             var entryA  = new Entry("a");
             var entryB0 = new Entry("b0");
             var entryB1 = new Entry("b1");
@@ -692,7 +709,7 @@ namespace DependencyQueue
         {
             Task WorkerMain(Context_ _) => Task.CompletedTask;
 
-            var queue = new Queue();
+            using var queue = new Queue();
 
             queue
                 .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
@@ -704,7 +721,8 @@ namespace DependencyQueue
         {
             Task WorkerMain(Context_ _) => Task.CompletedTask;
 
-            var queue = new Queue();
+            using var queue = new Queue();
+
             queue.Should().BeValid();
 
             queue
@@ -718,7 +736,8 @@ namespace DependencyQueue
         {
             using var cts = new CancellationTokenSource();
 
-            var queue   = new Queue();
+            using var queue = new Queue();
+
             var entryA  = new Entry("a");
             var entryB0 = new Entry("b0");
             var entryB1 = new Entry("b1");
@@ -772,11 +791,28 @@ namespace DependencyQueue
             queue.ReadyEntries.Should().BeEmpty();
         }
 
+        [Test]
+        public void Dispose_Managed()
+        {
+            var queue = Queue();
+
+            queue.Dispose();
+            queue.Dispose(); // to test multiple disposes
+        }
+
+        [Test]
+        public void Dispose_Unmanaged()
+        {
+            var queue = Queue();
+
+            queue.SimulateUnmanagedDispose();
+        }
+
         private static readonly string[] None = { };
 
-        private static Queue Queue(params Entry[] entries)
+        private static TestQueue Queue(params Entry[] entries)
         {
-            var queue = new Queue();
+            var queue = new TestQueue();
 
             foreach (var entry in entries)
                 queue.Enqueue(entry);
@@ -802,5 +838,17 @@ namespace DependencyQueue
 
         internal static T[] E<T>(params T[] items)
             => items;
+
+        private class TestQueue : Queue
+        {
+            internal TestQueue(StringComparer? comparer = null)
+                : base(comparer) { }
+
+            internal void SimulateUnmanagedDispose()
+            {
+                Dispose(managed: false);
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 }
