@@ -286,6 +286,7 @@ namespace DependencyQueue
 
             stopwatch.Start();
             Parallel.Invoke(TryDequeue, CompleteEntryB0, CompleteEntryB1, CompleteEntryC);
+            //stopwatch.Stop(); is done by TryDequeue, above
 
             dequeuedEntry    .Should().BeSameAs(entryA);
             stopwatch.Elapsed.Should().BeGreaterOrEqualTo(600.Milliseconds());
@@ -360,6 +361,7 @@ namespace DependencyQueue
 
             stopwatch.Start();
             Parallel.Invoke(TryDequeue, TryDequeue, CompleteEntryB);
+            stopwatch.Stop();
 
             dequeuedEntries.Should().BeEquivalentTo(entryA, null);
             stopwatch.Elapsed.Should().BeGreaterOrEqualTo(75.Milliseconds());
@@ -475,6 +477,7 @@ namespace DependencyQueue
                 Task.Run(CompleteEntryB1Async),
                 Task.Run(CompleteEntryCAsync)
             );
+            //stopwatch.Stop(); is done by TryDequeueAsync, above
 
             dequeuedEntry    .Should().BeSameAs(entryA);
             stopwatch.Elapsed.Should().BeGreaterOrEqualTo(600.Milliseconds());
@@ -553,6 +556,7 @@ namespace DependencyQueue
                 Task.Run(TryDequeueAsync),
                 Task.Run(CompleteEntryBAsync)
             );
+            stopwatch.Stop();
 
             dequeuedEntries.Should().BeEquivalentTo(entryA, null);
             stopwatch.Elapsed.Should().BeGreaterOrEqualTo(75.Milliseconds());
