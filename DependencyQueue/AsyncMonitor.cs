@@ -35,7 +35,7 @@ namespace DependencyQueue
         ///   This method is the equivalent of
         ///   <see cref="Monitor.Enter(object)"/>.
         /// </remarks>
-        public AsyncMonitorLock Acquire()
+        public Lock Acquire()
         {
             _lock.Wait();
             return new(this);
@@ -54,7 +54,7 @@ namespace DependencyQueue
         ///   This method is the asynchronous analog of
         ///   <see cref="Monitor.Enter(object)"/>.
         /// </remarks>
-        public async Task<AsyncMonitorLock> AcquireAsync(CancellationToken cancellation = default)
+        public async Task<Lock> AcquireAsync(CancellationToken cancellation = default)
         {
             await _lock.WaitAsync(cancellation);
             return new(this);
@@ -74,7 +74,7 @@ namespace DependencyQueue
         ///     <see cref="Monitor.Exit(object)"/>.
         ///   </para>
         /// </remarks>
-        public void Release()
+        private void Release()
         {
             _lock.Release();
         }
@@ -99,7 +99,7 @@ namespace DependencyQueue
         ///     <see cref="Monitor.Wait(object, int)"/>.
         ///   </para>
         /// </remarks>
-        public void ReleaseUntilPulse(int msTimeout)
+        private void ReleaseUntilPulse(int msTimeout)
         {
             var timeoutTask = Task.Delay(msTimeout);
             var reacquired  = false;
@@ -155,7 +155,7 @@ namespace DependencyQueue
         ///     <see cref="Monitor.Wait(object, int)"/>.
         ///   </para>
         /// </remarks>
-        public async Task ReleaseUntilPulseAsync(int msTimeout, CancellationToken cancellation = default)
+        private async Task ReleaseUntilPulseAsync(int msTimeout, CancellationToken cancellation = default)
         {
             var timeoutTask = Task.Delay(msTimeout, cancellation);
             var reacquired  = false;
@@ -236,6 +236,30 @@ namespace DependencyQueue
                 return;
 
             _lock.Dispose();
+        }
+
+        /// <summary>
+        ///   Represents an exclusive lock held against an
+        ///   <see cref="AsyncMonitor"/>.
+        /// </summary>
+        internal readonly struct Lock : IDisposable
+        {
+            private readonly AsyncMonitor _monitor;
+
+            internal Lock(AsyncMonitor monitor)
+                => _monitor = monitor;
+
+            /// <inheritdoc cref="AsyncMonitor.ReleaseUntilPulse(int)"/>
+            public void ReleaseUntilPulse(int msTimeout)
+                => _monitor.ReleaseUntilPulse(msTimeout);
+
+            /// <inheritdoc cref="AsyncMonitor.ReleaseUntilPulseAsync(int, CancellationToken)"/>
+            public Task ReleaseUntilPulseAsync(int msTimeout, CancellationToken cancellation = default)
+                => _monitor.ReleaseUntilPulseAsync(msTimeout, cancellation);
+
+            /// <inheritdoc cref="AsyncMonitor.Release"/>
+            void IDisposable.Dispose()
+                => _monitor.Release();
         }
     }
 }
