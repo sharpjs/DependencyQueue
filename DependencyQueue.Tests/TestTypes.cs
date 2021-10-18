@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using NUnit.Framework;
 
@@ -13,7 +12,7 @@ namespace DependencyQueue
         internal static StringComparer Comparer
             => StringComparer.OrdinalIgnoreCase;
 
-        internal static IEnumerable<T> Enumerable<T>(params T[] items)
+        internal static T[] Items<T>(params T[] items)
             => items;
     }
 
@@ -36,6 +35,12 @@ namespace DependencyQueue
         internal Queue(StringComparer? comparer = null)
             : base(comparer)
         { }
+
+        internal void SimulateUnmanagedDispose()
+        {
+            Dispose(managed: false);
+            GC.SuppressFinalize(this);
+        }
     }
 
     class Topic : DependencyQueueTopic<Value>

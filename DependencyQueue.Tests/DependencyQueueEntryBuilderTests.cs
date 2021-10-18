@@ -60,7 +60,7 @@ namespace DependencyQueue
             using var h = new TestHarness();
 
             h.Builder
-                .Invoking(b => b.AddProvides(Enumerable("a", "b")))
+                .Invoking(b => b.AddProvides(Items("a", "b")))
                 .Should().ThrowExactly<InvalidOperationException>();
         }
 
@@ -75,7 +75,7 @@ namespace DependencyQueue
                 .CurrentEntry;
 
             entry          .Should().NotBeNull();
-            entry!.Provides.Should().Contain(Enumerable("a", "b"));
+            entry!.Provides.Should().Contain(Items("a", "b"));
         }
 
         [Test]
@@ -85,11 +85,11 @@ namespace DependencyQueue
 
             var entry = h.Builder
                 .NewEntry("x", new())
-                .AddProvides(Enumerable("a", "b"))
+                .AddProvides(Items("a", "b"))
                 .CurrentEntry;
 
             entry          .Should().NotBeNull();
-            entry!.Provides.Should().Contain(Enumerable("a", "b"));
+            entry!.Provides.Should().Contain(Items("a", "b"));
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace DependencyQueue
             using var h = new TestHarness();
 
             h.Builder
-                .Invoking(b => b.AddRequires(Enumerable("a", "b")))
+                .Invoking(b => b.AddRequires(Items("a", "b")))
                 .Should().ThrowExactly<InvalidOperationException>();
         }
 
@@ -123,7 +123,7 @@ namespace DependencyQueue
                 .CurrentEntry;
 
             entry          .Should().NotBeNull();
-            entry!.Requires.Should().Contain(Enumerable("a", "b"));
+            entry!.Requires.Should().Contain(Items("a", "b"));
         }
 
         [Test]
@@ -133,11 +133,11 @@ namespace DependencyQueue
 
             var entry = h.Builder
                 .NewEntry("x", new())
-                .AddRequires(Enumerable("a", "b"))
+                .AddRequires(Items("a", "b"))
                 .CurrentEntry;
 
             entry          .Should().NotBeNull();
-            entry!.Requires.Should().Contain(Enumerable("a", "b"));
+            entry!.Requires.Should().Contain(Items("a", "b"));
         }
 
         [Test]
