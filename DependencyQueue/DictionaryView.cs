@@ -127,7 +127,8 @@ namespace DependencyQueue
         {
             _lock.RequireNotDisposed();
             var @lock = _lock;
-            return new(_dictionary.Select(x => KeyValuePair.Create(x.Key, x.Value.GetView(@lock))).GetEnumerator(), _lock);
+            var items = _dictionary.Select(e => KeyValuePair.Create(e.Key, e.Value.GetView(@lock)));
+            return new(items.GetEnumerator(), _lock);
         }
 
         /// <inheritdoc/>
