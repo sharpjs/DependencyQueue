@@ -38,12 +38,12 @@ namespace DependencyQueue
         public string Name { get; }
 
         /// <summary>
-        ///   Gets the set of nodes that provide the topic.
+        ///   Gets the set of entries that provide the topic.
         /// </summary>
         public IReadOnlyList<DependencyQueueEntry<T>> ProvidedBy => InternalProvidedBy;
 
         /// <summary>
-        ///   Gets the set of nodes that require the topic.
+        ///   Gets the set of entries that require the topic.
         /// </summary>
         public IReadOnlyList<DependencyQueueEntry<T>> RequiredBy => InternalRequiredBy;
 

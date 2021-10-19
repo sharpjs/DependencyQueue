@@ -30,7 +30,7 @@ namespace DependencyQueue
         // Comparer for topic names
         private readonly StringComparer _comparer;
 
-        // Thing that a thread must lock exclusively to access queue state
+        // Thing that an execution context must lock exclusively to access queue state
         private readonly AsyncMonitor _monitor;
 
         // Whether queue state is valid
