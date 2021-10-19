@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace DependencyQueue
 {
@@ -11,7 +12,7 @@ namespace DependencyQueue
     /// <typeparam name="T">
     ///   The type of values contained in queue entries.
     /// </typeparam>
-    public class DependencyQueueTopic<T>
+    public class DependencyQueueTopic<T> : IHasView<DependencyQueueTopic<T>.View>
     {
         /// <summary>
         ///   Initializes a new <see cref="DependencyQueueTopic{T}"/> instance
@@ -56,27 +57,88 @@ namespace DependencyQueue
         /// <inheritdoc/>
         public override string ToString()
         {
-            const string
-                ChunkA = " (ProvidedBy: ",
-                ChunkB = "; RequiredBy: ",
-                ChunkC = ")";
+            return Name;
+        }
 
-            var providedBy = InternalProvidedBy.Select(e => e.Name);
-            var requiredBy = InternalRequiredBy.Select(e => e.Name);
+        DependencyQueueTopic<T>.View IHasView<DependencyQueueTopic<T>.View>.GetView(object @lock)
+        {
+            return new(this, (AsyncMonitor.Lock) @lock);
+        }
 
-            var length
-                = ChunkA.Length
-                + ChunkB.Length
-                + ChunkC.Length
-                + Name  .Length
-                + providedBy.GetJoinedLength()
-                + requiredBy.GetJoinedLength();
+        /// <summary>
+        ///   A read-only view of an exclusively-locked
+        ///   <see cref="DependencyQueueTopic{T}"/>.
+        /// </summary>
+        public readonly struct View
+        {
+            private readonly DependencyQueueTopic<T> _topic;
+            private readonly AsyncMonitor.Lock       _lock;
 
-            return new StringBuilder(length)
-                .Append(Name)
-                .Append(ChunkA).AppendJoined(providedBy)
-                .Append(ChunkB).AppendJoined(requiredBy)
-                .Append(ChunkC).ToString();
+            internal View(DependencyQueueTopic<T> dependencyQueueTopic, AsyncMonitor.Lock @lock)
+            {
+                _topic = dependencyQueueTopic;
+                _lock  = @lock;
+            }
+
+            /// <summary>
+            ///   Gets the underlying topic.
+            /// </summary>
+            public DependencyQueueTopic<T> Topic => _topic;
+
+            /// <summary>
+            ///   Gets the name of the topic.
+            /// </summary>
+            public string Name => _topic.Name;
+
+            /// <summary>
+            ///   Gets the set of entries that provide the topic.
+            /// </summary>
+            public CollectionView<DependencyQueueEntry<T>, DependencyQueueEntry<T>.View> ProvidedBy
+            {
+                get
+                {
+                    _lock.RequireNotDisposed();
+                    return new(_topic.InternalProvidedBy, _lock);
+                }
+            }
+
+            /// <summary>
+            ///   Gets the set of entries that require the topic.
+            /// </summary>
+            public CollectionView<DependencyQueueEntry<T>, DependencyQueueEntry<T>.View> RequiredBy
+            {
+                get
+                {
+                    _lock.RequireNotDisposed();
+                    return new(_topic.InternalRequiredBy, _lock);
+                }
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                const string
+                    ChunkA = " (ProvidedBy: ",
+                    ChunkB = "; RequiredBy: ",
+                    ChunkC = ")";
+
+                var providedBy = ProvidedBy.Select(e => e.Name);
+                var requiredBy = RequiredBy.Select(e => e.Name);
+
+                var length
+                    = ChunkA.Length
+                    + ChunkB.Length
+                    + ChunkC.Length
+                    + Name  .Length
+                    + providedBy.GetJoinedLength()
+                    + requiredBy.GetJoinedLength();
+
+                return new StringBuilder(length)
+                    .Append(Name)
+                    .Append(ChunkA).AppendJoined(providedBy)
+                    .Append(ChunkB).AppendJoined(requiredBy)
+                    .Append(ChunkC).ToString();
+            }
         }
     }
 }

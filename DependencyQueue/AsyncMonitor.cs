@@ -77,7 +77,7 @@ namespace DependencyQueue
         ///     thread holds an exclusive lock on the monitor.
         ///   </para>
         ///   <para>
-        ///     This method is the asynchronous analog of
+        ///     This method is the equivalent of
         ///     <see cref="Monitor.Exit(object)"/>.
         ///   </para>
         /// </remarks>
@@ -249,24 +249,55 @@ namespace DependencyQueue
         ///   Represents an exclusive lock held against an
         ///   <see cref="AsyncMonitor"/>.
         /// </summary>
-        internal readonly struct Lock : IDisposable
+        internal class Lock : IDisposable
         {
+            private const string TypeName
+                = nameof(AsyncMonitor) + "." + nameof(Lock);
+
             private readonly AsyncMonitor _monitor;
+            private int                   _disposeCount;
 
             internal Lock(AsyncMonitor monitor)
-                => _monitor = monitor;
+            {
+                _monitor = monitor;
+            }
 
             /// <inheritdoc cref="AsyncMonitor.ReleaseUntilPulse(int)"/>
             public void ReleaseUntilPulse(int timeoutMs)
-                => _monitor.ReleaseUntilPulse(timeoutMs);
+            {
+                RequireNotDisposed();
+                _monitor.ReleaseUntilPulse(timeoutMs);
+            }
 
             /// <inheritdoc cref="AsyncMonitor.ReleaseUntilPulseAsync(int, CancellationToken)"/>
             public Task ReleaseUntilPulseAsync(int timeoutMs, CancellationToken cancellation = default)
-                => _monitor.ReleaseUntilPulseAsync(timeoutMs, cancellation);
+            {
+                RequireNotDisposed();
+                return _monitor.ReleaseUntilPulseAsync(timeoutMs, cancellation);
+            }
 
-            /// <inheritdoc cref="AsyncMonitor.Release"/>
-            void IDisposable.Dispose()
-                => _monitor.Release();
+            /// <summary>
+            ///   Throws an <see cref="ObjectDisposedException"/> if the object
+            ///   is disposed.  Otherwise, this method does nothing.
+            /// </summary>
+            public void RequireNotDisposed()
+            {
+                if (_disposeCount != 0)
+                    throw Errors.ObjectDisposed(TypeName);
+            }
+
+            /// <summary>
+            ///   Releases the exclusive lock.
+            /// </summary>
+            /// <remarks>
+            ///   It is safe to invoke this method multiple times.
+            ///   Only the first invocation has an effect.
+            /// </remarks>
+            public void Dispose()
+            {
+                if (Interlocked.Exchange(ref _disposeCount, 1) == 0)
+                    _monitor.Release();
+            }
         }
     }
 }

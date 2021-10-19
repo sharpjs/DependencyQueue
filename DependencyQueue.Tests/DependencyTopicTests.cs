@@ -91,7 +91,8 @@ namespace DependencyQueue
         public void ToString_Empty()
         {
             new Topic("a").ToString().Should().Be(
-                "a (ProvidedBy: none; RequiredBy: none)"
+                "a"
+                //"a (ProvidedBy: none; RequiredBy: none)"
             );
         }
 
@@ -112,7 +113,8 @@ namespace DependencyQueue
             });
 
             topic.ToString().Should().Be(
-                "a (ProvidedBy: b; RequiredBy: c, d)"
+                "a"
+                //"a (ProvidedBy: b; RequiredBy: c, d)"
             );
         }
     }

@@ -10,7 +10,7 @@ namespace DependencyQueue
     /// <typeparam name="T">
     ///   The type of value contained in the entry.
     /// </typeparam>
-    public class DependencyQueueEntry<T>
+    public class DependencyQueueEntry<T> : IHasView<DependencyQueueEntry<T>.View>
     {
         /// <summary>
         ///   Initializes a new <see cref="DependencyQueueEntry{T}"/> instance
@@ -111,32 +111,11 @@ namespace DependencyQueue
         /// <inheritdoc/>
         public override string ToString()
         {
-            const string
-                ChunkA = " (Provides: ",
-                ChunkB = "; Requires: ",
-                ChunkC = ") {",
-                ChunkD = "}";
+            var value = Value?.ToString() ?? "null";
 
-            var provides = _provides;
-            var requires = _requires;
-            var value    = Value?.ToString() ?? "null";
-
-            var length
-                = ChunkA.Length
-                + ChunkB.Length
-                + ChunkC.Length
-                + ChunkD.Length
-                + Name  .Length
-                + provides.GetJoinedLength()
-                + requires.GetJoinedLength()
-                + value .Length;
-
-            return new StringBuilder(length)
-                .Append(Name)
-                .Append(ChunkA).AppendJoined(provides)
-                .Append(ChunkB).AppendJoined(requires)
-                .Append(ChunkC).Append(value)
-                .Append(ChunkD).ToString();
+            return string.Concat(
+                Name, " {", value, "}"
+            );
         }
 
         private static void RequireValidName(string name)
@@ -165,6 +144,95 @@ namespace DependencyQueue
                 throw Errors.ArgumentContainsNull("names");
             if (name.Length == 0)
                 throw Errors.ArgumentContainsEmpty("names");
+        }
+
+        DependencyQueueEntry<T>.View IHasView<DependencyQueueEntry<T>.View>.GetView(object @lock)
+        {
+            return new View(this, (AsyncMonitor.Lock) @lock);
+        }
+
+        /// <summary>
+        ///   A read-only view of an exclusively-locked
+        ///   <see cref="DependencyQueueTopic{T}"/>.
+        /// </summary>
+        public readonly struct View
+        {
+            private readonly DependencyQueueEntry<T> _entry;
+            private readonly AsyncMonitor.Lock       _lock;
+
+            internal View(DependencyQueueEntry<T> dependencyQueueEntry, AsyncMonitor.Lock @lock)
+            {
+                _entry = dependencyQueueEntry;
+                _lock  = @lock;
+            }
+
+            /// <summary>
+            ///   Gets the underlying entry.
+            /// </summary>
+            public DependencyQueueEntry<T> Entry => _entry;
+
+            /// <summary>
+            ///   Gets the name of the entry.
+            /// </summary>
+            public string Name => _entry.Name;
+
+            /// <summary>
+            ///   Gets the value contained in the entry.
+            /// </summary>
+            public T Value => _entry.Value;
+
+            /// <summary>
+            ///   Gets the set of topic names that the entry provides.
+            /// </summary>
+            public CollectionView<string> Provides
+            {
+                get
+                {
+                    _lock.RequireNotDisposed();
+                    return new(_entry.Provides, _lock);
+                }
+            }
+
+            /// <summary>
+            ///   Gets the set of topic names that the entry requires.
+            /// </summary>
+            public CollectionView<string> Requires
+            {
+                get
+                {
+                    _lock.RequireNotDisposed();
+                    return new(_entry.Requires, _lock);
+                }
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                const string
+                    ChunkA = " (Provides: ",
+                    ChunkB = "; Requires: ",
+                    ChunkC = ") {",
+                    ChunkD = "}";
+
+                var value = Value?.ToString() ?? "null";
+
+                var length
+                    = ChunkA.Length
+                    + ChunkB.Length
+                    + ChunkC.Length
+                    + ChunkD.Length
+                    + Name  .Length
+                    + Provides.GetJoinedLength()
+                    + Requires.GetJoinedLength()
+                    + value .Length;
+
+                return new StringBuilder(length)
+                    .Append(Name)
+                    .Append(ChunkA).AppendJoined(Provides)
+                    .Append(ChunkB).AppendJoined(Requires)
+                    .Append(ChunkC).Append(value)
+                    .Append(ChunkD).ToString();
+            }
         }
     }
 }

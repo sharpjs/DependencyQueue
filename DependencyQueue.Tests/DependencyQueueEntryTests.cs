@@ -252,7 +252,8 @@ namespace DependencyQueue
             entry.AddRequires(new[] { "x", "y" });
 
             var expected = string.Concat(
-                "a (Provides: a, b, c; Requires: x, y) {", entry.Value.ToString(), "}"
+                "a {", entry.Value.ToString(), "}"
+                //"a (Provides: a, b, c; Requires: x, y) {", entry.Value.ToString(), "}"
             );
 
             entry.ToString().Should().Be(expected);
@@ -263,7 +264,8 @@ namespace DependencyQueue
         {
             var entry = new Entry("a", null!);
 
-            entry.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
+            entry.ToString().Should().Be("a {null}");
+            //entry.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
         }
     }
 }

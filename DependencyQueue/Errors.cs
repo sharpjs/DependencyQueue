@@ -19,6 +19,9 @@ namespace DependencyQueue
         internal static Exception ArgumentOutOfRange(string name)
             => new ArgumentOutOfRangeException(name);
 
+        internal static Exception ObjectDisposed(string? name)
+            => new ObjectDisposedException(name);
+
         internal static Exception NoCurrentEntry()
             => new InvalidOperationException(
                 "The builder does not have a current entry.  " +

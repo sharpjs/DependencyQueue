@@ -18,14 +18,8 @@ namespace DependencyQueue
         // Entries that are ready to dequeue
         private readonly Queue<DependencyQueueEntry<T>> _ready;
 
-        // ...and a lazily-created, read-only view for public consumption
-        private ThreadSafeCollectionView<DependencyQueueEntry<T>>? _publicReady;
-
         // Topics keyed by name
         private readonly Dictionary<string, DependencyQueueTopic<T>> _topics;
-
-        // ...and a lazily-created, read-only view for public consumption
-        private ThreadSafeDictionaryView<string, DependencyQueueTopic<T>>? _publicTopics;
 
         // Comparer for topic names
         private readonly StringComparer _comparer;
@@ -59,14 +53,14 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the collection of entries that are ready to dequeue.
         /// </summary>
-        public IReadOnlyCollection<DependencyQueueEntry<T>> ReadyEntries
-            => _ready.GetThreadSafeView(_monitor, ref _publicReady);
+        private IReadOnlyCollection<DependencyQueueEntry<T>> ReadyEntries
+            => _ready;
 
         /// <summary>
         ///   Gets the dictionary that maps topic names to topics.
         /// </summary>
-        public IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
-            => _topics.GetThreadSafeView(_monitor, ref _publicTopics);
+        private IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
+            => _topics;
 
         /// <summary>
         ///   Gets the comparer for topic names.
@@ -516,6 +510,98 @@ namespace DependencyQueue
                 return;
 
             _monitor.Dispose();
+        }
+
+        /// <summary>
+        ///   Blocks the current thread until it acquires an exclusive lock on
+        ///   the queue, and returns a read-only view of the queue state.  To
+        ///   release the lock, dispose the view.
+        /// </summary>
+        /// <returns>
+        ///   A read-only view over the exclusively-locked queue.
+        /// </returns>
+        public View Inspect()
+        {
+            return new(this, _monitor.Acquire());
+        }
+
+        /// <summary>
+        ///   Waits asynchronously to acquire an exclusive lock on the queue,
+        ///   and returns a read-only view of the queue state.  To release the
+        ///   lock, dispose the view.
+        /// </summary>
+        /// <param name="cancellation">
+        ///   The token to monitor for cancellation requests.
+        /// </param>
+        /// <returns>
+        ///   A task that represents the asynchronous operation.  When the task
+        ///   completes, its <see cref="Task{T}.Result"/> property is set to
+        ///   a read-only view over the exclusively-locked queue.
+        /// </returns>
+        public async Task<View> InspectAsync(CancellationToken cancellation = default)
+        {
+            return new(this, await _monitor.AcquireAsync(cancellation));
+        }
+
+        /// <summary>
+        ///   A read-only view over an exclusively-locked
+        ///   <see cref="DependencyQueue{T}"/>.  The current execution context
+        ///   holds the lock until this object is disposed.
+        /// </summary>
+        public readonly struct View : IDisposable
+        {
+            private readonly DependencyQueue<T> _queue;
+            private readonly AsyncMonitor.Lock  _lock;
+
+            internal View(DependencyQueue<T> queue, AsyncMonitor.Lock @lock)
+            {
+                _queue = queue;
+                _lock  = @lock;
+            }
+
+            /// <summary>
+            ///   Gets the underlying queue.
+            /// </summary>
+            public DependencyQueue<T> Queue => _queue;
+
+            /// <inheritdoc cref="DependencyQueue{T}.Comparer"/>
+            public StringComparer Comparer => _queue.Comparer;
+
+            /// <summary>
+            ///   Gets the collection of entries that are ready to dequeue.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
+            public CollectionView<DependencyQueueEntry<T>, DependencyQueueEntry<T>.View> ReadyEntries
+            {
+                get
+                {
+                    _lock.RequireNotDisposed();
+                    return new(_queue._ready, _lock);
+                }
+            }
+
+            /// <summary>
+            ///   Gets the dictionary that maps topic names to topics.
+            /// </summary>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
+            public DictionaryView<string, DependencyQueueTopic<T>, DependencyQueueTopic<T>.View> Topics
+            {
+                get
+                {
+                    _lock.RequireNotDisposed();
+                    return new(_queue._topics, _lock);
+                }
+            }
+
+            /// <inheritdoc/>
+            void IDisposable.Dispose()
+            {
+                _lock.Dispose();
+            }
         }
     }
 }
