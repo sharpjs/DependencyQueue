@@ -146,6 +146,7 @@ namespace DependencyQueue
                 throw Errors.ArgumentContainsEmpty("names");
         }
 
+        /// <inheritdoc/>
         DependencyQueueEntry<T>.View IHasView<DependencyQueueEntry<T>.View>.GetView(object @lock)
         {
             return new View(this, (AsyncMonitor.Lock) @lock);

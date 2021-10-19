@@ -10,13 +10,13 @@ namespace DependencyQueue
     ///   A read-only view over an exclusively-locked dictionary.
     /// </summary>
     /// <typeparam name="TKey">
-    ///   The type of key in the underlying dictionary and view.
+    ///   The type of keys in the underlying dictionary and view.
     /// </typeparam>
     /// <typeparam name="TValue">
-    ///   The type of value in the underlying dictionary.
+    ///   The type of values in the underlying dictionary.
     /// </typeparam>
     /// <typeparam name="TView">
-    ///   The type of value in the view.
+    ///   The type of values exposed by the view.
     /// </typeparam>
     public readonly struct DictionaryView<TKey, TValue, TView> : IReadOnlyDictionary<TKey, TView>
         where TKey   : notnull

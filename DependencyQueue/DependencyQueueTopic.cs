@@ -60,6 +60,7 @@ namespace DependencyQueue
             return Name;
         }
 
+        /// <inheritdoc/>
         DependencyQueueTopic<T>.View IHasView<DependencyQueueTopic<T>.View>.GetView(object @lock)
         {
             return new(this, (AsyncMonitor.Lock) @lock);

@@ -8,7 +8,7 @@ namespace DependencyQueue
     ///   An enumerator over a read-only, exclusively-locked collection.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of element in the collection.
+    ///   The type of elements to enumerate.
     /// </typeparam>
     public readonly struct EnumeratorView<T> : IEnumerator<T>
     {
@@ -78,10 +78,10 @@ namespace DependencyQueue
     ///   An enumerator over a read-only, exclusively-locked collection.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of element in the underlying collection.
+    ///   The type of elements in the underlying enumerator.
     /// </typeparam>
     /// <typeparam name="TView">
-    ///   The type of element in the view.
+    ///   The type of elements exposed by the view.
     /// </typeparam>
     public readonly struct EnumeratorView<T, TView> : IEnumerator<TView>
         where T : IHasView<TView>

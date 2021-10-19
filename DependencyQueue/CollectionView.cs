@@ -8,7 +8,7 @@ namespace DependencyQueue
     ///   A read-only view over an exclusively-locked collection.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of element in the underlying collection.
+    ///   The type of elements in the collection.
     /// </typeparam>
     public readonly struct CollectionView<T> : IReadOnlyCollection<T>
     {
@@ -67,10 +67,10 @@ namespace DependencyQueue
     ///   A read-only view over an exclusively-locked collection.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of element in the underlying collection.
+    ///   The type of elements in the underlying collection.
     /// </typeparam>
     /// <typeparam name="TView">
-    ///   The type of element in the view.
+    ///   The type of elements exposed by the view.
     /// </typeparam>
     public readonly struct CollectionView<T, TView> : IReadOnlyCollection<TView>
         where T : IHasView<TView>
