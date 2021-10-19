@@ -1,3 +1,4 @@
+#if OLD
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -207,3 +208,4 @@ namespace DependencyQueue
             => a.Intersect(b).SequenceEqual(a);
     }
 }
+#endif
