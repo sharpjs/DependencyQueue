@@ -22,12 +22,25 @@ namespace DependencyQueue
         public void Construct_DefaultComparer()
         {
             using var queue = new Queue();
-            queue.Should().BeValid();
+
+            queue             .Should().BeValid();
+            queue.Comparer    .Should().BeSameAs(StringComparer.Ordinal);
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
 
             using var view = queue.Inspect();
-            view.Topics      .Should().BeEmpty();
-            view.ReadyEntries.Should().BeEmpty();
-            view.Comparer    .Should().BeSameAs(StringComparer.Ordinal);
+
+            view.Queue             .Should().BeSameAs(queue);
+            view.Comparer          .Should().BeSameAs(queue.Comparer);
+            view.Topics.Dictionary .Should().BeSameAs(queue.Topics);
+            view.ReadyEntries.Queue.Should().BeSameAs(queue.ReadyEntries);
+
+            view.Dispose();
+
+            view.Queue                        .Should().BeSameAs(queue);
+            view.Comparer                     .Should().BeSameAs(queue.Comparer);
+            view.Invoking(v => v.Topics)      .Should().Throw<ObjectDisposedException>();
+            view.Invoking(v => v.ReadyEntries).Should().Throw<ObjectDisposedException>();
         }
 
         [Test]
@@ -36,12 +49,25 @@ namespace DependencyQueue
             var comparer = StringComparer.InvariantCultureIgnoreCase;
 
             using var queue = new Queue(comparer);
-            queue.Should().BeValid();
+
+            queue             .Should().BeValid();
+            queue.Comparer    .Should().BeSameAs(comparer);
+            queue.Topics      .Should().BeEmpty();
+            queue.ReadyEntries.Should().BeEmpty();
 
             using var view = queue.Inspect();
-            view.Topics      .Should().BeEmpty();
-            view.ReadyEntries.Should().BeEmpty();
-            view.Comparer    .Should().BeSameAs(comparer);
+
+            view.Queue             .Should().BeSameAs(queue);
+            view.Comparer          .Should().BeSameAs(comparer);
+            view.Topics.Dictionary .Should().BeSameAs(queue.Topics);
+            view.ReadyEntries.Queue.Should().BeSameAs(queue.ReadyEntries);
+
+            view.Dispose();
+
+            view.Queue                        .Should().BeSameAs(queue);
+            view.Comparer                     .Should().BeSameAs(comparer);
+            view.Invoking(v => v.Topics)      .Should().Throw<ObjectDisposedException>();
+            view.Invoking(v => v.ReadyEntries).Should().Throw<ObjectDisposedException>();
         }
 
         [Test]

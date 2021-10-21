@@ -34,21 +34,51 @@ namespace DependencyQueue
         }
 
         [Test]
-        public void Name_Get()
+        public void CreateView()
         {
             var entry = new Entry("x");
 
-            entry.Name.Should().Be("x");
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Entry.Should().BeSameAs(entry);
+
+            h.Dispose();
+
+            h.View.Entry.Should().BeSameAs(entry);
+        }
+
+        [Test]
+        public void Name_Get()
+        {
+            var name  = "x";
+            var entry = new Entry(name);
+
+            entry.Name.Should().BeSameAs(name);
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Name.Should().BeSameAs(name);
+
+            h.Dispose();
+
+            h.View.Name.Should().BeSameAs(name);
         }
 
         [Test]
         public void Value_Get()
         {
             var value = new Value();
-
             var entry = new Entry("x", value);
 
             entry.Value.Should().BeSameAs(value);
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Value.Should().BeSameAs(value);
+
+            h.Dispose();
+
+            h.View.Value.Should().BeSameAs(value);
         }
 
         [Test]
@@ -57,6 +87,14 @@ namespace DependencyQueue
             var entry = new Entry("x");
 
             entry.Provides.Should().NotBeNull().And.BeEquivalentTo("x");
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().NotBeNull().And.BeEquivalentTo("x");
+
+            h.Dispose();
+
+            h.View.Invoking(v => v.Provides).Should().Throw<ObjectDisposedException>();
         }
 
         [Test]
@@ -65,6 +103,14 @@ namespace DependencyQueue
             var entry = new Entry("x");
 
             entry.Requires.Should().NotBeNull().And.BeEmpty();
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Requires.Should().NotBeNull().And.BeEmpty();
+
+            h.Dispose();
+
+            h.View.Invoking(v => v.Requires).Should().Throw<ObjectDisposedException>();
         }
 
         [Test]
@@ -103,6 +149,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("A", "b", "C");
             entry.Requires.Should().BeEmpty();
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("A", "b", "C");
+            h.View.Requires.Should().BeEmpty();
         }
 
         [Test]
@@ -114,6 +165,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("a");
             entry.Requires.Should().BeEmpty();
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("a");
+            h.View.Requires.Should().BeEmpty();
         }
 
         [Test]
@@ -126,6 +182,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("A", "b");
             entry.Requires.Should().BeEmpty();
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("A", "b");
+            h.View.Requires.Should().BeEmpty();
         }
 
         [Test]
@@ -164,6 +225,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("x");
             entry.Requires.Should().BeEquivalentTo("A", "b", "C");
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("x");
+            h.View.Requires.Should().BeEquivalentTo("A", "b", "C");
         }
 
         [Test]
@@ -175,6 +241,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("x");
             entry.Requires.Should().BeEquivalentTo("a");
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("x");
+            h.View.Requires.Should().BeEquivalentTo("a");
         }
 
         [Test]
@@ -187,6 +258,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("x");
             entry.Requires.Should().BeEquivalentTo("a");
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("x");
+            h.View.Requires.Should().BeEquivalentTo("a");
         }
 
         [Test]
@@ -198,6 +274,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("a");
             entry.Requires.Should().BeEmpty(); // NOTE: x did *not* become required
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("a");
+            h.View.Requires.Should().BeEmpty(); // NOTE: x did *not* become required
         }
 
         [Test]
@@ -228,6 +309,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("x");
             entry.Requires.Should().BeEmpty();
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("x");
+            h.View.Requires.Should().BeEmpty();
         }
 
         [Test]
@@ -241,6 +327,11 @@ namespace DependencyQueue
 
             entry.Provides.Should().BeEquivalentTo("x");
             entry.Requires.Should().BeEmpty();
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.Provides.Should().BeEquivalentTo("x");
+            h.View.Requires.Should().BeEmpty();
         }
 
         [Test]
@@ -251,12 +342,19 @@ namespace DependencyQueue
             entry.AddProvides(new[] { "b", "c" });
             entry.AddRequires(new[] { "x", "y" });
 
-            var expected = string.Concat(
+            entry.ToString().Should().Be(string.Concat(
                 "a {", entry.Value.ToString(), "}"
-                //"a (Provides: a, b, c; Requires: x, y) {", entry.Value.ToString(), "}"
-            );
+            ));
 
-            entry.ToString().Should().Be(expected);
+            using var h = new ViewTestHarness(entry);
+
+            h.View.ToString().Should().Be(string.Concat(
+                "a (Provides: a, b, c; Requires: x, y) {", entry.Value.ToString(), "}"
+            ));
+
+            h.Dispose();
+
+            h.View.Invoking(h => h.ToString()).Should().Throw<ObjectDisposedException>();
         }
 
         [Test]
@@ -265,7 +363,24 @@ namespace DependencyQueue
             var entry = new Entry("a", null!);
 
             entry.ToString().Should().Be("a {null}");
-            //entry.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
+
+            using var h = new ViewTestHarness(entry);
+
+            h.View.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
+
+            h.Dispose();
+
+            h.View.Invoking(h => h.ToString()).Should().Throw<ObjectDisposedException>();
+        }
+
+        private class ViewTestHarness : ViewTestHarnessBase
+        {
+            public Entry.View View { get; }
+
+            public ViewTestHarness(Entry entry)
+            {
+                View = new Entry.View(entry, Lock);
+            }
         }
     }
 }
