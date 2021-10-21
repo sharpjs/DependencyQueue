@@ -23,6 +23,12 @@ namespace DependencyQueue
             _lock       = @lock;
         }
 
+        /// <summary>
+        ///   Gets the underlying dictionary.
+        /// </summary>
+        internal Dictionary<string, DependencyQueueTopic<T>> Dictionary
+            => _dictionary;
+
         /// <inheritdoc/>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.

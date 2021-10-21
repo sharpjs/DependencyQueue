@@ -18,6 +18,11 @@ namespace DependencyQueue
             _lock = @lock;
         }
 
+        /// <summary>
+        ///   Gets the underlying set.
+        /// </summary>
+        internal SortedSet<string> Set => _set;
+
         /// <inheritdoc/>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.

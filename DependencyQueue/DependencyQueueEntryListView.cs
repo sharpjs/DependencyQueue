@@ -22,6 +22,11 @@ namespace DependencyQueue
             _lock = @lock;
         }
 
+        /// <summary>
+        ///   Gets the underlying list.
+        /// </summary>
+        internal List<DependencyQueueEntry<T>> List => _list;
+
         /// <inheritdoc/>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.

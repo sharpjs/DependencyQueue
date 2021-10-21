@@ -594,9 +594,15 @@ namespace DependencyQueue
             }
 
             /// <inheritdoc cref="AsyncMonitor.Lock.Dispose"/>
-            void IDisposable.Dispose()
+            internal void Dispose()
             {
                 _lock.Dispose();
+            }
+
+            /// <inheritdoc cref="AsyncMonitor.Lock.Dispose"/>
+            void IDisposable.Dispose()
+            {
+                Dispose();
             }
         }
     }
