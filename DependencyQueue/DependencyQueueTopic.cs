@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 
 namespace DependencyQueue
 {
@@ -12,7 +12,7 @@ namespace DependencyQueue
     /// <typeparam name="T">
     ///   The type of values contained in queue entries.
     /// </typeparam>
-    public class DependencyQueueTopic<T> : IHasView<DependencyQueueTopic<T>.View>
+    public class DependencyQueueTopic<T>
     {
         /// <summary>
         ///   Initializes a new <see cref="DependencyQueueTopic{T}"/> instance
@@ -28,9 +28,9 @@ namespace DependencyQueue
             if (name.Length == 0)
                 throw Errors.ArgumentEmpty(nameof(name));
 
-            Name               = name;
-            InternalProvidedBy = new();
-            InternalRequiredBy = new();
+            Name       = name;
+            ProvidedBy = new();
+            RequiredBy = new();
         }
 
         /// <summary>
@@ -41,29 +41,17 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the set of entries that provide the topic.
         /// </summary>
-        public IReadOnlyList<DependencyQueueEntry<T>> ProvidedBy => InternalProvidedBy;
+        internal List<DependencyQueueEntry<T>> ProvidedBy { get; }
 
         /// <summary>
         ///   Gets the set of entries that require the topic.
         /// </summary>
-        public IReadOnlyList<DependencyQueueEntry<T>> RequiredBy => InternalRequiredBy;
-
-        /// <inheritdoc cref="ProvidedBy"/>
-        internal List<DependencyQueueEntry<T>> InternalProvidedBy { get; }
-
-        /// <inheritdoc cref="RequiredBy"/>
-        internal List<DependencyQueueEntry<T>> InternalRequiredBy { get; }
+        internal List<DependencyQueueEntry<T>> RequiredBy { get; }
 
         /// <inheritdoc/>
         public override string ToString()
         {
             return Name;
-        }
-
-        /// <inheritdoc/>
-        DependencyQueueTopic<T>.View IHasView<DependencyQueueTopic<T>.View>.GetView(object @lock)
-        {
-            return new(this, (AsyncMonitor.Lock) @lock);
         }
 
         /// <summary>
@@ -86,45 +74,50 @@ namespace DependencyQueue
             /// </summary>
             public DependencyQueueTopic<T> Topic => _topic;
 
-            /// <summary>
-            ///   Gets the name of the topic.
-            /// </summary>
+            /// <inheritdoc cref="DependencyQueueTopic{T}.Name"/>
             public string Name => _topic.Name;
 
-            /// <summary>
-            ///   Gets the set of entries that provide the topic.
-            /// </summary>
-            public CollectionView<DependencyQueueEntry<T>, DependencyQueueEntry<T>.View> ProvidedBy
+            /// <inheritdoc cref="DependencyQueueTopic{T}.ProvidedBy"/>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
+            public DependencyQueueEntryListView<T> ProvidedBy
             {
                 get
                 {
                     _lock.RequireNotDisposed();
-                    return new(_topic.InternalProvidedBy, _lock);
+                    return new(_topic.ProvidedBy, _lock);
                 }
             }
 
-            /// <summary>
-            ///   Gets the set of entries that require the topic.
-            /// </summary>
-            public CollectionView<DependencyQueueEntry<T>, DependencyQueueEntry<T>.View> RequiredBy
+            /// <inheritdoc cref="DependencyQueueTopic{T}.RequiredBy"/>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
+            public DependencyQueueEntryListView<T> RequiredBy
             {
                 get
                 {
                     _lock.RequireNotDisposed();
-                    return new(_topic.InternalRequiredBy, _lock);
+                    return new(_topic.RequiredBy, _lock);
                 }
             }
 
             /// <inheritdoc/>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
             public override string ToString()
             {
+                _lock.RequireNotDisposed();
+
                 const string
                     ChunkA = " (ProvidedBy: ",
                     ChunkB = "; RequiredBy: ",
                     ChunkC = ")";
 
-                var providedBy = ProvidedBy.Select(e => e.Name);
-                var requiredBy = RequiredBy.Select(e => e.Name);
+                var providedBy = _topic.ProvidedBy.Select(e => e.Name);
+                var requiredBy = _topic.RequiredBy.Select(e => e.Name);
 
                 var length
                     = ChunkA.Length

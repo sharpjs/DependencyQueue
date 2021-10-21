@@ -53,13 +53,13 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the collection of entries that are ready to dequeue.
         /// </summary>
-        private IReadOnlyCollection<DependencyQueueEntry<T>> ReadyEntries
+        internal Queue<DependencyQueueEntry<T>> ReadyEntries
             => _ready;
 
         /// <summary>
         ///   Gets the dictionary that maps topic names to topics.
         /// </summary>
-        private IReadOnlyDictionary<string, DependencyQueueTopic<T>> Topics
+        internal Dictionary<string, DependencyQueueTopic<T>> Topics
             => _topics;
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace DependencyQueue
         ///   entries in parallel, create one builder per thread.
         /// </remarks>
         public DependencyQueueEntryBuilder<T> CreateEntryBuilder()
-            => new DependencyQueueEntryBuilder<T>(this);
+            => new(this);
 
         /// <summary>
         ///   Adds the specified entry to the queue.
@@ -101,10 +101,10 @@ namespace DependencyQueue
             using var @lock = _monitor.Acquire();
 
             foreach (var name in entry.Provides)
-                GetTopic(name).InternalProvidedBy.Add(entry);
+                GetTopic(name).ProvidedBy.Add(entry);
 
             foreach (var name in entry.Requires)
-                GetTopic(name).InternalRequiredBy.Add(entry);
+                GetTopic(name).RequiredBy.Add(entry);
 
             if (entry.Requires.Count == 0)
                 _ready.Enqueue(entry);
@@ -272,10 +272,10 @@ namespace DependencyQueue
                 var topic = _topics[name];
 
                 // Mark this entry as done
-                topic.InternalProvidedBy.Remove(entry);
+                topic.ProvidedBy.Remove(entry);
 
                 // Check if all of topic's entries are completed
-                if (topic.InternalProvidedBy.Count != 0)
+                if (topic.ProvidedBy.Count != 0)
                     continue;
 
                 // All of topic's entries are completed; mark topic itself as completed
@@ -287,7 +287,7 @@ namespace DependencyQueue
                     wake = true;
 
                 // Update dependents
-                foreach (var dependent in topic.InternalRequiredBy)
+                foreach (var dependent in topic.RequiredBy)
                 {
                     // Mark requirement as met
                     dependent.RemoveRequires(name);
@@ -438,7 +438,7 @@ namespace DependencyQueue
 
             foreach (var topic in _topics.Values)
             {
-                if (topic.InternalProvidedBy.Count == 0)
+                if (topic.ProvidedBy.Count == 0)
                     errors.Add(DependencyQueueError.UnprovidedTopic(topic));
                 else 
                     DetectCycles(null, topic, visited, errors);
@@ -459,7 +459,7 @@ namespace DependencyQueue
             {
                 visited[topic.Name] = false; // in progress
 
-                foreach (var entry in topic.InternalProvidedBy)
+                foreach (var entry in topic.ProvidedBy)
                     foreach (var name in entry.Requires)
                         DetectCycles(entry, _topics[name], visited, errors);
 
@@ -567,37 +567,33 @@ namespace DependencyQueue
             /// <inheritdoc cref="DependencyQueue{T}.Comparer"/>
             public StringComparer Comparer => _queue.Comparer;
 
-            /// <summary>
-            ///   Gets the collection of entries that are ready to dequeue.
-            /// </summary>
+            /// <inheritdoc cref="DependencyQueue{T}.ReadyEntries"/>
             /// <exception cref="ObjectDisposedException">
             ///   The underlying lock has been released.
             /// </exception>
-            public CollectionView<DependencyQueueEntry<T>, DependencyQueueEntry<T>.View> ReadyEntries
+            public DependencyQueueEntryQueueView<T> ReadyEntries
             {
                 get
                 {
                     _lock.RequireNotDisposed();
-                    return new(_queue._ready, _lock);
+                    return new(_queue.ReadyEntries, _lock);
                 }
             }
 
-            /// <summary>
-            ///   Gets the dictionary that maps topic names to topics.
-            /// </summary>
+            /// <inheritdoc cref="DependencyQueue{T}.Topics"/>
             /// <exception cref="ObjectDisposedException">
             ///   The underlying lock has been released.
             /// </exception>
-            public DictionaryView<string, DependencyQueueTopic<T>, DependencyQueueTopic<T>.View> Topics
+            public DependencyQueueTopicDictionaryView<T> Topics
             {
                 get
                 {
                     _lock.RequireNotDisposed();
-                    return new(_queue._topics, _lock);
+                    return new(_queue.Topics, _lock);
                 }
             }
 
-            /// <inheritdoc/>
+            /// <inheritdoc cref="AsyncMonitor.Lock.Dispose"/>
             void IDisposable.Dispose()
             {
                 _lock.Dispose();

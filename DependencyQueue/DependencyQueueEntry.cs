@@ -10,7 +10,7 @@ namespace DependencyQueue
     /// <typeparam name="T">
     ///   The type of value contained in the entry.
     /// </typeparam>
-    public class DependencyQueueEntry<T> : IHasView<DependencyQueueEntry<T>.View>
+    public class DependencyQueueEntry<T>
     {
         /// <summary>
         ///   Initializes a new <see cref="DependencyQueueEntry{T}"/> instance
@@ -37,10 +37,10 @@ namespace DependencyQueue
             RequireValidName(name);
             RequireComparer(comparer);
 
-            Name      = name;
-            Value     = value;
-            _provides = new(comparer) { name };
-            _requires = new(comparer);
+            Name     = name;
+            Value    = value;
+            Provides = new(comparer) { name };
+            Requires = new(comparer);
         }
 
         /// <summary>
@@ -56,15 +56,12 @@ namespace DependencyQueue
         /// <summary>
         ///   Gets the set of topic names that the entry provides.
         /// </summary>
-        public IReadOnlyCollection<string> Provides => _provides;
+        internal SortedSet<string> Provides { get; }
 
         /// <summary>
         ///   Gets the set of topic names that the entry requires.
         /// </summary>
-        public IReadOnlyCollection<string> Requires => _requires;
-
-        private readonly SortedSet<string> _provides;
-        private readonly SortedSet<string> _requires;
+        internal SortedSet<string> Requires { get; }
 
         // Invoked via DependencyQueueEntryBuilder<T>
         internal void AddProvides(IEnumerable<string> names)
@@ -75,8 +72,8 @@ namespace DependencyQueue
             {
                 RequireValidNamesItem(name);
 
-                _provides.Add   (name);
-                _requires.Remove(name);
+                Provides.Add   (name);
+                Requires.Remove(name);
             }
         }
 
@@ -86,7 +83,7 @@ namespace DependencyQueue
             RequireValidNames(names);
 
             var thisName = Name;
-            var comparer = StringComparer.OrdinalIgnoreCase;
+            var comparer = (StringComparer) Provides.Comparer;
 
             foreach (var name in names)
             {
@@ -95,8 +92,8 @@ namespace DependencyQueue
                 if (comparer.Equals(name, thisName))
                     continue;
 
-                _requires.Add   (name);
-                _provides.Remove(name);
+                Requires.Add   (name);
+                Provides.Remove(name);
             }
         }
 
@@ -105,7 +102,7 @@ namespace DependencyQueue
         {
             RequireValidName(name);
 
-            _requires.Remove(name);
+            Requires.Remove(name);
         }
 
         /// <inheritdoc/>
@@ -146,12 +143,6 @@ namespace DependencyQueue
                 throw Errors.ArgumentContainsEmpty("names");
         }
 
-        /// <inheritdoc/>
-        DependencyQueueEntry<T>.View IHasView<DependencyQueueEntry<T>.View>.GetView(object @lock)
-        {
-            return new View(this, (AsyncMonitor.Lock) @lock);
-        }
-
         /// <summary>
         ///   A read-only view of an exclusively-locked
         ///   <see cref="DependencyQueueTopic{T}"/>.
@@ -172,20 +163,17 @@ namespace DependencyQueue
             /// </summary>
             public DependencyQueueEntry<T> Entry => _entry;
 
-            /// <summary>
-            ///   Gets the name of the entry.
-            /// </summary>
+            /// <inheritdoc cref="DependencyQueueEntry{T}.Name"/>
             public string Name => _entry.Name;
 
-            /// <summary>
-            ///   Gets the value contained in the entry.
-            /// </summary>
+            /// <inheritdoc cref="DependencyQueueEntry{T}.Value"/>
             public T Value => _entry.Value;
 
-            /// <summary>
-            ///   Gets the set of topic names that the entry provides.
-            /// </summary>
-            public CollectionView<string> Provides
+            /// <inheritdoc cref="DependencyQueueEntry{T}.Provides"/>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
+            public StringSetView Provides
             {
                 get
                 {
@@ -194,10 +182,11 @@ namespace DependencyQueue
                 }
             }
 
-            /// <summary>
-            ///   Gets the set of topic names that the entry requires.
-            /// </summary>
-            public CollectionView<string> Requires
+            /// <inheritdoc cref="DependencyQueueEntry{T}.Requires"/>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
+            public StringSetView Requires
             {
                 get
                 {
@@ -207,15 +196,20 @@ namespace DependencyQueue
             }
 
             /// <inheritdoc/>
+            /// <exception cref="ObjectDisposedException">
+            ///   The underlying lock has been released.
+            /// </exception>
             public override string ToString()
             {
+                _lock.RequireNotDisposed();
+
                 const string
                     ChunkA = " (Provides: ",
                     ChunkB = "; Requires: ",
                     ChunkC = ") {",
                     ChunkD = "}";
 
-                var value = Value?.ToString() ?? "null";
+                var value = _entry.Value?.ToString() ?? "null";
 
                 var length
                     = ChunkA.Length
@@ -223,14 +217,14 @@ namespace DependencyQueue
                     + ChunkC.Length
                     + ChunkD.Length
                     + Name  .Length
-                    + Provides.GetJoinedLength()
-                    + Requires.GetJoinedLength()
+                    + _entry.Provides.GetJoinedLength()
+                    + _entry.Requires.GetJoinedLength()
                     + value .Length;
 
                 return new StringBuilder(length)
                     .Append(Name)
-                    .Append(ChunkA).AppendJoined(Provides)
-                    .Append(ChunkB).AppendJoined(Requires)
+                    .Append(ChunkA).AppendJoined(_entry.Provides)
+                    .Append(ChunkB).AppendJoined(_entry.Requires)
                     .Append(ChunkC).Append(value)
                     .Append(ChunkD).ToString();
             }
