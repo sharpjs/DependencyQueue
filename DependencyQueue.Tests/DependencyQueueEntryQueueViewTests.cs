@@ -20,10 +20,7 @@ namespace DependencyQueue
         {
             using var h = new TestHarness(this);
 
-            var outer = h.View      .Peek();
-            var inner = h.Collection.Peek();
-
-            outer.Apply(Unwrap).Should().Be(inner);
+            h.View.Peek().Apply(Unwrap).Should().Be(ItemA);
 
             h.Dispose();
 
@@ -35,11 +32,11 @@ namespace DependencyQueue
         {
             using var h = new TestHarness(this);
 
-            var outerResult = h.View      .TryPeek(out var outerItem);
-            var innerResult = h.Collection.TryPeek(out var innerItem);
+            h.View.TryPeek(out var item).Should().BeTrue();
+            item.Apply(Unwrap)          .Should().Be(ItemA);
 
-            outerResult            .Should().Be(innerResult);
-            outerItem.Apply(Unwrap).Should().Be(innerItem);
+            h.Collection.Clear(); // violating thread safety for testing only
+            h.View.TryPeek(out _).Should().BeFalse();
 
             h.Dispose();
 
