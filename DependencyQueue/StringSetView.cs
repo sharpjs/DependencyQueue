@@ -114,12 +114,8 @@ namespace DependencyQueue
             }
 
             /// <inheritdoc/>
-            /// <exception cref="ObjectDisposedException">
-            ///   The underlying lock has been released.
-            /// </exception>
             public void Dispose()
             {
-                _lock.RequireNotDisposed();
                 _enumerator.Dispose();
             }
         }
