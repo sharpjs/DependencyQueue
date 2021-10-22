@@ -238,7 +238,7 @@ namespace DependencyQueue
                 public void Reset()
                 {
                     _lock.RequireNotDisposed();
-                    ((IEnumerator) _enumerator).Reset();
+                    ViewHelpers.Reset(ref _enumerator);
                 }
 
                 /// <inheritdoc/>
@@ -346,7 +346,7 @@ namespace DependencyQueue
                 public void Reset()
                 {
                     _lock.RequireNotDisposed();
-                    ((IEnumerator) _enumerator).Reset();
+                    ViewHelpers.Reset(ref _enumerator);
                 }
 
                 /// <inheritdoc/>
@@ -411,7 +411,7 @@ namespace DependencyQueue
             public void Reset()
             {
                 _lock.RequireNotDisposed();
-                ((IEnumerator) _enumerator).Reset();
+                ViewHelpers.Reset(ref _enumerator);
             }
 
             /// <inheritdoc/>
