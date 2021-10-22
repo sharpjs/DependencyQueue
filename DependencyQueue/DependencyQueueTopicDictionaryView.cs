@@ -59,8 +59,9 @@ namespace DependencyQueue
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        IEnumerable<string> IReadOnlyDictionary<string, DependencyQueueTopic<T>.View>.Keys
-            => Keys;
+        IEnumerable<string>
+            IReadOnlyDictionary<string, DependencyQueueTopic<T>.View>
+            .Keys => Keys;
 
         /// <inheritdoc cref="IReadOnlyDictionary{TKey, TValue}.Values"/>
         /// <exception cref="ObjectDisposedException">
@@ -79,8 +80,9 @@ namespace DependencyQueue
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        IEnumerable<DependencyQueueTopic<T>.View> IReadOnlyDictionary<string, DependencyQueueTopic<T>.View>.Values
-            => Values;
+        IEnumerable<DependencyQueueTopic<T>.View>
+            IReadOnlyDictionary<string, DependencyQueueTopic<T>.View>
+            .Values => Values;
 
         /// <inheritdoc/>
         /// <exception cref="ObjectDisposedException">
@@ -159,6 +161,12 @@ namespace DependencyQueue
                 _keys = keys;
                 _lock = @lock;
             }
+
+            /// <summary>
+            ///   Gets the underlying collection.
+            /// </summary>
+            internal Dictionary<string, DependencyQueueTopic<T>>.KeyCollection Keys
+                => _keys;
 
             /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             /// <exception cref="ObjectDisposedException">
@@ -266,6 +274,12 @@ namespace DependencyQueue
                 _values = values;
                 _lock   = @lock;
             }
+
+            /// <summary>
+            ///   Gets the underlying collection.
+            /// </summary>
+            internal Dictionary<string, DependencyQueueTopic<T>>.ValueCollection Values
+                => _values;
 
             /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             /// <exception cref="ObjectDisposedException">
