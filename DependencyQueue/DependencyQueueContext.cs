@@ -118,5 +118,13 @@ namespace DependencyQueue
 
             return _entry = await _queue.TryDequeueAsync(cancellation: CancellationToken);
         }
+
+        /// <summary>
+        ///   Notifies all waiting threads to end processing.
+        /// </summary>
+        public void SetEnding()
+        {
+            _queue.SetEnding();
+        }
     }
 }

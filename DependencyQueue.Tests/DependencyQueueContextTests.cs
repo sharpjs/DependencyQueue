@@ -153,6 +153,18 @@ namespace DependencyQueue
             result.Should().BeSameAs(entry1);
         }
 
+        [Test]
+        public void SetEnding()
+        {
+            using var h = new TestHarness();
+
+            h.Queue
+                .Setup(q => q.SetEnding())
+                .Verifiable();
+
+            h.Context.SetEnding();
+        }
+
         private class TestHarness : QueueTestHarness { }
     }
 }

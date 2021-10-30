@@ -20,5 +20,7 @@ namespace DependencyQueue
         );
 
         void Complete(DependencyQueueEntry<T> entry);
+
+        void SetEnding();
     }
 }
