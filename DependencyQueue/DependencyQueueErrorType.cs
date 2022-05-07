@@ -1,20 +1,35 @@
-namespace DependencyQueue
+/*
+    Copyright 2022 Jeffrey Sharp
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+
+namespace DependencyQueue;
+
+/// <summary>
+///   Types of <see cref="DependencyQueue{T}"/> validation errors.
+/// </summary>
+public enum DependencyQueueErrorType
 {
     /// <summary>
-    ///   Types of <see cref="DependencyQueue{T}"/> validation errors.
+    ///   One or more entries require a topic that no entries provide.
+    ///   The error object is a <see cref="DependencyQueueUnprovidedTopicError{T}"/>.
     /// </summary>
-    public enum DependencyQueueErrorType
-    {
-        /// <summary>
-        ///   One or more entries require a topic that no entries provide.
-        ///   The error object is a <see cref="DependencyQueueUnprovidedTopicError{T}"/>.
-        /// </summary>
-        UnprovidedTopic,
+    UnprovidedTopic,
 
-        /// <summary>
-        ///   The dependency graph contains a cycle.
-        ///   The error object is a <see cref="DependencyQueueCycleError{T}"/>.
-        /// </summary>
-        Cycle
-    }
+    /// <summary>
+    ///   The dependency graph contains a cycle.
+    ///   The error object is a <see cref="DependencyQueueCycleError{T}"/>.
+    /// </summary>
+    Cycle
 }

@@ -31,8 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="DependencyQueue.TestGlobals" Static="true" />
     <Using Include="FluentAssertions" />
     <Using Include="FluentAssertions.FluentActions" Static="true" />
+    <Using Include="Moq" />
     <Using Include="NUnit.Framework" />
     <Using Include="Subatomix.Testing" />
   </ItemGroup>
