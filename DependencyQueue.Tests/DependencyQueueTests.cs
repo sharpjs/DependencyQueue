@@ -383,7 +383,7 @@ namespace DependencyQueue
             Parallel.Invoke(TryDequeue, TryDequeue, CompleteEntryB);
             stopwatch.Stop();
 
-            dequeuedEntries  .Should().BeEquivalentTo(entryA, null);
+            dequeuedEntries  .Should().BeEquivalentTo(new[] { entryA, null });
             stopwatch.Elapsed.Should().BeGreaterOrEqualTo(75.Milliseconds());
 
             queue.Should().HaveReadyEntries(/*none*/);
@@ -574,7 +574,7 @@ namespace DependencyQueue
             );
             stopwatch.Stop();
 
-            dequeuedEntries.Should().BeEquivalentTo(entryA, null);
+            dequeuedEntries.Should().BeEquivalentTo(new[] { entryA, null });
             stopwatch.Elapsed.Should().BeGreaterOrEqualTo(75.Milliseconds());
 
             queue.Should().HaveReadyEntries(/*none*/);
@@ -665,26 +665,26 @@ namespace DependencyQueue
             workers.Should().Contain(c => c.WorkerId == 2);
             workers.Should().Contain(c => c.WorkerId == 3);
 
-            entries.Should().BeEquivalentTo(entryA, entryB0, entryB1, entryC);
+            entries.Should().BeEquivalentTo(new[] { entryA, entryB0, entryB1, entryC });
 
             queue.Should().HaveReadyEntries(/*none*/);
             queue.Should().HaveTopicCount(0);
         }
 
         [Test]
-        public void RunAsync_NotValidated()
+        public async Task RunAsync_NotValidatedAsync()
         {
             Task WorkerMain(Context_ _) => Task.CompletedTask;
 
             using var queue = Queue();
 
-            queue
+            await queue
                 .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
-                .Should().ThrowExactly<InvalidOperationException>();
+                .Should().ThrowExactlyAsync<InvalidOperationException>();
         }
 
         [Test]
-        public void RunAsync_InvalidParallelism()
+        public async Task RunAsync_InvalidParallelismAsync()
         {
             Task WorkerMain(Context_ _) => Task.CompletedTask;
 
@@ -692,9 +692,9 @@ namespace DependencyQueue
 
             queue.Should().BeValid();
 
-            queue
+            await queue
                 .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
-                .Should().ThrowExactly<ArgumentOutOfRangeException>()
+                .Should().ThrowExactlyAsync<ArgumentOutOfRangeException>()
                 .Where(e => e.ParamName == "parallelism");
         }
 
@@ -742,7 +742,7 @@ namespace DependencyQueue
             for (var i = 1; i < workers.Count; i++)
                 workers.Should().Contain(c => c.WorkerId == i);
 
-            entries.Should().BeEquivalentTo(entryA, entryB0, entryB1, entryC);
+            entries.Should().BeEquivalentTo(new[] { entryA, entryB0, entryB1, entryC });
 
             queue.Should().HaveReadyEntries(/*none*/);
             queue.Should().HaveTopicCount(0);
