@@ -1,11 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <!--
+    Copyright 2022 Jeffrey Sharp
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  -->
+
   <PropertyGroup>
     <Description>Tests for DependencyQueue</Description>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>DependencyQueue</RootNamespace>
-    <!-- Do not warn about missing Async suffix in this assembly -->
-    <NoWarn>IDE1006;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +28,13 @@
 
   <ItemGroup>
     <PackageReference Include="Subatomix.Testing" Version="1.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="FluentAssertions" />
+    <Using Include="FluentAssertions.FluentActions" Static="true" />
+    <Using Include="NUnit.Framework" />
+    <Using Include="Subatomix.Testing" />
   </ItemGroup>
 
 </Project>
