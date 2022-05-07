@@ -606,7 +606,7 @@ public class DependencyQueueTests
     [Test]
     public void Run_NotValidated()
     {
-        void WorkerMain(Context_ _) { };
+        static void WorkerMain(Context_ _) { };
 
         using var queue = Queue();
 
@@ -618,7 +618,7 @@ public class DependencyQueueTests
     [Test]
     public void Run_InvalidParallelism()
     {
-        void WorkerMain(Context_ _) { };
+        static void WorkerMain(Context_ _) { };
 
         using var queue = Queue();
 
