@@ -60,7 +60,7 @@ internal class DependencyQueueEntryQueueViewTests
     private protected override Inner ItemB { get; } = new Entry("b");
 
     private protected override Collection CreateCollection()
-        => new Collection(new[] { ItemA, ItemB });
+        => new(new[] { ItemA, ItemB });
 
     private protected override View CreateView(Collection collection, Lock @lock)
         => new(collection, @lock);
