@@ -22,6 +22,13 @@
     <RootNamespace>DependencyQueue</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1816</NoWarn>
+    <!--
+      CA1816: GC.SuppressFinalize(object) in unusual place
+    -->
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\DependencyQueue\DependencyQueue.csproj" />
   </ItemGroup>
