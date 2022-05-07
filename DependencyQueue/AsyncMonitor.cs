@@ -191,7 +191,7 @@ internal class AsyncMonitor : IDisposable
                     break;
 
                 // Pulsed => reacquire immediately if possible; otherwise loop
-                reacquired = _locker.Wait(0);
+                reacquired = _locker.Wait(0, CancellationToken.None);
             }
             while (!reacquired);
         }
