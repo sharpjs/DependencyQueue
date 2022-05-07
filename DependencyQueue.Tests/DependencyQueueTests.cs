@@ -682,7 +682,7 @@ public class DependencyQueueTests
     [Test]
     public async Task RunAsync_NotValidatedAsync()
     {
-        Task WorkerMain(Context_ _) => Task.CompletedTask;
+        static Task WorkerMain(Context_ _) => Task.CompletedTask;
 
         using var queue = Queue();
 
@@ -694,7 +694,7 @@ public class DependencyQueueTests
     [Test]
     public async Task RunAsync_InvalidParallelismAsync()
     {
-        Task WorkerMain(Context_ _) => Task.CompletedTask;
+        static Task WorkerMain(Context_ _) => Task.CompletedTask;
 
         using var queue = Queue();
 
