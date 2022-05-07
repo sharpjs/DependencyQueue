@@ -137,7 +137,7 @@ public class DependencyQueueEntry<T>
             throw Errors.ArgumentEmpty(nameof(name));
     }
 
-    private void RequireComparer(StringComparer comparer)
+    private static void RequireComparer(StringComparer comparer)
     {
         if (comparer is null)
             throw Errors.ArgumentNull(nameof(comparer));
