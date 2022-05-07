@@ -142,9 +142,9 @@ public class DependencyQueueTopic<T>
 
             return new StringBuilder(length)
                 .Append(Name)
-                .Append(ChunkA).AppendJoined(providedBy)
-                .Append(ChunkB).AppendJoined(requiredBy)
-                .Append(ChunkC).ToString();
+                .Append(ChunkA   ).AppendJoined(providedBy)
+                .Append(ChunkB   ).AppendJoined(requiredBy)
+                .Append(ChunkC[0]).ToString();
         }
     }
 }

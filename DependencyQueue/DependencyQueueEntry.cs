@@ -237,10 +237,10 @@ public class DependencyQueueEntry<T>
 
             return new StringBuilder(length)
                 .Append(Name)
-                .Append(ChunkA).AppendJoined(_entry.Provides)
-                .Append(ChunkB).AppendJoined(_entry.Requires)
-                .Append(ChunkC).Append(value)
-                .Append(ChunkD).ToString();
+                .Append(ChunkA   ).AppendJoined(_entry.Provides)
+                .Append(ChunkB   ).AppendJoined(_entry.Requires)
+                .Append(ChunkC   ).Append(value)
+                .Append(ChunkD[0]).ToString();
         }
     }
 }
