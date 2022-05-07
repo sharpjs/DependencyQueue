@@ -18,8 +18,12 @@
 
   <PropertyGroup>
     <Description>A thread-safe generic queue that dequeues in dependency order.</Description>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="all" />
+  </ItemGroup>
 
 </Project>

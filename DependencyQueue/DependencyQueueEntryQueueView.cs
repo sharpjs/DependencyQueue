@@ -65,6 +65,7 @@ public readonly struct DependencyQueueEntryQueueView<T>
         return new(_queue.Peek(), _lock);
     }
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
     /// <inheritdoc cref="Queue{T}.TryPeek(out T)" />
     /// <exception cref="ObjectDisposedException">
     ///   The underlying lock has been released.
@@ -76,6 +77,7 @@ public readonly struct DependencyQueueEntryQueueView<T>
             ? (r: true,  result = new(obj, _lock)).r
             : (r: false, result = default).r;
     }
+#endif
 
     /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
     /// <exception cref="ObjectDisposedException">

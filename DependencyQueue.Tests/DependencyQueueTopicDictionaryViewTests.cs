@@ -33,8 +33,13 @@ internal class DependencyQueueTopicDictionaryViewTests
     private protected override InnerPair ItemB { get; } = new("b", new("b"));
     private protected override InnerPair Other { get; } = new("x", new("x"));
 
+#if NETCOREAPP
     private protected override Dictionary<string, Inner> CreateCollection()
         => new(new[] { ItemA, ItemB });
+#else
+    private protected override Dictionary<string, Inner> CreateCollection()
+        => new() { [ItemA.Key] = ItemA.Value, [ItemB.Key] = ItemB.Value };
+#endif
 
     private protected override View CreateView(Dictionary<string, Inner> collection, Lock @lock)
         => new(collection, @lock);
