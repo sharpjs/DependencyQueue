@@ -251,7 +251,7 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
             // for in-progress entries to complete and unblock some ready
             // entry(ies), or for one second to elapse, after which the
             // predicate might change its mind.
-            await @lock.ReleaseUntilPulseAsync(OneSecond);
+            await @lock.ReleaseUntilPulseAsync(OneSecond, cancellation);
         }
     }
 
