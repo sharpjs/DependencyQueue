@@ -63,14 +63,12 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// <summary>
     ///   Gets the collection of entries that are ready to dequeue.
     /// </summary>
-    internal Queue<DependencyQueueEntry<T>> ReadyEntries
-        => _ready;
+    internal Queue<DependencyQueueEntry<T>> ReadyEntries => _ready;
 
     /// <summary>
     ///   Gets the dictionary that maps topic names to topics.
     /// </summary>
-    internal Dictionary<string, DependencyQueueTopic<T>> Topics
-        => _topics;
+    internal Dictionary<string, DependencyQueueTopic<T>> Topics => _topics;
 
     /// <summary>
     ///   Gets the comparer for topic names.
