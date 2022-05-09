@@ -18,7 +18,7 @@
 
   <PropertyGroup>
     <Description>Tests for DependencyQueue</Description>
-    <TargetFrameworks>net48;netcoreapp3.1;net60</TargetFrameworks>
+    <TargetFrameworks>net48;netcoreapp3.1;net6.0</TargetFrameworks>
     <RootNamespace>DependencyQueue</RootNamespace>
   </PropertyGroup>
 
