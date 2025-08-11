@@ -23,16 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Subatomix.Testing" Version="2.0.1" />
+    <PackageReference Include="Subatomix.Testing" Version="3.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="DependencyQueue.TestGlobals" Static="true" />
-    <Using Include="FluentAssertions" />
-    <Using Include="FluentAssertions.FluentActions" Static="true" />
-    <Using Include="Moq" />
-    <Using Include="NUnit.Framework" />
-    <Using Include="Subatomix.Testing" />
   </ItemGroup>
 
 </Project>
