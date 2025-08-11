@@ -24,9 +24,32 @@ charset = utf-8-bom
 [*.*proj]
 charset = utf-8-bom
 
-[*.{config,json,jsonc,md,*proj,props,runsettings,targets,*xml,yaml,yml}]
+[*.{config,json,jsonc,md,*proj,props,runsettings,slnLaunch,targets,*xml,yaml,yml}]
 indent_size = 2
 
+[*.slnLaunch]
+insert_final_newline = false
+
+[dotnet-tools.json]
+insert_final_newline = false
+
 [*.cs]
-csharp_space_after_cast = true
-dotnet_sort_system_directives_first = true
+# C# Diagnostics
+dotnet_diagnostic.CA1859.severity = none # CA1859: Use concrete types when possible for improved performance
+
+# C# Style Conventions
+# Below are deviations from the default documented here:
+# https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options
+
+csharp_indent_case_contents_when_block               = false                  # was true
+csharp_prefer_braces                                 = when_multiline         # was true
+csharp_space_after_cast                              = true                   # was false
+csharp_style_namespace_declarations                  = file_scoped:suggestion # was block_scoped
+csharp_style_prefer_primary_constructors             = false                  # was true
+csharp_style_var_elsewhere                           = true                   # was false
+csharp_style_var_for_built_in_types                  = true                   # was false
+csharp_style_var_when_type_is_apparent               = true                   # was false
+
+dotnet_sort_system_directives_first                  = true                   # was false
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning          # was true
+dotnet_style_namespace_match_folder                  = true:none              # was true
