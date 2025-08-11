@@ -33,6 +33,7 @@
     <LangVersion>12</LangVersion>
     <ImplicitUsings>true</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <InheritDocEnabled>true</InheritDocEnabled>
   </PropertyGroup>
 
   <!-- Packaging properties -->
