@@ -7,7 +7,7 @@
 
   <PropertyGroup>
     <Description>A thread-safe generic queue that dequeues in dependency order.</Description>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
