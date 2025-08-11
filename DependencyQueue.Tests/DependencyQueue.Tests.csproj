@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Subatomix.Testing" Version="3.2.0" />
+    <PackageReference Include="Subatomix.Testing" />
   </ItemGroup>
 
   <ItemGroup>

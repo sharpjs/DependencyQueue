@@ -1,0 +1,31 @@
+<Project>
+
+  <!--
+    Copyright Subatomix Research Inc.
+    SPDX-License-Identifier: MIT
+  -->
+
+  <!--
+    Central Package Management
+    https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Nullable"          Version="1.3.1" />
+    <PackageVersion Include="Subatomix.Testing" Version="3.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GlobalPackageReference Include="SauceControl.InheritDoc"             Version="2.0.2" />
+    <GlobalPackageReference Include="Subatomix.Build.Versioning.Semantic" Version="1.1.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <GlobalPackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -28,19 +28,4 @@
     <Using Include="System.FormattableString" Static="true" />
   </ItemGroup>
 
-  <!-- Versioning -->
-  <ItemGroup>
-    <PackageReference Include="Subatomix.Build.Versioning.Semantic" Version="1.1.0" PrivateAssets="all" />
-  </ItemGroup>
-
-  <!-- <inheritdoc/> support -->
-  <ItemGroup>
-    <PackageReference Include="SauceControl.InheritDoc" Version="2.0.2" PrivateAssets="all" />
-  </ItemGroup>
-
-  <!-- SourceLink https://github.com/dotnet/sourcelink/blob/master/README.md -->
-  <ItemGroup Condition="'$(IsPackable)' == 'true'">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
-  </ItemGroup>
-
 </Project>
