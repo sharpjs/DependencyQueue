@@ -12,10 +12,12 @@
   -->
 
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
-    <None Include="..\icon.png" Link="Properties\icon.png"
+    <None Include="..\icon.png" LinkBase="Properties"
           Pack="true" PackagePath="" CopyToOutputDirectory="Never" />
-    <None Include="..\LICENSE.txt" Link="Properties\LICENSE.txt"
-          Pack="true" PackagePath="$(PackageLicenseFile)" CopyToOutputDirectory="Never" />
+    <None Include="..\LICENSE.txt" LinkBase="Properties"
+          Pack="true" PackagePath="" CopyToOutputDirectory="Never" />
+    <None Include="..\README.md" LinkBase="Properties"
+          Pack="true" PackagePath="" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
   <!-- Visibility -->
