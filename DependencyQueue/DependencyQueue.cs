@@ -159,7 +159,7 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
 
             // Check if the ready queue has an entry to dequeue
             if (_ready.Any())
-                // Check if caller accepts teh entry
+                // Check if caller accepts the entry
                 if (predicate is null || predicate(_ready.Peek().Value))
                     // Dequeue it
                     return _ready.Dequeue();
@@ -228,7 +228,7 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
 
             // Check if the ready queue has an entry to dequeue
             if (_ready.Any())
-                // Check if caller accepts teh entry
+                // Check if caller accepts the entry
                 if (predicate is null || predicate(_ready.Peek().Value))
                     // Dequeue it
                     return _ready.Dequeue();
