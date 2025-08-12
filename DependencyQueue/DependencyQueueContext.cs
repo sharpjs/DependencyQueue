@@ -85,37 +85,49 @@ public class DependencyQueueContext<T, TData>
     /// <summary>
     ///   Gets the next entry that the worker should process.
     /// </summary>
+    /// <param name="predicate">
+    ///   An optional delegate that receives an entry's
+    ///   <see cref="DependencyQueueEntry{T}.Value"/> and returns
+    ///   <see langword="true"/> to dequeue the entry or
+    ///   <see langword="false"/> to block until a later time.
+    /// </param>
     /// <returns>
     ///   An entry to process, or <see langword="null"/> if no more entries
     ///   remain to be processed.
     /// </returns>
-    public DependencyQueueEntry<T>? GetNextEntry()
+    public DependencyQueueEntry<T>? GetNextEntry(Func<T, bool>? predicate = null)
     {
         var entry = _entry;
 
         if (entry is not null)
             _queue.Complete(entry);
 
-        return _entry = _queue.TryDequeue();
+        return _entry = _queue.TryDequeue(predicate);
     }
 
     /// <summary>
     ///   Asynchronously gets the next entry that the worker should process.
     /// </summary>
+    /// <param name="predicate">
+    ///   An optional delegate that receives an entry's
+    ///   <see cref="DependencyQueueEntry{T}.Value"/> and returns
+    ///   <see langword="true"/> to dequeue the entry or
+    ///   <see langword="false"/> to block until a later time.
+    /// </param>
     /// <returns>
     ///   A task that represents the asynchronous operation.  When the task
     ///   completes, its <see cref="Task{T}.Result"/> property contains an
     ///   entry to process or <see langword="null"/> if no more entries remain
     ///   to be processed.
     /// </returns>
-    public async Task<DependencyQueueEntry<T>?> GetNextEntryAsync()
+    public async Task<DependencyQueueEntry<T>?> GetNextEntryAsync(Func<T, bool>? predicate = null)
     {
         var entry = _entry;
 
         if (entry is not null)
             _queue.Complete(entry);
 
-        return _entry = await _queue.TryDequeueAsync(cancellation: CancellationToken);
+        return _entry = await _queue.TryDequeueAsync(predicate, CancellationToken);
     }
 
     /// <summary>
