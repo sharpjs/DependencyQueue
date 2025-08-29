@@ -23,7 +23,9 @@ internal class AsyncMonitor : IDisposable
     internal AsyncMonitor()
     {
         _locker = new(initialCount: 1, maxCount: 1);
-        _pulser = new();
+        _pulser = null!; // to not pass uninitialized location to Volatile.Write
+
+        Volatile.Write(ref _pulser, new());
     }
 
     /// <summary>
@@ -107,32 +109,14 @@ internal class AsyncMonitor : IDisposable
     /// </remarks>
     private void ReleaseUntilPulse(int timeoutMs)
     {
+        var pulseTask   = Volatile.Read(ref _pulser).Task;
         var timeoutTask = Task.Delay(timeoutMs);
-        var reacquired  = false;
 
         _locker.Release();
-        try
-        {
-            do
-            {
-                // Wait for pulse or timeout
-                var index = Task.WaitAny(timeoutTask, _pulser.Task);
 
-                // Check for timeout
-                if (index == 0)
-                    break;
+        Task.WaitAny(pulseTask, timeoutTask);
 
-                // Pulsed => reacquire immediately if possible; otherwise loop
-                reacquired = _locker.Wait(0);
-            }
-            while (!reacquired);
-        }
-        finally
-        {
-            // Timeout or exception => wait for reacquisition
-            if (!reacquired)
-                _locker.Wait();
-        }
+        _locker.Wait();
     }
 
     /// <summary>
@@ -162,32 +146,14 @@ internal class AsyncMonitor : IDisposable
     /// </remarks>
     private async Task ReleaseUntilPulseAsync(int timeoutMs, CancellationToken cancellation = default)
     {
+        var pulseTask   = Volatile.Read(ref _pulser).Task;
         var timeoutTask = Task.Delay(timeoutMs, cancellation);
-        var reacquired  = false;
 
         _locker.Release();
-        try
-        {
-            do
-            {
-                // Wait for pulse or timeout
-                var task = await Task.WhenAny(timeoutTask, _pulser.Task);
 
-                // Check for timeout
-                if (task == timeoutTask)
-                    break;
+        await Task.WhenAny(pulseTask, timeoutTask);
 
-                // Pulsed => reacquire immediately if possible; otherwise loop
-                reacquired = _locker.Wait(0, CancellationToken.None);
-            }
-            while (!reacquired);
-        }
-        finally
-        {
-            // Timeout or exception => wait for reacquisition
-            if (!reacquired)
-                await _locker.WaitAsync(cancellation);
-        }
+        await _locker.WaitAsync(cancellation);
     }
 
     /// <summary>
