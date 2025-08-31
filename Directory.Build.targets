@@ -8,7 +8,7 @@
   <!--
     * Imported late: project -> SDK .targets -> NuGet package .targets -> this
     * Override properties and targets here.
-    https://docs.microsoft.com/en-us/visualstudio/msbuild/customize-your-build
+    https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build
   -->
 
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
