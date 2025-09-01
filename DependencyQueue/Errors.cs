@@ -15,7 +15,7 @@ internal static class Errors
         => new ArgumentException("Argument cannot contain a null item.", name);
 
     internal static Exception ArgumentContainsEmpty(string name)
-        => new ArgumentException("Argument cannot contain an mepty item.", name);
+        => new ArgumentException("Argument cannot contain an empty item.", name);
 
     internal static Exception ArgumentOutOfRange(string name)
         => new ArgumentOutOfRangeException(name);
