@@ -744,6 +744,49 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public async Task RunAsync_Funky()
+    {
+        var entryA  = Entry("a",  requires: Items("b"));
+        var entryB0 = Entry("b0", provides: Items("a", "b"));
+        var entryB1 = Entry("b1", provides: Items("a", "b"));
+        var entryB2 = Entry("b2", provides: Items("a", "b"));
+        var entryB3 = Entry("b3", provides: Items("a", "b"));
+        var entryB4 = Entry("b4", provides: Items("a", "b"));
+        var entryB5 = Entry("b5", provides: Items("a", "b"));
+        var entryB6 = Entry("b6", provides: Items("a", "b"));
+        var entryB7 = Entry("b7", provides: Items("a", "b"));
+        var entryC  = Entry("c",  requires: Items("a"));
+
+        var entriesB = new[] { entryB0, entryB1, entryB2, entryB3, entryB4, entryB5, entryB6, entryB7 };
+
+        using var queue = Queue(entryA, entryB0, entryB1, entryB2, entryB3, entryB4, entryB5, entryB6, entryB7, entryC);
+        using var cts   = new CancellationTokenSource();
+
+        queue.Should().BeValid();
+
+        async Task WorkerMainAsync(Context_ context)
+        {
+            var takeable = context.WorkerId is var n and <= 8
+                ? new[] { entryA.Value, entriesB[n - 1].Value, entryC.Value }
+                : new[] { entryA.Value,                        entryC.Value };
+
+            for (;;)
+            {
+                await Task.Delay((17 - context.WorkerId) * 10);
+                var entry = await context.GetNextEntryAsync(takeable.Contains);
+                if (entry is null) break;
+            }
+        }
+
+        var data = new Data();
+
+        await queue.RunAsync(WorkerMainAsync, data, parallelism: 16, cancellation: cts.Token);
+
+        queue.Should().HaveReadyEntries(/*none*/);
+        queue.Should().HaveTopicCount(0);
+    }
+
+    [Test]
     public void Dispose_Managed()
     {
         using var queue = Queue();

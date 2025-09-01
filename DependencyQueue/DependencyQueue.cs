@@ -259,9 +259,6 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
 
         using var @lock = _monitor.Acquire();
 
-        // Whether to wake waiting threads to allow one to dequeue the next entry
-        var wake = false;
-
         foreach (var name in entry.Provides)
         {
             var topic = _topics[name];
@@ -276,11 +273,6 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
             // All of topic's entries are completed; mark topic itself as completed
             _topics.Remove(name);
 
-            // Check if all topics are completed
-            if (_topics.Count == 0)
-                // No more topics; wake sleeping workers so they can exit
-                wake = true;
-
             // Update dependents
             foreach (var dependent in topic.RequiredBy)
             {
@@ -293,13 +285,16 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
 
                 // All of dependent's requirements are met; it becomes ready
                 _ready.Enqueue(dependent);
-                wake = true;
             }
         }
 
-        // If necessary, wake up waiting threads so that one can dequeue the next entry
-        if (wake)
-            _monitor.PulseAll();
+        // Previously, this method avoided awaking any waiting tasks if the
+        // queue still had in-progress topics and no new entries became ready
+        // to dequeue.  That optimization was incorrect because completion of
+        // an entry here could cause a predicate to accept an entry that it
+        // previously rejected.  Because predicate logic is hidden, the only
+        // safe option is to wake waiting tasks after every entry completion.
+        _monitor.PulseAll();
     }
 
     /// <summary>
