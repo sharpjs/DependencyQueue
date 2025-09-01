@@ -50,7 +50,7 @@ public class DependencyQueueTests
         queue.Topics      .Should().BeEmpty();
         queue.ReadyEntries.Should().BeEmpty();
 
-        using var view = queue.Inspect();
+        using var view = queue.InspectAsync().GetAwaiter().GetResult();
 
         view.Queue             .Should().BeSameAs(queue);
         view.Comparer          .Should().BeSameAs(comparer);
@@ -205,7 +205,7 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public void TryDequeue_Validated()
+    public void TryDequeue_Initial()
     {
         using var queue = Queue();
 
@@ -383,6 +383,15 @@ public class DependencyQueueTests
 
         queue.Should().HaveReadyEntries(/*none*/);
         queue.Should().HaveTopicCount(0);
+    }
+
+    [Test]
+    public async Task TryDequeueAsync_NotValidated()
+    {
+        using var queue = Queue();
+
+        await queue.Awaiting(q => q.TryDequeueAsync())
+            .Should().ThrowAsync<InvalidOperationException>();
     }
 
     [Test]
