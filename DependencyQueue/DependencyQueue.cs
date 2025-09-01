@@ -140,7 +140,7 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// </remarks>
     public DependencyQueueEntry<T>? TryDequeue(Func<T, bool>? predicate = null)
     {
-        const int OneSecond = 1000; //ms
+        const int OneSecond = 1000; // ms
 
         if (!_isValid)
             throw Errors.NotValid();
@@ -208,7 +208,7 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
         Func<T, bool>?    predicate    = null,
         CancellationToken cancellation = default)
     {
-        const int OneSecond = 1000; //ms
+        const int OneSecond = 1000; // ms
 
         if (!_isValid)
             throw Errors.NotValid();
