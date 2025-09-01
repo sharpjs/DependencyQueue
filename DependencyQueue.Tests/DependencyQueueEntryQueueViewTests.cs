@@ -3,7 +3,7 @@
 
 namespace DependencyQueue;
 
-using Collection = Queue<DependencyQueueEntry<Value>>;
+using Collection = PredicateQueue<DependencyQueueEntry<Value>>;
 using View       = DependencyQueueEntryQueueView<Value>;
 using Inner      = DependencyQueueEntry<Value>;
 using Outer      = DependencyQueueEntry<Value>.View;
@@ -25,7 +25,6 @@ internal class DependencyQueueEntryQueueViewTests
         h.View.Invoking(v => v.Peek()).Should().Throw<ObjectDisposedException>();
     }
 
-#if NETCOREAPP
     [Test]
     public void TryPeek()
     {
@@ -41,7 +40,6 @@ internal class DependencyQueueEntryQueueViewTests
 
         h.View.Invoking(v => v.Peek()).Should().Throw<ObjectDisposedException>();
     }
-#endif
 
     private protected override Inner ItemA { get; } = new Entry("a");
     private protected override Inner ItemB { get; } = new Entry("b");

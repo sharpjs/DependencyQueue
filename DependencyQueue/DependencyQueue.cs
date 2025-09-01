@@ -13,7 +13,7 @@ namespace DependencyQueue;
 public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
 {
     // Entries that are ready to dequeue
-    private readonly Queue<DependencyQueueEntry<T>> _ready;
+    private readonly PredicateQueue<DependencyQueueEntry<T>> _ready;
 
     // Topics keyed by name
     private readonly Dictionary<string, DependencyQueueTopic<T>> _topics;
@@ -50,7 +50,7 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// <summary>
     ///   Gets the collection of entries that are ready to dequeue.
     /// </summary>
-    internal Queue<DependencyQueueEntry<T>> ReadyEntries => _ready;
+    internal PredicateQueue<DependencyQueueEntry<T>> ReadyEntries => _ready;
 
     /// <summary>
     ///   Gets the dictionary that maps topic names to topics.
@@ -145,6 +145,8 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
         if (!_isValid)
             throw Errors.NotValid();
 
+        predicate ??= AcceptAny;
+
         using var @lock = _monitor.Acquire();
 
         for (;;)
@@ -157,18 +159,15 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
             if (!_topics.Any())
                 return null;
 
-            // Check if the ready queue has an entry to dequeue
-            if (_ready.Any())
-                // Check if caller accepts the entry
-                if (predicate is null || predicate(_ready.Peek().Value))
-                    // Dequeue it
-                    return _ready.Dequeue();
+            // Check if the ready queue has an entry to dequeue that the caller accepts
+            if (_ready.TryDequeue(GetValue, predicate, out var entry))
+                return entry;
 
             // Some entries are in progress, and either there are no more ready
-            // entries, or the predicate rejected the next ready entry.  Wait
-            // for in-progress entries to complete and unblock some ready
-            // entry(ies), or for one second to elapse, after which the
-            // predicate might change its mind.
+            // entries, or the predicate rejected all of them.  Wait for any
+            // in-progress entries to complete and unblock some ready entries,
+            // or for one second to elapse, after which the predicate might
+            // change its mind.
             @lock.ReleaseUntilPulse(OneSecond);
         }
     }
@@ -214,6 +213,8 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
         if (!_isValid)
             throw Errors.NotValid();
 
+        predicate ??= AcceptAny;
+
         using var @lock = await _monitor.AcquireAsync(cancellation);
 
         for (;;)
@@ -226,21 +227,24 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
             if (!_topics.Any())
                 return null;
 
-            // Check if the ready queue has an entry to dequeue
-            if (_ready.Any())
-                // Check if caller accepts the entry
-                if (predicate is null || predicate(_ready.Peek().Value))
-                    // Dequeue it
-                    return _ready.Dequeue();
+            // Check if the ready queue has an entry to dequeue that the caller accepts
+            if (_ready.TryDequeue(GetValue, predicate, out var entry))
+                return entry;
 
             // Some entries are in progress, and either there are no more ready
-            // entries, or the predicate rejected the next ready entry.  Wait
-            // for in-progress entries to complete and unblock some ready
-            // entry(ies), or for one second to elapse, after which the
-            // predicate might change its mind.
+            // entries, or the predicate rejected all of them.  Wait for any
+            // in-progress entries to complete and unblock some ready entries,
+            // or for one second to elapse, after which the predicate might
+            // change its mind.
             await @lock.ReleaseUntilPulseAsync(OneSecond, cancellation);
         }
     }
+
+    private static readonly Func<DependencyQueueEntry<T>, T>
+        GetValue = e => e.Value;
+
+    private static readonly Func<T, bool>
+        AcceptAny = _ => true;
 
     /// <summary>
     ///   Marks the specified entry as done.
