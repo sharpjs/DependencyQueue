@@ -23,6 +23,15 @@ internal static class Errors
     internal static Exception ObjectDisposed(string? name)
         => new ObjectDisposedException(name);
 
+    internal static Exception CollectionEmpty()
+        => new InvalidOperationException("The collection is empty.");
+
+    internal static Exception EnumeratorNoCurrentItem()
+        => new InvalidOperationException(
+            "The enumerator is positioned before the first element " +
+            "of the collection or after the last element."
+        );
+
     internal static Exception NoCurrentEntry()
         => new InvalidOperationException(
             "The builder does not have a current entry.  " +
