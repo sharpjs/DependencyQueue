@@ -110,7 +110,7 @@ public readonly struct DependencyQueueEntryQueueView<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        public DependencyQueueEntry<T>.View Current
+        public readonly DependencyQueueEntry<T>.View Current
         {
             get
             {
@@ -123,7 +123,7 @@ public readonly struct DependencyQueueEntryQueueView<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        object? IEnumerator.Current => Current;
+        readonly object? IEnumerator.Current => Current;
 
         /// <inheritdoc/>
         /// <exception cref="ObjectDisposedException">

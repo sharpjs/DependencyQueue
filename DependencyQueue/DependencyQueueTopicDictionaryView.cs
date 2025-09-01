@@ -215,7 +215,7 @@ public readonly struct DependencyQueueTopicDictionaryView<T>
             /// <exception cref="ObjectDisposedException">
             ///   The underlying lock has been released.
             /// </exception>
-            public string Current
+            public readonly string Current
             {
                 get
                 {
@@ -228,7 +228,7 @@ public readonly struct DependencyQueueTopicDictionaryView<T>
             /// <exception cref="ObjectDisposedException">
             ///   The underlying lock has been released.
             /// </exception>
-            object? IEnumerator.Current => Current;
+            readonly object? IEnumerator.Current => Current;
 
             /// <inheritdoc/>
             /// <exception cref="ObjectDisposedException">
@@ -329,7 +329,7 @@ public readonly struct DependencyQueueTopicDictionaryView<T>
             /// <exception cref="ObjectDisposedException">
             ///   The underlying lock has been released.
             /// </exception>
-            public DependencyQueueTopic<T>.View Current
+            public readonly DependencyQueueTopic<T>.View Current
             {
                 get
                 {
@@ -342,7 +342,7 @@ public readonly struct DependencyQueueTopicDictionaryView<T>
             /// <exception cref="ObjectDisposedException">
             ///   The underlying lock has been released.
             /// </exception>
-            object? IEnumerator.Current => Current;
+            readonly object? IEnumerator.Current => Current;
 
             /// <inheritdoc/>
             /// <exception cref="ObjectDisposedException">
@@ -393,7 +393,7 @@ public readonly struct DependencyQueueTopicDictionaryView<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        public KeyValuePair<string, DependencyQueueTopic<T>.View> Current
+        public readonly KeyValuePair<string, DependencyQueueTopic<T>.View> Current
         {
             get
             {
@@ -407,7 +407,7 @@ public readonly struct DependencyQueueTopicDictionaryView<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        object? IEnumerator.Current => Current;
+        readonly object? IEnumerator.Current => Current;
 
         /// <inheritdoc/>
         /// <exception cref="ObjectDisposedException">
