@@ -422,6 +422,9 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     ///   If the queue state is valid, an empty list; otherwise, a list of
     ///   errors that prevent the queue state from being valid.
     /// </returns>
+    /// <remarks>
+    ///   This method is thread-safe.
+    /// </remarks>
     public IReadOnlyList<DependencyQueueError> Validate()
     {
         var errors = new List<DependencyQueueError>();
