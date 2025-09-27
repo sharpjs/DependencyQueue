@@ -131,6 +131,19 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public void Enqueue_DuplicateEntry()
+    {
+        var entryA0 = Entry("a");
+        var entryA1 = Entry("a");
+
+        using var queue = Queue(entryA0, entryA1);
+
+        queue.Should().HaveReadyEntries(entryA0, entryA1);
+        queue.Should().HaveTopicCount(1);
+        queue.Should().HaveTopic("a", providedBy: Items(entryA0, entryA1));
+    }
+
+    [Test]
     public void Validate_Empty()
     {
         using var queue = Queue();
