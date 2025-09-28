@@ -26,7 +26,7 @@ item is not dequeued until any items on which it depends have been dequeued.
 If one must ascribe a catchy initialism to such a queue, a nice one is WIRDO —
 **w**hatever **i**n, **r**everse **d**ependency **o**ut.
 
-If an example would be helpful, skip to the Example section below.
+If an example would be helpful, skip to the [Example](#example) section below.
 
 ### Creation
 
@@ -148,7 +148,9 @@ call `Complete()` to inform the queue.
 queue.Complete(entry);
 ```
 
-`TryDequeue()`, `TryDequeueAsync()`, and `Complete()` are thread-safe.
+`TryDequeue()`, `TryDequeueAsync()`, and `Complete()` are thread-safe.  For
+full thread safety information, see the [Thread Safety](#thread-safety) section
+below.
 
 Because dequeueing and completing entries is often done in a loop and in
 parallel, DependencyQueue provides `Run()` and `RunAsync()` methods that
@@ -200,8 +202,9 @@ await var entry = queue.TryDequeueAsync(
 ### Inspection
 
 To peek into a queue, the `DependencyQueue<T>` class provides the `Inspect()`
-method.  The method acquires an exclusive lock on the queue and returns a
-read-only view of the queue that holds the lock until the view is disposed.
+and `InspectAsync()` methods.  These methods acquire an exclusive lock on the
+queue and return a read-only view of the queue.  The view holds the exclusive
+lock until disposed.
 
 ```csharp
 using var view = queue.Inspect();
@@ -244,6 +247,8 @@ A `DependencyQueue<T>` instance has four possible states:
 
 ### Thread Safety
 
+Most methods of `DependencyQueue<T>` are thread-safe.  Specifically:
+
 - The object returned by `CreateEntryBuilder()` is not thread-safe, but
   multiple threads can each use their own builder instance to enqueue items in
   parallel.
@@ -252,6 +257,9 @@ A `DependencyQueue<T>` instance has four possible states:
 
 - All dequeue methods (`TryDequeue()`, `TryDequeueAsync()`, `Run()`,
   `RunAsync()`, and `Complete()`) are thread-safe.
+
+- All inspection methods (`Inspect()` and `InspectAsync()`) are thread-safe, as
+  are the objects they return.
 
 - `SetEnding()` is thread-safe.
 
