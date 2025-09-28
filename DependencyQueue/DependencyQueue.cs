@@ -9,6 +9,7 @@ namespace DependencyQueue;
 /// <typeparam name="T">
 ///   The type of values contained in queue entries.
 /// </typeparam>
+/// <seealso href="https://github.com/sharpjs/DependencyQueue"/>
 /// <seealso href="https://en.wikipedia.org/wiki/Dependency_graph"/>
 public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
 {
@@ -70,8 +71,8 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// </returns>
     /// <remarks>
     ///   ⚠ <strong>Warning:</strong>
-    ///   The builder this method returns is not thread-safe.  To build
-    ///   entries in parallel, create one builder per thread.
+    ///   The builder this method returns is not thread-safe.  To build entries
+    ///   in parallel, create one builder per thread.
     /// </remarks>
     public DependencyQueueEntryBuilder<T> CreateEntryBuilder()
         => new(this);
@@ -88,7 +89,11 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="entry"/> is <see langword="null"/>.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    ///   The queue has been disposed.
+    /// </exception>
     public void Enqueue(DependencyQueueEntry<T> entry)
+    // TODO: This method should be internal.
     {
         if (entry is null)
             throw Errors.ArgumentNull(nameof(entry));
@@ -108,46 +113,54 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     }
 
     /// <summary>
-    ///   Dequeues the next entry from the queue.
+    ///   Dequeues an entry from the queue.
     /// </summary>
     /// <param name="predicate">
     ///   An optional delegate that receives an entry's
     ///   <see cref="DependencyQueueEntry{T}.Value"/> and returns
     ///   <see langword="true"/> to dequeue the entry or
-    ///   <see langword="false"/> to block until a later time.
+    ///   <see langword="false"/> otherwise.  The method may invoke the
+    ///   delegate multiple times.
     /// </param>
     /// <returns>
-    ///   The next entry from the queue, or <see langword="null"/> if no more
-    ///   entries remain.
+    ///   An entry from the queue, or <see langword="null"/> if no more entries
+    ///   remain.
     /// </returns>
-    /// <exception cref="InvalidOperationException">
-    ///   The queue state is invalid or has not been validated.  Use the
-    ///   <see cref="Validate"/> method and correct any errors it returns.
-    /// </exception>
     /// <remarks>
     ///   <para>
-    ///     This method returns when the next entry is ready to dequeue
-    ///     <strong>and</strong> the <paramref name="predicate"/> returns
-    ///     <see langword="true"/> for the entry's
-    ///     <see cref="DependencyQueueEntry{T}.Value"/>.
-    ///     This method reevaluates that condition when another entry becomes
-    ///     ready to dequeue or when one second has elapsed since the previous
-    ///     evaluation.
+    ///     This method returns only when an entry is ready to dequeue.
+    ///   </para>
+    ///   <para>
+    ///     If a <paramref name="predicate"/> is provided, this method tests
+    ///     the <see cref="DependencyQueueEntry{T}.Value"/> of each ready entry
+    ///     and dequeues the first entry for which the predicate returns
+    ///     <see langword="true"/>.  If the predicate does not accept any ready
+    ///     entry, then this method blocks as if there are no entries ready to
+    ///     dequeue.  While blocking, this method retests all ready entries
+    ///     against the predicate when another entry becomes ready to dequeue
+    ///     or when one second has elapsed since the previous test.
     ///   </para>
     ///   <para>
     ///     This method is thread-safe.
     ///   </para>
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    ///   The queue state is invalid or has not been validated.  Use the
+    ///   <see cref="Validate"/> method and correct any errors it returns.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    ///   The queue has been disposed.
+    /// </exception>
     public DependencyQueueEntry<T>? TryDequeue(Func<T, bool>? predicate = null)
     {
         const int OneSecond = 1000; // ms
 
-        if (!_isValid)
-            throw Errors.NotValid();
-
         predicate ??= AcceptAny;
 
         using var @lock = _monitor.Acquire();
+
+        if (!_isValid)
+            throw Errors.NotValid();
 
         for (;;)
         {
@@ -173,49 +186,61 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     }
 
     /// <summary>
-    ///   Dequeues the next entry from the queue asynchronously.
+    ///   Dequeues an entry from the queue asynchronously.
     /// </summary>
     /// <param name="predicate">
     ///   An optional delegate that receives an entry's
     ///   <see cref="DependencyQueueEntry{T}.Value"/> and returns
     ///   <see langword="true"/> to dequeue the entry or
-    ///   <see langword="false"/> to block until a later time.
+    ///   <see langword="false"/> otherwise.  The method may invoke the
+    ///   delegate multiple times.
     /// </param>
     /// <param name="cancellation">
     ///   The token to monitor for cancellation requests.
     /// </param>
     /// <returns>
     ///   A task that represents the asynchronous operation.  When the task
-    ///   completes, its <see cref="Task{T}.Result"/> property is set to the
-    ///   next entry from the queue, or <see langword="null"/> if no more
-    ///   entries remain.
+    ///   completes, its <see cref="Task{T}.Result"/> property is set to an
+    ///   entry from the queue, or <see langword="null"/> if no more entries
+    ///   remain.
     /// </returns>
     /// <remarks>
     ///   <para>
-    ///     This method returns when the next entry is ready to dequeue
-    ///     <strong>and</strong> the <paramref name="predicate"/> returns
-    ///     <see langword="true"/> for the entry's
-    ///     <see cref="DependencyQueueEntry{T}.Value"/>.
-    ///     This method reevaluates that condition when another entry becomes
-    ///     ready to dequeue or when one second has elapsed since the previous
-    ///     evaluation.
+    ///     This method returns only when an entry is ready to dequeue.
+    ///   </para>
+    ///   <para>
+    ///     If a <paramref name="predicate"/> is provided, this method tests
+    ///     the <see cref="DependencyQueueEntry{T}.Value"/> of each ready entry
+    ///     and dequeues the first entry for which the predicate returns
+    ///     <see langword="true"/>.  If the predicate does not accept any ready
+    ///     entry, then this method delays as if there are no entries ready to
+    ///     dequeue.  While delaying, this method retests all ready entries
+    ///     against the predicate when another entry becomes ready to dequeue
+    ///     or when one second has elapsed since the previous test.
     ///   </para>
     ///   <para>
     ///     This method is thread-safe.
     ///   </para>
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    ///   The queue state is invalid or has not been validated.  Use the
+    ///   <see cref="Validate"/> method and correct any errors it returns.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    ///   The queue has been disposed.
+    /// </exception>
     public async Task<DependencyQueueEntry<T>?> TryDequeueAsync(
         Func<T, bool>?    predicate    = null,
         CancellationToken cancellation = default)
     {
         const int OneSecond = 1000; // ms
 
-        if (!_isValid)
-            throw Errors.NotValid();
-
         predicate ??= AcceptAny;
 
         using var @lock = await _monitor.AcquireAsync(cancellation);
+
+        if (!_isValid)
+            throw Errors.NotValid();
 
         for (;;)
         {
@@ -253,9 +278,20 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     ///   The entry to mark as done.
     /// </param>
     /// <remarks>
-    ///   If <paramref name="entry"/> completes a topic, any entries that
-    ///   depend solely upon that topic become ready to dequeue.
+    ///   <para>
+    ///     If <paramref name="entry"/> completes a topic, any entries that
+    ///     depend solely upon that topic become ready to dequeue.
+    ///   </para>
+    ///   <para>
+    ///     This method is thread-safe.
+    ///   </para>
     /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    ///   <paramref name="entry"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    ///   The queue has been disposed.
+    /// </exception>
     public void Complete(DependencyQueueEntry<T> entry)
     {
         if (entry is null)
@@ -304,6 +340,9 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// <summary>
     ///   Notifies all waiting threads to end processing.
     /// </summary>
+    /// <remarks>
+    ///   This method is thread-safe.
+    /// </remarks>
     public void SetEnding()
     {
         _isEnding = true;
@@ -319,8 +358,8 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     }
 
     /// <summary>
-    ///   Invokes one or more workers to process entries from the queue in
-    ///   dependency order.
+    ///   Invokes one or more parallel workers to process entries from the
+    ///   queue in dependency order.
     /// </summary>
     /// <typeparam name="TData">
     ///   The type of arbitrary data to provide to invocations of
@@ -338,23 +377,38 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     ///   The number of parallel invocations of <paramref name="worker"/>.
     ///   The default is <see cref="Environment.ProcessorCount"/>.
     /// </param>
+    /// <remarks>
+    ///   This method is thread-safe.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    ///   <paramref name="worker"/> is <see langword="null"/>.
+    /// </exception>
     /// <exception cref="InvalidOperationException">
     ///   The queue state is invalid or has not been validated.  Use the
     ///   <see cref="Validate"/> method and correct any errors it returns.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    ///   The queue has been disposed.
     /// </exception>
     public void Run<TData>(
         Action<DependencyQueueContext<T, TData>> worker,
         TData                                    data,
         int?                                     parallelism = null)
     {
-        var contexts = MakeContexts(data, parallelism);
+        if (worker is null)
+            throw Errors.ArgumentNull(nameof(worker));
+
+        DependencyQueueContext<T, TData>[] contexts;
+
+        using (_monitor.Acquire())
+            contexts = MakeContexts(data, parallelism);
 
         Parallel.ForEach(contexts, worker);
     }
 
     /// <summary>
-    ///   Invokes one or more workers asynchronously to process entries from
-    ///   the queue in dependency order.
+    ///   Invokes one or more parallel workers asynchronously to process
+    ///   entries from the queue in dependency order.
     /// </summary>
     /// <typeparam name="TData">
     ///   The type of arbitrary data to provide to invocations of
@@ -378,19 +432,34 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// <returns>
     ///   A task that represents the asynchronous operation.
     /// </returns>
+    /// <remarks>
+    ///   This method is thread-safe.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    ///   <paramref name="worker"/> is <see langword="null"/>.
+    /// </exception>
     /// <exception cref="InvalidOperationException">
     ///   The queue state is invalid or has not been validated.  Use the
     ///   <see cref="Validate"/> method and correct any errors it returns.
     /// </exception>
-    public Task RunAsync<TData>(
+    /// <exception cref="ObjectDisposedException">
+    ///   The queue has been disposed.
+    /// </exception>
+    public async Task RunAsync<TData>(
         Func<DependencyQueueContext<T, TData>, Task> worker,
         TData                                        data,
         int?                                         parallelism  = null,
         CancellationToken                            cancellation = default)
     {
-        var contexts = MakeContexts(data, parallelism, cancellation);
+        if (worker is null)
+            throw Errors.ArgumentNull(nameof(worker));
 
-        return Task.WhenAll(contexts.Select(worker));
+        DependencyQueueContext<T, TData>[] contexts;
+
+        using (await _monitor.AcquireAsync(cancellation))
+            contexts = MakeContexts(data, parallelism, cancellation);
+
+        await Task.WhenAll(contexts.Select(worker));
     }
 
     private DependencyQueueContext<T, TData>[] MakeContexts<TData>(
@@ -517,6 +586,9 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     /// <returns>
     ///   A read-only view over the exclusively-locked queue.
     /// </returns>
+    /// <remarks>
+    ///   This method and the object model it returns are thread-safe.
+    /// </remarks>
     public View Inspect()
     {
         return new(this, _monitor.Acquire());
@@ -535,6 +607,9 @@ public class DependencyQueue<T> : IDependencyQueue<T>, IDisposable
     ///   completes, its <see cref="Task{T}.Result"/> property is set to a
     ///   read-only view over the exclusively-locked queue.
     /// </returns>
+    /// <remarks>
+    ///   This method and the object model it returns are thread-safe.
+    /// </remarks>
     public async Task<View> InspectAsync(CancellationToken cancellation = default)
     {
         return new(this, await _monitor.AcquireAsync(cancellation));

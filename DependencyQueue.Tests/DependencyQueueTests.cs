@@ -144,6 +144,32 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public void Enqueue_Ending()
+    {
+        var entry = Entry("a");
+
+        using var queue = Queue();
+
+        queue.SetEnding();
+
+        // Allowed but not very useful
+        queue.Enqueue(entry);
+    }
+
+    [Test]
+    public void Enqueue_Disposed()
+    {
+        var entry = Entry("a");
+
+        var queue = Queue();
+        queue.Dispose();
+
+        queue
+            .Invoking(q => q.Enqueue(entry))
+            .Should().Throw<ObjectDisposedException>();
+    }
+
+    [Test]
     public void Validate_Empty()
     {
         using var queue = Queue();
@@ -209,6 +235,28 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public void Validate_Ending()
+    {
+        using var queue = Queue();
+
+        queue.SetEnding();
+
+        // Allowed but not very useful
+        queue.Validate().Should().BeEmpty();
+    }
+
+    [Test]
+    public void Validate_Disposed()
+    {
+        var queue = Queue();
+        queue.Dispose();
+
+        queue
+            .Invoking(q => q.Validate())
+            .Should().Throw<ObjectDisposedException>();
+    }
+
+    [Test]
     public void TryDequeue_NotValidated()
     {
         using var queue = Queue();
@@ -245,6 +293,19 @@ public class DependencyQueueTests
         queue.Should().HaveReadyEntries(entry);
         queue.Should().HaveTopicCount(1);
         queue.Should().HaveTopic("a", providedBy: Items(entry));
+    }
+
+    [Test]
+    public void TryDequeue_Disposed()
+    {
+        var entry = Entry("a");
+
+        var queue = Queue(entry);
+        queue.Dispose();
+
+        queue
+            .Invoking(q => q.TryDequeue())
+            .Should().Throw<ObjectDisposedException>();
     }
 
     [Test]
@@ -438,6 +499,19 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public async Task TryDequeueAsync_Disposed()
+    {
+        var entry = Entry("a");
+
+        var queue = Queue(entry);
+        queue.Dispose();
+
+        await queue
+            .Awaiting(q => q.TryDequeueAsync())
+            .Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Test]
     public async Task TryDequeueAsync_Ok()
     {
         var entry = Entry("a");
@@ -609,8 +683,50 @@ public class DependencyQueueTests
             .Where(e => e.ParamName == "entry");
     }
 
-    // TODO: Do we need to test more of Complete, specifically what it does
-    // to the Topics and ReadEvents collections?
+    [Test]
+    public void Complete_Ending()
+    {
+        var entry = Entry("a");
+
+        using var queue = Queue(entry);
+        queue.Validate();
+        queue.TryDequeue().Should().BeSameAs(entry);
+        queue.SetEnding();
+
+        // Allowed but not very useful
+        queue.Complete(entry);
+    }
+
+    [Test]
+    public void Complete_Disposed()
+    {
+        var entry = Entry("a");
+
+        var queue = Queue(entry);
+        queue.Validate();
+        queue.TryDequeue().Should().BeSameAs(entry);
+        queue.Dispose();
+
+        queue
+            .Invoking(q => q.Complete(entry))
+            .Should().Throw<ObjectDisposedException>();
+    }
+
+    // TODO: Need to test more of Complete, specifically what it does to the
+    // Topics and ReadEvents collections?  Or what happens when completing an
+    // entry that wasn't dequeued?  Or completing the same entry twice?  Or
+    // completing an entry that was never enqueued?
+
+    [Test]
+    public void Run_NullWorker()
+    {
+        using var queue = Queue();
+
+        queue
+            .Invoking(q => q.Run(null!, new Data(), parallelism: 0))
+            .Should().Throw<ArgumentNullException>()
+            .WithParameterName("worker");
+    }
 
     [Test]
     public void Run_NotValidated()
@@ -622,6 +738,19 @@ public class DependencyQueueTests
         queue
             .Invoking(q => q.Run(WorkerMain, new Data(), parallelism: 0))
             .Should().ThrowExactly<InvalidOperationException>();
+    }
+
+    [Test]
+    public void Run_Disposed()
+    {
+        static void WorkerMain(Context_ _) { };
+
+        var queue = Queue();
+        queue.Dispose();
+
+        queue
+            .Invoking(q => q.Run(WorkerMain, new Data(), parallelism: 0))
+            .Should().Throw<ObjectDisposedException>();
     }
 
     [Test]
@@ -689,7 +818,18 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public async Task RunAsync_NotValidatedAsync()
+    public async Task RunAsync_NullWorker()
+    {
+        using var queue = Queue();
+
+        await queue
+            .Awaiting(q => q.RunAsync(null!, new Data(), parallelism: 0))
+            .Should().ThrowAsync<ArgumentNullException>()
+            .WithParameterName("worker");
+    }
+
+    [Test]
+    public async Task RunAsync_NotValidated()
     {
         static Task WorkerMain(Context_ _) => Task.CompletedTask;
 
@@ -701,7 +841,20 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public async Task RunAsync_InvalidParallelismAsync()
+    public async Task RunAsync_Disposed()
+    {
+        static Task WorkerMain(Context_ _) => Task.CompletedTask;
+
+        var queue = Queue();
+        queue.Dispose();
+
+        await queue
+            .Awaiting(q => q.RunAsync(WorkerMain, new Data(), parallelism: 0))
+            .Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Test]
+    public async Task RunAsync_InvalidParallelism()
     {
         static Task WorkerMain(Context_ _) => Task.CompletedTask;
 
