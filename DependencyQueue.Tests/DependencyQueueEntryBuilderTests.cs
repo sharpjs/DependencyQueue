@@ -9,174 +9,227 @@ public class DependencyQueueEntryBuilderTests
     [Test]
     public void Construct_NullQueue()
     {
-        Invoking(() => new Builder(null!))
-            .Should().ThrowExactly<ArgumentNullException>()
-            .Where(e => e.ParamName == "queue");
+        var e = Should.Throw<ArgumentNullException>(
+            () => new Builder(null!)
+        );
+
+        e.ParamName.ShouldBe("queue");
     }
 
     [Test]
     public void Construct_Ok()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        h.Builder.CurrentEntry.Should().BeNull();
-        h.Builder.Queue       .Should().BeSameAs(h.Queue.Object);
+        var builder = queue.CreateEntryBuilder();
+
+        builder.CurrentEntry.ShouldBeNull();
+        builder.Queue       .ShouldBeSameAs(queue);
     }
 
     [Test]
     public void NewEntry()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        var name  = "x";
+        var builder = queue.CreateEntryBuilder();
+
         var value = new Value();
-
-        var entry = h.Builder
-            .NewEntry(name, value)
+        var entry = builder
+            .NewEntry("x", value)
             .CurrentEntry;
 
-        entry       .Should().NotBeNull();
-        entry!.Name .Should().BeSameAs(name);
-        entry!.Value.Should().BeSameAs(value);
+        entry         .ShouldNotBeNull();
+        entry.Name    .ShouldBeSameAs("x");
+        entry.Value   .ShouldBeSameAs(value);
+        entry.Requires.ShouldBeEmpty();
+        entry.Provides.ShouldBe(["x"]);
     }
 
     [Test]
     public void AddProvides_ParamsArray_NoCurrentEntry()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        h.Builder
-            .Invoking(b => b.AddProvides("a", "b"))
-            .Should().ThrowExactly<InvalidOperationException>();
+        var builder = queue.CreateEntryBuilder();
+
+        Should.Throw<InvalidOperationException>(
+            () => builder.AddProvides("a", "b")
+        );
     }
 
     [Test]
     public void AddProvides_IEnumerable_NoCurrentEntry()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        h.Builder
-            .Invoking(b => b.AddProvides(Items("a", "b")))
-            .Should().ThrowExactly<InvalidOperationException>();
+        var builder = queue.CreateEntryBuilder();
+
+        Should.Throw<InvalidOperationException>(
+            () => builder.AddProvides((IEnumerable<string>) ["a", "b"])
+        );
     }
 
     [Test]
     public void AddProvides_ParamsArray_Ok()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        var entry = h.Builder
-            .NewEntry("x", new())
+        var builder = queue.CreateEntryBuilder();
+
+        var entry = builder
+            .NewEntry("x", value: new())
             .AddProvides("a", "b")
             .CurrentEntry;
 
-        entry          .Should().NotBeNull();
-        entry!.Provides.Should().Contain(Items("a", "b"));
+        entry         .ShouldNotBeNull();
+        entry.Provides.ShouldBe(["x", "a", "b"]);
     }
 
     [Test]
     public void AddProvides_IEnumerable_Ok()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        var entry = h.Builder
-            .NewEntry("x", new())
-            .AddProvides(Items("a", "b"))
+        var builder = queue.CreateEntryBuilder();
+
+        var entry = builder
+            .NewEntry("x", value: new())
+            .AddProvides((IEnumerable<string>) ["a", "b"])
             .CurrentEntry;
 
-        entry          .Should().NotBeNull();
-        entry!.Provides.Should().Contain(Items("a", "b"));
+        entry         .ShouldNotBeNull();
+        entry.Provides.ShouldBe(["x", "a", "b"]);
     }
 
     [Test]
     public void AddRequires_ParamsArray_NoCurrentEntry()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        h.Builder
-            .Invoking(b => b.AddRequires("a", "b"))
-            .Should().ThrowExactly<InvalidOperationException>();
+        var builder = queue.CreateEntryBuilder();
+
+        Should.Throw<InvalidOperationException>(
+            () => builder.AddRequires("a", "b")
+        );
     }
 
     [Test]
     public void AddRequires_IEnumerable_NoCurrentEntry()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        h.Builder
-            .Invoking(b => b.AddRequires(Items("a", "b")))
-            .Should().ThrowExactly<InvalidOperationException>();
+        var builder = queue.CreateEntryBuilder();
+
+        Should.Throw<InvalidOperationException>(
+            () => builder.AddRequires((IEnumerable<string>) ["a", "b"])
+        );
     }
 
     [Test]
     public void AddRequires_ParamsArray_Ok()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        var entry = h.Builder
-            .NewEntry("x", new())
+        var builder = queue.CreateEntryBuilder();
+
+        var entry = builder
+            .NewEntry("x", value: new())
             .AddRequires("a", "b")
             .CurrentEntry;
 
-        entry          .Should().NotBeNull();
-        entry!.Requires.Should().Contain(Items("a", "b"));
+        entry         .ShouldNotBeNull();
+        entry.Requires.ShouldBe(["a", "b"]);
     }
 
     [Test]
     public void AddRequires_IEnumerable_Ok()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        var entry = h.Builder
-            .NewEntry("x", new())
-            .AddRequires(Items("a", "b"))
+        var builder = queue.CreateEntryBuilder();
+
+        var entry = builder
+            .NewEntry("x", value: new())
+            .AddRequires((IEnumerable<string>) ["a", "b"])
             .CurrentEntry;
 
-        entry          .Should().NotBeNull();
-        entry!.Requires.Should().Contain(Items("a", "b"));
+        entry         .ShouldNotBeNull();
+        entry.Requires.ShouldBe(["a", "b"]);
     }
 
     [Test]
     public void Enqueue_NoCurrentEntry()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        h.Builder
-            .Invoking(b => b.Enqueue())
-            .Should().ThrowExactly<InvalidOperationException>();
+        var builder = queue.CreateEntryBuilder();
+
+        Should.Throw<InvalidOperationException>(
+            () => builder.Enqueue()
+        );
     }
 
     [Test]
     public void Enqueue_Ok()
     {
-        using var h = new TestHarness();
+        using var queue = new Queue();
 
-        var entry0 = h.Builder
-            .NewEntry("x", new())
-            .CurrentEntry;
+        var builder = queue.CreateEntryBuilder();
 
-        h.Queue
-            .Setup(q => q.Enqueue(entry0!))
-            .Verifiable();
+        builder
+            .NewEntry("x", value: new())
+            .Enqueue();
 
-        var entry1 = h.Builder
-            .Enqueue()
-            .CurrentEntry;
+        builder.CurrentEntry.ShouldBeNull();
 
-        entry1.Should().BeNull();
+        var entry = queue.ReadyEntries.ShouldHaveSingleItem();
+        entry         .ShouldNotBeNull();
+        entry.Name    .ShouldBe("x");
+        entry.Provides.ShouldBe(["x"]);
+        entry.Requires.ShouldBeEmpty();
+
+        var topic = queue.Topics.Values.ShouldHaveSingleItem();
+        topic.Name      .ShouldBe("x");
+        topic.ProvidedBy.ShouldBe([entry]);
+        topic.RequiredBy.ShouldBeEmpty();
     }
 
-    private class TestHarness : QueueTestHarness
+    [Test]
+    public void Enqueue_WithOutParameter_NoCurrentEntry()
     {
-        public Builder Builder { get; }
+        using var queue = new Queue();
 
-        public TestHarness()
-        {
-            Queue
-                .Setup(q => q.Comparer)
-                .Returns(Comparer);
+        var builder = queue.CreateEntryBuilder();
 
-            Builder = new Builder(Queue.Object);
-        }
+        Should.Throw<InvalidOperationException>(
+            () => builder.Enqueue(out _)
+        );
+    }
+
+    [Test]
+    public void Enqueue_WithOutParameter__Ok()
+    {
+        using var queue = new Queue();
+
+        var builder = queue.CreateEntryBuilder();
+
+        builder
+            .NewEntry("x", value: new())
+            .Enqueue(out var entry);
+
+        builder.CurrentEntry.ShouldBeNull();
+
+        entry         .ShouldNotBeNull();
+        entry.Name    .ShouldBe("x");
+        entry.Provides.ShouldBe(["x"]);
+        entry.Requires.ShouldBeEmpty();
+
+        queue.ReadyEntries.ShouldBe([entry]);
+
+        var topic = queue.Topics.Values.ShouldHaveSingleItem();
+        topic.Name      .ShouldBe("x");
+        topic.ProvidedBy.ShouldBe([entry]);
+        topic.RequiredBy.ShouldBeEmpty();
     }
 }

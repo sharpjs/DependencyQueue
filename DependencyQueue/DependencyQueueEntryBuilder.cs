@@ -20,7 +20,7 @@ public class DependencyQueueEntryBuilder<T>
     private DependencyQueueEntry<T>? _entry;
 
     // The queue to which the builder will enqueue entries
-    private readonly IDependencyQueue<T> _queue;
+    private readonly DependencyQueue<T> _queue;
 
     /// <summary>
     ///   Initializes a new <see cref="DependencyQueueEntryBuilder{T}"/>
@@ -32,7 +32,7 @@ public class DependencyQueueEntryBuilder<T>
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="queue"/> is <see langword="null"/>.
     /// </exception>
-    internal DependencyQueueEntryBuilder(IDependencyQueue<T> queue)
+    internal DependencyQueueEntryBuilder(DependencyQueue<T> queue)
     {
         if (queue is null)
             throw Errors.ArgumentNull(nameof(queue));
