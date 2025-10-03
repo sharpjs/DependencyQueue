@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotStuff" />
     <PackageReference Include="Subatomix.Testing" />
   </ItemGroup>
 

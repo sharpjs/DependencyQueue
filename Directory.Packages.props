@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageVersion Include="DotStuff"          Version="0.0.0-pre.2" />
     <PackageVersion Include="Nullable"          Version="1.3.1" />
     <PackageVersion Include="Subatomix.Testing" Version="3.2.0" />
   </ItemGroup>
