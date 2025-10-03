@@ -152,7 +152,17 @@ public class DependencyQueueEntryBuilder<T>
     /// </exception>
     public DependencyQueueEntryBuilder<T> Enqueue()
     {
-        var entry = RequireCurrentEntry();
+        return Enqueue(out _);
+    }
+
+    /// <inheritdoc cref="Enqueue()"/>
+    /// <param name="entry">
+    ///   When this method returns, contains the entry that was added to the
+    ///   queue.
+    /// </param>
+    public DependencyQueueEntryBuilder<T> Enqueue(out DependencyQueueEntry<T> entry)
+    {
+        entry = RequireCurrentEntry();
         _queue.Enqueue(entry);
         _entry = null;
         return this;
