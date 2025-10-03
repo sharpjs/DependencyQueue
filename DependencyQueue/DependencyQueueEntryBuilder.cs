@@ -158,11 +158,9 @@ public class DependencyQueueEntryBuilder<T>
     ///   The builder, to enable chaining of method invocations.
     /// </returns>
     /// <remarks>
-    ///   <para>
-    ///     This method is valid only when building an entry.  After this
-    ///     method returns, the builder is no longer building an entry.
-    ///     Use <see cref="NewEntry"/> to begin building another entry.
-    ///   </para>
+    ///   This method is valid only when building an entry.  After this method
+    ///   returns, the builder is no longer building an entry.  Use
+    ///   <see cref="NewEntry"/> to begin building another entry.
     /// </remarks>
     /// <exception cref="InvalidOperationException">
     ///   The builder does not have a current entry.
