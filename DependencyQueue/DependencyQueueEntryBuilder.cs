@@ -4,13 +4,15 @@
 namespace DependencyQueue;
 
 /// <summary>
-///   A builder to create <see cref="DependencyQueueEntry{T}"/> instances.
+///   A builder that can incrementally create and enqueue entries in a
+///   <see cref="DependencyQueue{T}"/>.
 /// </summary>
 /// <typeparam name="T">
 ///   The type of object contained in an entry.
 /// </typeparam>
 /// <remarks>
-///   Members of this type are <strong>not</strong> thread-safe.
+///   Members of this type are <strong>not</strong> thread-safe.  To build
+///   entries in parallel, use a separate builder for each thread.
 /// </remarks>
 public class DependencyQueueEntryBuilder<T>
 {
@@ -55,7 +57,7 @@ public class DependencyQueueEntryBuilder<T>
     ///   Begins building a new entry with the specified name and value.
     /// </summary>
     /// <param name="name">
-    ///   The name of the entry.
+    ///   The name of the entry.  Cannot be <see langword="null"/> or empty.
     /// </param>
     /// <param name="value">
     ///   The value to store in the entry.
@@ -83,7 +85,8 @@ public class DependencyQueueEntryBuilder<T>
     ///   Declares that the current entry provides the specified topics.
     /// </summary>
     /// <param name="names">
-    ///   The names of topics that the entry provides.
+    ///   The names of topics that the entry provides.  A name cannot be
+    ///   <see langword="null"/> or empty.
     /// </param>
     /// <returns>
     ///   The builder, to enable chaining of method invocations.
@@ -92,6 +95,13 @@ public class DependencyQueueEntryBuilder<T>
     ///   This method is valid only when building an entry.
     ///   Use <see cref="NewEntry"/> to begin building an entry.
     /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    ///   <paramref name="names"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///   <paramref name="names"/> contains a <see langword="null"/> or empty
+    ///   name.
+    /// </exception>
     /// <exception cref="InvalidOperationException">
     ///   The builder does not have a current entry.
     ///   Use <see cref="NewEntry"/> to begin building an entry.
@@ -110,7 +120,8 @@ public class DependencyQueueEntryBuilder<T>
     ///   Declares that the current entry requires the specified topics.
     /// </summary>
     /// <param name="names">
-    ///   The names of topics that the entry requires.
+    ///   The names of topics that the entry requires.  A name cannot be
+    ///   <see langword="null"/> or empty.
     /// </param>
     /// <returns>
     ///   The builder, to enable chaining of method invocations.
@@ -119,6 +130,13 @@ public class DependencyQueueEntryBuilder<T>
     ///   This method is valid only when building an entry.
     ///   Use <see cref="NewEntry"/> to begin building an entry.
     /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    ///   <paramref name="names"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///   <paramref name="names"/> contains a <see langword="null"/> or empty
+    ///   name.
+    /// </exception>
     /// <exception cref="InvalidOperationException">
     ///   The builder does not have a current entry.
     ///   Use <see cref="NewEntry"/> to begin building an entry.
