@@ -153,9 +153,9 @@ public class DependencyQueueEntry<T>
         private readonly DependencyQueueEntry<T> _entry;
         private readonly AsyncMonitor.Lock       _lock;
 
-        internal View(DependencyQueueEntry<T> dependencyQueueEntry, AsyncMonitor.Lock @lock)
+        internal View(DependencyQueueEntry<T> entry, AsyncMonitor.Lock @lock)
         {
-            _entry = dependencyQueueEntry;
+            _entry = entry;
             _lock  = @lock;
         }
 
