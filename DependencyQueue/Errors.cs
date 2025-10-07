@@ -17,9 +17,6 @@ internal static class Errors
     internal static Exception ArgumentContainsEmpty(string name)
         => new ArgumentException("Argument cannot contain an empty item.", name);
 
-    internal static Exception ArgumentOutOfRange(string name)
-        => new ArgumentOutOfRangeException(name);
-
     internal static Exception ObjectDisposed(string? name)
         => new ObjectDisposedException(name);
 

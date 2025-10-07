@@ -147,6 +147,18 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public void Enqueue_NullEntry()
+    {
+        using var queue = new Queue();
+
+        var e = Should.Throw<ArgumentNullException>(
+            () => queue.Enqueue(null!)
+        );
+
+        e.ParamName.ShouldBe("entry");
+    }
+
+    [Test]
     public void Enqueue_IndependentEntry()
     {
         using var queue = new Queue();
