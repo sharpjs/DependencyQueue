@@ -64,7 +64,7 @@ public class DependencyQueueEntry<T>
     /// </summary>
     internal SortedSet<string> Requires { get; }
 
-    // Invoked via DependencyQueueEntryBuilder<T>
+    // Invoked by DependencyQueue<T> and DependencyQueueEntryBuilder<T>
     internal void AddProvides(IEnumerable<string> names)
     {
         RequireValidNames(names);
@@ -78,7 +78,7 @@ public class DependencyQueueEntry<T>
         }
     }
 
-    // Invoked via DependencyQueueEntryBuilder<T>
+    // Invoked by DependencyQueue<T> and DependencyQueueEntryBuilder<T>
     internal void AddRequires(IEnumerable<string> names)
     {
         RequireValidNames(names);

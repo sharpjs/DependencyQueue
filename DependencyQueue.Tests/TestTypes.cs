@@ -24,8 +24,6 @@ class Data
         => Invariant($"Data{GetHashCode():X4}");
 }
 
-interface IQueue : IDependencyQueue<Value> { }
-
 class Queue : DependencyQueue<Value>
 {
     internal Queue(StringComparer? comparer = null)
@@ -68,6 +66,14 @@ class Entry : DependencyQueueEntry<Value>
         => TestContext.CurrentContext.Random.GetString(6);
 }
 
+class Builder : DependencyQueueEntryBuilder<Value>
+{
+    internal Builder(Queue queue)
+        : base(queue)
+    { }
+}
+
+#if REMOVED
 class Context : DependencyQueueContext<Value, Data>
 {
     internal Context(
@@ -79,10 +85,4 @@ class Context : DependencyQueueContext<Value, Data>
         : base(queue, runId, workerId, data, cancellation)
     { }
 }
-
-class Builder : DependencyQueueEntryBuilder<Value>
-{
-    internal Builder(IQueue queue)
-        : base(queue)
-    { }
-}
+#endif

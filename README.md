@@ -26,12 +26,12 @@ item is not dequeued until any items on which it depends have been dequeued.
 If one must ascribe a catchy initialism to such a queue, a nice one is WIRDO —
 **w**hatever **i**n, **r**everse **d**ependency **o**ut.
 
-If an example would be helpful, skip to the [Example](#example) section below.
+If an example would be helpful, skip to the [Examples](#examples) section below.
 
 ### Creation
 
 The queue class is the generic `DependencyQueue<T>`, which supports simple
-creation via a constructor.
+creation via its constructor.
 
 ```csharp
 using var queue = new DependencyQueue<Step>();
@@ -152,39 +152,6 @@ queue.Complete(entry);
 full thread safety information, see the [Thread Safety](#thread-safety) section
 below.
 
-Because dequeueing and completing entries is often done in a loop and in
-parallel, DependencyQueue provides `Run()` and `RunAsync()` methods that
-simplify that common pattern.
-
-```csharp
-queue.Run(
-    context =>
-    {
-        while (context.GetNextEntry() is { } entry)
-        {
-            // Process the entry
-        }
-    },
-    arbitrarySharedData, // made available as context.Data
-    parallelism: 4
-);
-```
-
-```csharp
-await queue.RunAsync(
-    async context =>
-    {
-        while (await context.GetNextEntryAsync() is { } entry)
-        {
-            // Process the entry asynchronously
-        }
-    },
-    arbitrarySharedData, // made available as context.Data
-    parallelism: 4,
-    cancellationToken
-);
-```
-
 All dequeue methods support an optional predicate parameter.  If the caller
 provides a predicate, the queue tests each ready-to-dequeue item against the
 predicate and yields the first entry for which the predicate returns `true`.
@@ -249,31 +216,35 @@ A `DependencyQueue<T>` instance has four possible states:
 
 Most methods of `DependencyQueue<T>` are thread-safe.  Specifically:
 
+- The `Enqueue()` method is thread-safe.
+
 - The object returned by `CreateEntryBuilder()` is not thread-safe, but
   multiple threads can each use their own builder instance to enqueue items in
   parallel.
 
-- `Validate()` is thread-safe.
+- The `Validate()` method is thread-safe.
 
-- All dequeue methods (`TryDequeue()`, `TryDequeueAsync()`, `Run()`,
-  `RunAsync()`, and `Complete()`) are thread-safe.
+- The dequeue methods (`TryDequeue()`, `TryDequeueAsync()`, and `Complete()`)
+  are thread-safe.
 
-- All inspection methods (`Inspect()` and `InspectAsync()`) are thread-safe, as
+- The inspection methods (`Inspect()` and `InspectAsync()`) are thread-safe, as
   are the objects they return.
 
-- `SetEnding()` is thread-safe.
+- The `SetEnding()` method is thread-safe.
 
-- `Dispose()` is not thread-safe.
+- The `Dispose()` is <strong>Not</strong> thread-safe.
 
-## Example
+## Examples
 
-Let's imagine a program that cooks a basic hamburger.  The program can add
-steps to a dependency queue in any order, and the queue will yield back the
-steps in the correct order to prepare a burger.
+### Basic Usage
 
-The things in the queue are `Step` objects.  For the sake of the example, it's
-not important what that is.  Just imagine it has an `Execute()` method that
-does the thing.
+Imagine a program that cooks a basic hamburger.  The program can add steps to a
+dependency queue in any order, and the queue will yield back the steps in the
+correct order to prepare a burger.
+
+The values in the queue are `Step` objects.  For the sake of the example, it is
+not important what a 'step' is.  Just imagine that the `Step` class has an
+`Execute()` method that performs the step.
 
 ```csharp
 // Create a queue
@@ -287,12 +258,6 @@ var builder = queue.CreateEntryBuilder();
 builder
     .NewEntry("Assembly", burgerAssembler)
     .AddRequires("GrilledPatty", "ToastedBun", "Condiments", "Sauce")
-    .Enqueue();
-
-// And we have to get the ingredients somewhere
-builder
-    .NewEntry("Gathering", fridgeRaider)
-    .AddProvides("Patty", "Bun", "Condiments", "Sauce")
     .Enqueue();
 
 // Gotta cook the patty
@@ -309,6 +274,12 @@ builder
     .AddProvides("ToastedBun")
     .Enqueue();
 
+// We have to get the ingredients somewhere
+builder
+    .NewEntry("Gathering", fridgeRaider)
+    .AddProvides("Patty", "Bun", "Condiments", "Sauce")
+    .Enqueue();
+
 // Validate the queue
 var errors = queue.Validate();
 if (errors.Any())
@@ -317,19 +288,68 @@ if (errors.Any())
 // Now build the burger
 while (queue.TryDequeue() is { } entry)
 {
-    Console.WriteLine("Executing: " + entry.Name);
+    Console.WriteLine($"Executing: {entry.Name}");
+
+    // Execute the burger-making step
     entry.Value.Execute();
+
+    // Tell the queue that the step is done
     queue.Complete(entry);
 }
 ```
 
-Output might be:
+Output:
 
 ```
 Executing: Gathering
 Executing: Toasting
 Executing: Grilling
 Executing: Assembly
+```
+
+### Asynchronous Code and Concurrency
+
+DependencyQueue supports `async` code and concurrent processing.  Imagine that
+the `Step` class from the example above has an `ExecuteAsync()` method that
+performs the step asynchronously.
+
+```csharp
+async Task ProcessAsync(DependencyQueue<Step> queue, CancellationToken cancellation)
+{
+    // Spin up three workers and wait for them to finish
+    await Task.WhenAll(
+        WorkAsync(queue, 1, cancellation),
+        WorkAsync(queue, 2, cancellation),
+        WorkAsync(queue, 3, cancellation)
+    );
+}
+
+async Task WorkAsync(DependencyQueue<Step> queue, int n, CancellationToken cancellation)
+{
+    // This yield causes the worker to hop onto another thread
+    // so that the caller can continue creating more workers
+    await Task.Yield();
+
+    while (await queue.DequeueAsync(cancellation) is { } entry)
+    {
+        Console.WriteLine($"Worker {n} executing: {entry.Name}");
+
+        // Execute the burger-making step
+        await entry.Value.ExecuteAsync(cancellation);
+
+        // Tell the queue that the step is done
+        queue.Complete(entry);
+    }
+}
+```
+
+Output might be:
+
+```
+Worker 1 executing: Gathering
+Worker 3 executing: Grilling
+Worker 2 executing: Toasting
+Worker 1 executing: Assembly
 ```
 
 <!--

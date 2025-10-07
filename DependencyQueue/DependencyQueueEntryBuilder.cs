@@ -51,7 +51,7 @@ public class DependencyQueueEntryBuilder<T>
     ///   ⚠ <strong>For testing only.</strong>
     ///   Gets the queue to which the builder will enqueue entries.
     /// </summary>
-    internal IDependencyQueue<T>? Queue => _queue;
+    internal DependencyQueue<T>? Queue => _queue;
 
     /// <summary>
     ///   Begins building a new entry with the specified name and value.
