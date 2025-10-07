@@ -15,7 +15,7 @@ public class DependencyQueueUnprovidedTopicError<T> : DependencyQueueError
     internal DependencyQueueUnprovidedTopicError(DependencyQueueTopic<T> topic)
     {
         if (topic is null)
-            throw new ArgumentNullException(nameof(topic));
+            throw Errors.ArgumentNull(nameof(topic));
 
         Topic = topic;
     }

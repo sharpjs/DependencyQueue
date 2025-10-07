@@ -17,9 +17,9 @@ public class DependencyQueueCycleError<T> : DependencyQueueError
         DependencyQueueTopic<T> requiredTopic)
     {
         if (requiringEntry is null)
-            throw new ArgumentNullException(nameof(requiringEntry));
+            throw Errors.ArgumentNull(nameof(requiringEntry));
         if (requiredTopic is null)
-            throw new ArgumentNullException(nameof(requiredTopic));
+            throw Errors.ArgumentNull(nameof(requiredTopic));
 
         RequiringEntry = requiringEntry;
         RequiredTopic  = requiredTopic;
