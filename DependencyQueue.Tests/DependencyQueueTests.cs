@@ -219,18 +219,6 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public void Enqueue_Ending()
-    {
-        using var queue = new Queue();
-
-        queue.SetEnding();
-
-        Should.Throw<InvalidOperationException>(
-            () => queue.Enqueue("a", value: new())
-        );
-    }
-
-    [Test]
     public void Enqueue_Disposed()
     {
         var queue = new Queue();
@@ -316,18 +304,6 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public void Validate_Ending()
-    {
-        using var queue = new Queue();
-
-        queue.SetEnding();
-
-        // TODO: Error?
-        // Allowed but not very useful
-        queue.Validate().ShouldBeEmpty();
-    }
-
-    [Test]
     public void Validate_Disposed()
     {
         var queue = new Queue();
@@ -357,23 +333,6 @@ public class DependencyQueueTests
         queue.ShouldBeValid();
 
         queue.Dequeue().ShouldBeNull();
-    }
-
-    [Test]
-    public void Dequeue_Ending()
-    {
-        using var queue = new Queue();
-
-        var entry = queue.Enqueue("a", value: new());
-
-        queue.ShouldBeValid();
-        queue.SetEnding();
-
-        queue.Dequeue().ShouldBeNull();
-
-        queue.ShouldHaveReadyEntries(entry);
-        queue.ShouldHaveTopicCount(1);
-        queue.ShouldHaveTopic("a", providedBy: [entry]);
     }
 
     [Test]
@@ -564,23 +523,6 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public async Task DequeueAsync_Ending()
-    {
-        using var queue = new Queue();
-
-        var entry = queue.Enqueue("a", value: new());
-
-        queue.ShouldBeValid();
-        queue.SetEnding();
-
-        (await queue.DequeueAsync()).ShouldBeNull();
-
-        queue.ShouldHaveReadyEntries(entry);
-        queue.ShouldHaveTopicCount(1);
-        queue.ShouldHaveTopic("a", providedBy: [entry]);
-    }
-
-    [Test]
     public async Task DequeueAsync_Disposed()
     {
         var queue = new Queue();
@@ -768,21 +710,6 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public void Complete_Ending()
-    {
-        using var queue = new Queue();
-
-        var entry = queue.Enqueue("a", value: new());
-
-        queue.ShouldBeValid();
-        queue.Dequeue().ShouldBeSameAs(entry);
-        queue.SetEnding();
-
-        // Allowed
-        queue.Complete(entry);
-    }
-
-    [Test]
     public void Complete_Disposed()
     {
         var queue = new Queue();
@@ -865,6 +792,33 @@ public class DependencyQueueTests
         queue.ShouldHaveTopicCount(2);
         queue.ShouldHaveTopic("c", providedBy: [entryY]);
         queue.ShouldHaveTopic("y", providedBy: [entryY]);
+    }
+
+    [Test]
+    public void Clear_Ok()
+    {
+        using var queue = new Queue();
+
+        var entry = queue.Enqueue("a", value: new());
+
+        queue.ShouldBeValid();
+        queue.Clear();
+
+        queue.ShouldNotHaveReadyEntries();
+        queue.ShouldHaveTopicCount(0);
+        queue.Dequeue().ShouldBeNull();
+    }
+
+    [Test]
+    public void Clear_Disposed()
+    {
+        var queue = new Queue();
+
+        queue.Dispose();
+
+        Should.Throw<ObjectDisposedException>(
+            () => queue.Clear()
+        );
     }
 
     [Test]

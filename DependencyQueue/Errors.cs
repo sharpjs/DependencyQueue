@@ -26,9 +26,6 @@ internal static class Errors
     internal static Exception CollectionEmpty()
         => new InvalidOperationException("The collection is empty.");
 
-    internal static Exception QueueEnded()
-        => new InvalidOperationException("The queue is ended and does not accept new entries.");
-
     internal static Exception EnumeratorNoCurrentItem()
         => new InvalidOperationException(
             "The enumerator is positioned before the first element " +

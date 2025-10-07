@@ -103,16 +103,16 @@ constructor.
 
 ### Validation
 
-Upon construction or after enqueueing an item, a `DependencyQueue<T>` instance
-is in an unvalidated state.  Before any items can be dequeued, the queue must
-be validated.  Do that by calling `Validate()`.
+After enqueueing an item, a `DependencyQueue<T>` instance is in an unvalidated
+state.  Before any items can be dequeued, the queue must be validated.  Do that
+by calling `Validate()`.
 
 ```csharp
 var errors = queue.Validate();
 ```
 
 If the queue is valid, `Validate()` returns an empty list of error objects.
-Otherwiws, the list describes the problems found.
+Otherwise, the list describes the problems found.
 
 The web of dependencies between entries — the 'dependency graph' — can be
 invalid in two ways.
@@ -126,17 +126,15 @@ invalid in two ways.
 
 ### Dequeueing Items
 
-There are several ways to dequeue items from a `DependencyQueue<T>` instance.
-All of them require the queue to be valid.
-
-The simplest way is to call `TryDequeue()` or `TryDequeueAsync()`, which return
-the next entry in the queue or null if the queue is empty.
+To dequeue entries from a validated queue, call one of the dequeue methods
+`Dequeue()` or `DequeueAsync()`.  Both methods yield the next entry in the
+queue, or `null` if the queue is empty.
 
 ```csharp
-var entry = queue.TryDequeue();
+var entry = queue.Dequeue();
 ```
 ```csharp
-await var entry = queue.TryDequeueAsync(cancellation: cancellationToken);
+var entry = await queue.DequeueAsync(cancellation: cancellationToken);
 ```
 
 The item is available in the `Value` property of the returned entry.
@@ -148,11 +146,11 @@ call `Complete()` to inform the queue.
 queue.Complete(entry);
 ```
 
-`TryDequeue()`, `TryDequeueAsync()`, and `Complete()` are thread-safe.  For
-full thread safety information, see the [Thread Safety](#thread-safety) section
+`Dequeue()`, `DequeueAsync()`, and `Complete()` are thread-safe.  For full
+thread safety information, see the [Thread Safety](#thread-safety) section
 below.
 
-All dequeue methods support an optional predicate parameter.  If the caller
+The dequeue methods support an optional predicate parameter.  If the caller
 provides a predicate, the queue tests each ready-to-dequeue item against the
 predicate and yields the first entry for which the predicate returns `true`.
 If the predicate does not return `true` for any ready-to-dequeue item, then
@@ -160,7 +158,7 @@ the dequeue method blocks until an item becomes available that does satisfy the
 predicate.
 
 ```csharp
-await var entry = queue.TryDequeueAsync(
+var entry = await queue.DequeueAsync(
     item => MyCustomPredicate(item),
     cancellationToken
 );
@@ -188,26 +186,19 @@ _ = view.Topics["Foo"].RequiredBy;      // Entries that require topic "Foo"
 
 ### States
 
-A `DependencyQueue<T>` instance has four possible states:
+A `DependencyQueue<T>` instance has three possible states:
 
 - **Unvalidated:**
   - The queue has not been validated or was found to be invalid.
   - Items can be enqueued.
   - Dequeue methods will throw `InvalidOperationException`.
-  - Call `Validate()`  to transition to the **Valid**    state.
-  - Call `SetEnding()` to transition to the **Ending**   state.
-  - Call `Dispose()`   to transition to the **Disposed** state.
+  - Call `Validate()` or `Clear()` to transition to the **Valid**    state.
+  - Call `Dispose()`               to transition to the **Disposed** state.
 - **Valid:**
   - The queue was found to be valid.
   - Items can be dequeued.
   - Enqueuing a new item transitions back to the **Unvalidated** state.
-  - Call `SetEnding()` to transition to the **Ending**   state.
-  - Call `Dispose()`   to transition to the **Disposed** state.
-- **Ending:**
-  - Queue processing is ending early.
-  - Items can be enqueued, but will be ignored.
-  - Dequeue methods will return `null` immediately.
-  - Call `Dispose()`   to transition to the **Disposed** state.
+  - Call `Dispose()` to transition to the **Disposed** state.
 - **Disposed:**
   - The queue has been disposed and is no longer unsable.
   - Most methods will throw `ObjectDisposedException`.
@@ -224,15 +215,15 @@ Most methods of `DependencyQueue<T>` are thread-safe.  Specifically:
 
 - The `Validate()` method is thread-safe.
 
-- The dequeue methods (`TryDequeue()`, `TryDequeueAsync()`, and `Complete()`)
+- The dequeue methods (`Dequeue()`, `DequeueAsync()`, and `Complete()`)
   are thread-safe.
 
 - The inspection methods (`Inspect()` and `InspectAsync()`) are thread-safe, as
   are the objects they return.
 
-- The `SetEnding()` method is thread-safe.
+- The `Clear()` method is thread-safe.
 
-- The `Dispose()` is <strong>Not</strong> thread-safe.
+- The `Dispose()` method is <strong>NOT</strong> thread-safe.
 
 ## Examples
 
@@ -286,7 +277,7 @@ if (errors.Any())
     throw new InvalidBurgerException(errors);
 
 // Now build the burger
-while (queue.TryDequeue() is { } entry)
+while (queue.Dequeue() is { } entry)
 {
     Console.WriteLine($"Executing: {entry.Name}");
 

@@ -28,9 +28,6 @@ public class DependencyQueue<T> : IDisposable
     // Whether queue state is valid
     private bool _isValid;
 
-    // Whether queue processing is terminating
-    private bool _isEnding;
-
     /// <summary>
     ///   Initializes a new <see cref="DependencyQueue{T}"/> instance,
     ///   optionally with the specified topic name comparer.
@@ -159,9 +156,6 @@ public class DependencyQueue<T> : IDisposable
 
         using var @lock = _monitor.Acquire();
 
-        if (_isEnding)
-            throw Errors.QueueEnded();
-
         foreach (var name in entry.Provides)
             GetOrAddTopic(name).ProvidedBy.Add(entry);
 
@@ -233,10 +227,6 @@ public class DependencyQueue<T> : IDisposable
 
         for (;;)
         {
-            // Check if processing is ending
-            if (_isEnding)
-                return null;
-
             // Check if all topics (and thus all entries) are completed
             if (_topics.Count is 0)
                 return null;
@@ -357,10 +347,6 @@ public class DependencyQueue<T> : IDisposable
 
         for (;;)
         {
-            // Check if processing is ending
-            if (_isEnding)
-                return null;
-
             // Check if all topics (and thus all entries) are completed
             if (_topics.Count is 0)
                 return null;
@@ -468,20 +454,19 @@ public class DependencyQueue<T> : IDisposable
     }
 
     /// <summary>
-    ///   Transitions the queue to the ending state.
+    ///   Removes all entries from the queue.
     /// </summary>
     /// <remarks>
-    ///   <para>
-    ///     In the ending state, no new entries can be enqueued, and dequeue
-    ///     operations return <see langword="null"/>.
-    ///   </para>
-    ///   <para>
-    ///     This method is thread-safe.
-    ///   </para>
+    ///   This method is thread-safe.
     /// </remarks>
-    public void SetEnding()
+    public void Clear()
     {
-        _isEnding = true;
+        using var @lock = _monitor.Acquire();
+
+        _ready .Clear();
+        _topics.Clear();
+        _isValid = true;
+
         _monitor.PulseAll();
     }
 
