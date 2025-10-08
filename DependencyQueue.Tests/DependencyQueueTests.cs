@@ -16,6 +16,7 @@ public class DependencyQueueTests
 
         queue             .ShouldBeValid();
         queue.Comparer    .ShouldBeSameAs(StringComparer.Ordinal);
+        queue.Count       .ShouldBe(0);
         queue.Topics      .ShouldBeEmpty();
         queue.ReadyEntries.ShouldBeEmpty();
 
@@ -23,6 +24,7 @@ public class DependencyQueueTests
 
         view.Queue             .ShouldBeSameAs(queue);
         view.Comparer          .ShouldBeSameAs(queue.Comparer);
+        view.Count             .ShouldBe(0);
         view.Topics.Dictionary .ShouldBeSameAs(queue.Topics);
         view.ReadyEntries.Queue.ShouldBeSameAs(queue.ReadyEntries);
 
@@ -44,6 +46,7 @@ public class DependencyQueueTests
 
         queue             .ShouldBeValid();
         queue.Comparer    .ShouldBeSameAs(comparer);
+        queue.Count       .ShouldBe(0);
         queue.Topics      .ShouldBeEmpty();
         queue.ReadyEntries.ShouldBeEmpty();
 
@@ -51,6 +54,7 @@ public class DependencyQueueTests
 
         view.Queue             .ShouldBeSameAs(queue);
         view.Comparer          .ShouldBeSameAs(comparer);
+        view.Count             .ShouldBe(0);
         view.Topics.Dictionary .ShouldBeSameAs(queue.Topics);
         view.ReadyEntries.Queue.ShouldBeSameAs(queue.ReadyEntries);
 
@@ -171,8 +175,8 @@ public class DependencyQueueTests
         entry.Provides.ShouldBe(["a", "b"]); // name is always provided
         entry.Requires.ShouldBeEmpty();
 
+        queue.Count.ShouldBe(1);
         queue.ShouldHaveReadyEntries(entry);
-
         queue.ShouldHaveTopicCount(2);
         queue.ShouldHaveTopic("a", providedBy: [entry]);
         queue.ShouldHaveTopic("b", providedBy: [entry]);
@@ -191,8 +195,8 @@ public class DependencyQueueTests
         entry.Provides.ShouldBe(["a"]); // name is always provided
         entry.Requires.ShouldBe(["b"]);
 
+        queue.Count.ShouldBe(1);
         queue.ShouldNotHaveReadyEntries();
-
         queue.ShouldHaveTopicCount(2);
         queue.ShouldHaveTopic("a", providedBy: [entry]);
         queue.ShouldHaveTopic("b", requiredBy: [entry]);
@@ -207,6 +211,7 @@ public class DependencyQueueTests
         var entryB0 = queue.Enqueue("b0", value: new(), provides: ["b"]);
         var entryB1 = queue.Enqueue("b1", value: new(), provides: ["b"]);
 
+        queue.Count.ShouldBe(3);
         queue.ShouldHaveReadyEntries(entryB0, entryB1);
         queue.ShouldHaveTopicCount(4);
         queue.ShouldHaveTopic("a",  providedBy: [entryA]);
@@ -225,6 +230,7 @@ public class DependencyQueueTests
 
         entryA0.ShouldNotBeSameAs(entryA1);
 
+        queue.Count.ShouldBe(2);
         queue.ShouldHaveReadyEntries(entryA0, entryA1);
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entryA0, entryA1]);
@@ -333,6 +339,7 @@ public class DependencyQueueTests
         using var queue = new Queue();
 
         queue.Dequeue().ShouldBeNull();
+        queue.Count.ShouldBe(0);
     }
 
     [Test]
@@ -372,12 +379,14 @@ public class DependencyQueueTests
         var entry = queue.Enqueue("a", value: new());
 
         queue.ShouldBeValid();
+        queue.Count.ShouldBe(1);
         queue.ShouldHaveReadyEntries([entry]);
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entry]);
 
         queue.Dequeue().ShouldBeSameAs(entry);
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();                  // removed when dequeued
         queue.ShouldHaveTopicCount(1);                      // remains until completed
         queue.ShouldHaveTopic("a", providedBy: [entry]);    // remains until completed
@@ -397,6 +406,7 @@ public class DependencyQueueTests
         queue.Dequeue().ShouldBeSameAs(entryB1);
         queue.Dequeue().ShouldBeSameAs(entryC);
 
+        queue.Count.ShouldBe(1);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(5);
         queue.ShouldHaveTopic("a",  providedBy: [entryA]);
@@ -439,6 +449,7 @@ public class DependencyQueueTests
         dequeuedEntry    .ShouldBeSameAs(entryA);
         stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(600));
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entryA]);
@@ -469,6 +480,7 @@ public class DependencyQueueTests
         testedValues     .ShouldBe([entry.Value, entry.Value], ignoreOrder: true);
         stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(950));
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entry]);
@@ -508,6 +520,7 @@ public class DependencyQueueTests
         dequeuedEntries  .ShouldBe([entryA, null], ignoreOrder: true);
         stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(75));
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(0);
     }
@@ -560,6 +573,7 @@ public class DependencyQueueTests
 
         (await queue.DequeueAsync()).ShouldBeSameAs(entry);
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();                  // removed when dequeued
         queue.ShouldHaveTopicCount(1);                      // remains until completed
         queue.ShouldHaveTopic("a", providedBy: [entry]);    // remains until completed
@@ -579,9 +593,9 @@ public class DependencyQueueTests
         (await queue.DequeueAsync()).ShouldBeSameAs(entryB1);
         (await queue.DequeueAsync()).ShouldBeSameAs(entryC);
 
+        queue.Count.ShouldBe(1);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(5);
-
         queue.ShouldHaveTopic("a",  providedBy: [entryA]);
         queue.ShouldHaveTopic("b",  providedBy: [entryB0, entryB1], requiredBy: [entryA]);
         queue.ShouldHaveTopic("b0", providedBy: [entryB0]);
@@ -627,6 +641,7 @@ public class DependencyQueueTests
         dequeuedEntry    .ShouldBeSameAs(entryA);
         stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(600));
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entryA]);
@@ -657,6 +672,7 @@ public class DependencyQueueTests
         testedValues.ToArray().ShouldBe([entry.Value, entry.Value]);
         stopwatch.Elapsed     .ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(900));
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entry]);
@@ -700,6 +716,7 @@ public class DependencyQueueTests
         dequeuedEntries  .ShouldBe([entryA, null], ignoreOrder: true);
         stopwatch.Elapsed.ShouldBeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(75));
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(0);
     }
@@ -810,6 +827,7 @@ public class DependencyQueueTests
         queue.ShouldBeValid();
         queue.Clear();
 
+        queue.Count.ShouldBe(0);
         queue.ShouldNotHaveReadyEntries();
         queue.ShouldHaveTopicCount(0);
         queue.Dequeue().ShouldBeNull();

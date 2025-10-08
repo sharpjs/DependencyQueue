@@ -25,6 +25,9 @@ public class DependencyQueue<T> : IDisposable
     // Thing that an execution context must lock exclusively to access queue state
     private readonly AsyncMonitor _monitor;
 
+    // Count of items in the queue
+    private int _count;
+
     // Whether the dependency graph is valid, invalid, or of unknown validity
     private Validity _validity;
 
@@ -63,6 +66,11 @@ public class DependencyQueue<T> : IDisposable
     ///   Gets the comparer for topic names.
     /// </summary>
     public StringComparer Comparer => _comparer;
+
+    /// <summary>
+    ///   Gets the count of items in the queue.
+    /// </summary>
+    public int Count => _count;
 
     /// <summary>
     ///   Creates a builder that can create and enqueue entries in the queue
@@ -169,6 +177,7 @@ public class DependencyQueue<T> : IDisposable
         if (entry.Requires.Count == 0)
             _ready.Enqueue(entry);
 
+        _count++;
         _validity = Validity.Unknown;
         _monitor.PulseAll();
     }
@@ -244,7 +253,10 @@ public class DependencyQueue<T> : IDisposable
 
             // Check if the ready queue has an entry to dequeue that the caller accepts
             if (_ready.TryDequeue(GetValue, predicate, out var entry))
+            {
+                _count--;
                 return entry;
+            }
 
             // Some entries are in progress, and either there are no more ready
             // entries, or the predicate rejected all of them.  Wait for any
@@ -377,7 +389,10 @@ public class DependencyQueue<T> : IDisposable
 
             // Check if the ready queue has an entry to dequeue that the caller accepts
             if (_ready.TryDequeue(GetValue, predicate, out var entry))
+            {
+                _count--;
                 return entry;
+            }
 
             // Some entries are in progress, and either there are no more ready
             // entries, or the predicate rejected all of them.  Wait for any
@@ -489,6 +504,8 @@ public class DependencyQueue<T> : IDisposable
 
         _ready .Clear();
         _topics.Clear();
+
+        _count    = 0;
         _validity = Validity.Valid;
 
         _monitor.PulseAll();
@@ -687,6 +704,9 @@ public class DependencyQueue<T> : IDisposable
 
         /// <inheritdoc cref="DependencyQueue{T}.Comparer"/>
         public StringComparer Comparer => _queue.Comparer;
+
+        /// <inheritdoc cref="DependencyQueue{T}.Count"/>
+        public int Count => _queue.Count;
 
         /// <inheritdoc cref="DependencyQueue{T}.ReadyEntries"/>
         /// <exception cref="ObjectDisposedException">
