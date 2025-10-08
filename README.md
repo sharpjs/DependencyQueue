@@ -26,7 +26,7 @@ item is not dequeued until any items on which it depends have been dequeued.
 If one must ascribe a catchy initialism to such a queue, a nice one is WIRDO —
 **w**hatever **i**n, **r**everse **d**ependency **o**ut.
 
-If an example would be helpful, skip to the [Examples](#examples) section below.
+If an example would be helpful, skip to the [Examples](#examples) section.
 
 ### Creation
 
@@ -38,16 +38,15 @@ using var queue = new DependencyQueue<Step>();
 ```
 
 Because the queue class implements `IDisposable`, make sure to guarantee
-eventual disposal of queue instances via `using` or otherwise.
+eventual disposal of queue instances, via a `using` block or other means.
 
 ### Enqueueing Items
 
 A `DependencyQueue<T>` instance accepts new items of type `T`.  Each item is
 contained within an 'entry' structure which describes how the item relates
-dependency-wise to the other items in the queue.  DependencyQueue uses a
-builder pattern to create and enqueue entries.
-
-To obtain a builder object, call `CreateEntryBuilder()`.
+dependency-wise to the other items in the queue.  DependencyQueue provides two
+ways to create and enqueue entries: `Enqueue()` and a builder object.  To
+obtain a builder object, call `CreateEntryBuilder()`.
 
 ```csharp
 var builder = queue.CreateEntryBuilder();
@@ -70,7 +69,8 @@ the current entry will depend.
 ```csharp
 builder
     .NewEntry("MyItem", theItem)
-    .AddRequires("ThingINeedA", "ThingINeedB")
+    .AddRequires("ThingINeedA", "ThingINeedB")  // accepts multiple names
+    .AddRequires("ThingINeedC")                 // can use multiple times
     .Enqueue();
 ```
 
@@ -83,13 +83,28 @@ names for the entry.
 ```csharp
 builder
     .NewEntry("MyItem", theItem)
-    .AddProvides("BigThingIAmPartOf", "MyAlias")
+    .AddProvides("BigThingIAmPartOf", "MyAlias")  // accepts multiple names
+    .AddProvides("AnotherAlias")                  // can use multiple times
     .Enqueue();
 ```
 
-The names passed to `NewEntry()`, `AddRequires()`, and `AddProvides()` accept
-any names that are neither null nor empty.  **Duplicate names are allowed** and
-in fact are often useful.  Each name defines a 'topic'.  Other than its name, a
+As an alternative to the builder pattern, DependencyQueue also provides an
+`Enqueue()` method that can create and enqueue an entry in one call.  The
+tradeoff is that all the information about the entry must be specified in that
+one call.
+
+```csharp
+queue.Enqueue(
+    name:     "MyItem",
+    value:    theItem,
+    requires: ["ThingINeedA", "ThingINeedB", "ThingINeedC"],
+    provides: ["BigThingIAmPartOf", "MyAlias", "AnotherAlias"]
+);
+```
+
+Names passed to `Enqueue()`, `NewEntry()`, `AddRequires()`, and `AddProvides()`
+can be any non-null, non-empty strings.  **Duplicate names are allowed** and in
+fact are often useful.  Each name defines a 'topic'.  Other than its name, a
 topic is just a pair of lists:
 
 - a list of which entries *provide* that topic via `NewEntry()` or `AddProvides()`, and
@@ -101,34 +116,10 @@ constructor.
 
 `NewEntry()` places no restriction on the item passed as its `value` argument.
 
-### Validation
-
-After enqueueing an item, a `DependencyQueue<T>` instance is in an unvalidated
-state.  Before any items can be dequeued, the queue must be validated.  Do that
-by calling `Validate()`.
-
-```csharp
-var errors = queue.Validate();
-```
-
-If the queue is valid, `Validate()` returns an empty list of error objects.
-Otherwise, the list describes the problems found.
-
-The web of dependencies between entries — the 'dependency graph' — can be
-invalid in two ways.
-
-1. **A topic is required but not provided by any entry.**
-   This can happen due to a typo in a topic name or because an expected entry
-   was never enqueued.
-
-2. **The dependency graph contains a cycle.**
-   This occurs when an entry depends on itself, either directly or indirectly.
-
 ### Dequeueing Items
 
-To dequeue entries from a validated queue, call one of the dequeue methods
-`Dequeue()` or `DequeueAsync()`.  Both methods yield the next entry in the
-queue, or `null` if the queue is empty.
+To dequeue entries, call `Dequeue()` or `DequeueAsync()`.  Both methods yield
+the next entry in the queue, or `null` if the queue is empty.
 
 ```csharp
 var entry = queue.Dequeue();
@@ -164,6 +155,34 @@ var entry = await queue.DequeueAsync(
 );
 ```
 
+### Validation
+
+After enqueueing an item, a `DependencyQueue<T>` instance is in an unvalidated
+state.  Subsequent invocation of `Dequeue()` or `DequeueAsync()` automatically
+triggers validation of the queue as needed.  Both dequeue methods then throw
+`InvalidDependencyQueueException` if the queue is found to be invalid.  The
+`Errors` property of the exception details why the queue is invalid
+
+To validate the queue explicitly without dequeuing any items, call
+`Validate()`.
+
+```csharp
+var errors = queue.Validate();
+```
+
+If the queue is valid, `Validate()` returns an empty list of error objects.
+Otherwise, the list describes the problems found.
+
+The web of dependencies between entries — the 'dependency graph' — can be
+invalid in two ways.
+
+1. **A topic is required but not provided by any entry.**
+   This can happen due to a typo in a topic name or because an expected entry
+   was never enqueued.
+
+2. **The dependency graph contains a cycle.**
+   This occurs when an entry depends on itself, either directly or indirectly.
+
 ### Inspection
 
 To peek into a queue, the `DependencyQueue<T>` class provides the `Inspect()`
@@ -183,25 +202,6 @@ _ = view.Topics["Foo"];                 // Topic "foo"
 _ = view.Topics["Foo"].ProvidedBy;      // Entries that provide topic "Foo"
 _ = view.Topics["Foo"].RequiredBy;      // Entries that require topic "Foo"
 ```
-
-### States
-
-A `DependencyQueue<T>` instance has three possible states:
-
-- **Unvalidated:**
-  - The queue has not been validated or was found to be invalid.
-  - Items can be enqueued.
-  - Dequeue methods will throw `InvalidOperationException`.
-  - Call `Validate()` or `Clear()` to transition to the **Valid**    state.
-  - Call `Dispose()`               to transition to the **Disposed** state.
-- **Valid:**
-  - The queue was found to be valid.
-  - Items can be dequeued.
-  - Enqueuing a new item transitions back to the **Unvalidated** state.
-  - Call `Dispose()` to transition to the **Disposed** state.
-- **Disposed:**
-  - The queue has been disposed and is no longer unsable.
-  - Most methods will throw `ObjectDisposedException`.
 
 ### Thread Safety
 

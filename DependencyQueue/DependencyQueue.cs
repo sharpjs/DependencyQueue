@@ -25,8 +25,11 @@ public class DependencyQueue<T> : IDisposable
     // Thing that an execution context must lock exclusively to access queue state
     private readonly AsyncMonitor _monitor;
 
-    // Whether queue state is valid
-    private bool _isValid;
+    // Whether the dependency graph is valid, invalid, or of unknown validity
+    private Validity _validity;
+
+    // Possible values of _validity
+    private enum Validity { Unknown = 0, Invalid = -1, Valid = +1 }
 
     /// <summary>
     ///   Initializes a new <see cref="DependencyQueue{T}"/> instance,
@@ -40,9 +43,10 @@ public class DependencyQueue<T> : IDisposable
     /// </param>
     public DependencyQueue(StringComparer? comparer = null)
     {
-        _ready   = new();
-        _topics  = new(_comparer = comparer ?? StringComparer.Ordinal);
-        _monitor = new();
+        _ready    = new();
+        _topics   = new(_comparer = comparer ?? StringComparer.Ordinal);
+        _monitor  = new();
+        _validity = Validity.Valid;
     }
 
     /// <summary>
@@ -165,7 +169,8 @@ public class DependencyQueue<T> : IDisposable
         if (entry.Requires.Count == 0)
             _ready.Enqueue(entry);
 
-        _isValid = false;
+        _validity = Validity.Unknown;
+        _monitor.PulseAll();
     }
 
     /// <summary>
@@ -183,6 +188,12 @@ public class DependencyQueue<T> : IDisposable
     ///   remain.
     /// </returns>
     /// <remarks>
+    ///   <para>
+    ///     If <see cref="Validate"/> has not been invoked since the most
+    ///     recent modification of the queue, this method automatically
+    ///     validates the queue.  If the queue is invalid, this method throws
+    ///     <see cref="InvalidDependencyQueueException"/>.
+    ///   </para>
     ///   <para>
     ///     This method returns only when an entry is dequeued from the queue
     ///     or when no more entries remain to dequeue.
@@ -207,9 +218,10 @@ public class DependencyQueue<T> : IDisposable
     ///     This method is thread-safe.
     ///   </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">
-    ///   The queue state is invalid or has not been validated.  Use the
-    ///   <see cref="Validate"/> method and correct any errors it returns.
+    /// <exception cref="InvalidDependencyQueueException">
+    ///   The dependency graph is invalid.  The
+    ///   <see cref="InvalidDependencyQueueException.Errors"/> collection
+    ///   contains the errors found during validation.
     /// </exception>
     /// <exception cref="ObjectDisposedException">
     ///   The queue has been disposed.
@@ -222,8 +234,7 @@ public class DependencyQueue<T> : IDisposable
 
         using var @lock = _monitor.Acquire();
 
-        if (!_isValid)
-            throw Errors.NotValid();
+        RequireValid();
 
         for (;;)
         {
@@ -257,6 +268,12 @@ public class DependencyQueue<T> : IDisposable
     /// </returns>
     /// <remarks>
     ///   <para>
+    ///     If <see cref="Validate"/> has not been invoked since the most
+    ///     recent modification of the queue, this method automatically
+    ///     validates the queue.  If the queue is invalid, this method throws
+    ///     <see cref="InvalidDependencyQueueException"/>.
+    ///   </para>
+    ///   <para>
     ///     This method returns only when an entry is dequeued from the queue
     ///     or when no more entries remain to dequeue.
     ///   </para>
@@ -270,9 +287,10 @@ public class DependencyQueue<T> : IDisposable
     ///     This method is thread-safe.
     ///   </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">
-    ///   The queue state is invalid or has not been validated.  Use the
-    ///   <see cref="Validate"/> method and correct any errors it returns.
+    /// <exception cref="InvalidDependencyQueueException">
+    ///   The dependency graph is invalid.  The
+    ///   <see cref="InvalidDependencyQueueException.Errors"/> collection
+    ///   contains the errors found during validation.
     /// </exception>
     /// <exception cref="ObjectDisposedException">
     ///   The queue has been disposed.
@@ -302,6 +320,12 @@ public class DependencyQueue<T> : IDisposable
     /// </returns>
     /// <remarks>
     ///   <para>
+    ///     If <see cref="Validate"/> has not been invoked since the most
+    ///     recent modification of the queue, this method automatically
+    ///     validates the queue.  If the queue is invalid, this method throws
+    ///     <see cref="InvalidDependencyQueueException"/>.
+    ///   </para>
+    ///   <para>
     ///     This method returns only when an entry is dequeued from the queue
     ///     or when no more entries remain to dequeue.
     ///   </para>
@@ -325,9 +349,10 @@ public class DependencyQueue<T> : IDisposable
     ///     This method is thread-safe.
     ///   </para>
     /// </remarks>
-    /// <exception cref="InvalidOperationException">
-    ///   The queue state is invalid or has not been validated.  Use the
-    ///   <see cref="Validate"/> method and correct any errors it returns.
+    /// <exception cref="InvalidDependencyQueueException">
+    ///   The dependency graph is invalid.  The
+    ///   <see cref="InvalidDependencyQueueException.Errors"/> collection
+    ///   contains the errors found during validation.
     /// </exception>
     /// <exception cref="ObjectDisposedException">
     ///   The queue has been disposed.
@@ -342,8 +367,7 @@ public class DependencyQueue<T> : IDisposable
 
         using var @lock = await _monitor.AcquireAsync(cancellation);
 
-        if (!_isValid)
-            throw Errors.NotValid();
+        RequireValid();
 
         for (;;)
         {
@@ -465,7 +489,7 @@ public class DependencyQueue<T> : IDisposable
 
         _ready .Clear();
         _topics.Clear();
-        _isValid = true;
+        _validity = Validity.Valid;
 
         _monitor.PulseAll();
     }
@@ -490,10 +514,27 @@ public class DependencyQueue<T> : IDisposable
     /// </remarks>
     public IReadOnlyList<DependencyQueueError> Validate()
     {
-        var errors = new List<DependencyQueueError>();
-
         using var @lock = _monitor.Acquire();
 
+        return ValidateCore();
+    }
+
+    private void RequireValid()
+    {
+        if (_validity is Validity.Valid)
+            return;
+
+        var errors = ValidateCore();
+
+        if (errors.Count is 0)
+            return;
+
+        throw Errors.QueueInvalid(errors);
+    }
+
+    private IReadOnlyList<DependencyQueueError> ValidateCore()
+    {
+        var errors  = new List<DependencyQueueError>();
         var visited = new Dictionary<string, bool>(_topics.Count, _comparer);
 
         foreach (var topic in _topics.Values)
@@ -504,7 +545,9 @@ public class DependencyQueue<T> : IDisposable
                 DetectCycles(null, topic, visited, errors);
         }
 
-        _isValid = errors.Count == 0;
+        _validity = errors.Count is 0
+            ? Validity.Valid
+            : Validity.Invalid;
 
         return errors;
     }

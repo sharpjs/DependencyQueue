@@ -328,21 +328,9 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public void Dequeue_NotValidated()
-    {
-        using var queue = new Queue();
-
-        Should.Throw<InvalidOperationException>(
-            () => queue.Dequeue()
-        );
-    }
-
-    [Test]
     public void Dequeue_Empty()
     {
         using var queue = new Queue();
-
-        queue.ShouldBeValid();
 
         queue.Dequeue().ShouldBeNull();
     }
@@ -360,6 +348,23 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public void Dequeue_Invalid()
+    {
+        using var queue = new Queue();
+
+        var entry = queue.Enqueue("a", value: new(), requires: ["b"]);
+
+        var e = Should.Throw<InvalidDependencyQueueException>(
+            () => queue.Dequeue()
+        );
+
+        e.Errors
+            .ShouldHaveSingleItem()
+            .ShouldBeOfType<DependencyQueueUnprovidedTopicError<Value>>()
+            .Topic.Name.ShouldBe("b");
+    }
+
+    [Test]
     public void Dequeue_Ok()
     {
         using var queue = new Queue();
@@ -367,7 +372,6 @@ public class DependencyQueueTests
         var entry = queue.Enqueue("a", value: new());
 
         queue.ShouldBeValid();
-
         queue.ShouldHaveReadyEntries([entry]);
         queue.ShouldHaveTopicCount(1);
         queue.ShouldHaveTopic("a", providedBy: [entry]);
@@ -388,8 +392,6 @@ public class DependencyQueueTests
         var entryB0 = queue.Enqueue("b0", value: new(), provides: ["b"]);
         var entryB1 = queue.Enqueue("b1", value: new(), provides: ["b"]);
         var entryC  = queue.Enqueue("c",  value: new());
-
-        queue.ShouldBeValid();
 
         queue.Dequeue().ShouldBeSameAs(entryB0);
         queue.Dequeue().ShouldBeSameAs(entryB1);
@@ -449,8 +451,6 @@ public class DependencyQueueTests
 
         var entry = queue.Enqueue("a", value: new());
 
-        queue.ShouldBeValid();
-
         var testedValues = new ConcurrentQueue<Value>();
 
         bool ReturnTrueOnSecondInvocation(Value value)
@@ -481,8 +481,6 @@ public class DependencyQueueTests
 
         var entryA = queue.Enqueue("a", value: new(), requires: ["b"]);
         var entryB = queue.Enqueue("b", value: new());
-
-        queue.ShouldBeValid();
 
         queue.Dequeue().ShouldBeSameAs(entryB);
 
@@ -515,21 +513,9 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public async Task DequeueAsync_NotValidated()
-    {
-        using var queue = new Queue();
-
-        await Should.ThrowAsync<InvalidOperationException>(
-            () => queue.DequeueAsync()
-        );
-    }
-
-    [Test]
     public async Task DequeueAsync_Initial()
     {
         using var queue = new Queue();
-
-        queue.ShouldBeValid();
 
         (await queue.DequeueAsync()).ShouldBeNull();
     }
@@ -549,13 +535,28 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public async Task DequeueAsync_Invalid()
+    {
+        using var queue = new Queue();
+
+        var entry = queue.Enqueue("a", value: new(), requires: ["b"]);
+
+        var e = await Should.ThrowAsync<InvalidDependencyQueueException>(
+            () => queue.DequeueAsync()
+        );
+
+        e.Errors
+            .ShouldHaveSingleItem()
+            .ShouldBeOfType<DependencyQueueUnprovidedTopicError<Value>>()
+            .Topic.Name.ShouldBe("b");
+    }
+
+    [Test]
     public async Task DequeueAsync_Ok()
     {
         using var queue = new Queue();
 
         var entry = queue.Enqueue("a", value: new());
-
-        queue.ShouldBeValid();
 
         (await queue.DequeueAsync()).ShouldBeSameAs(entry);
 
@@ -573,8 +574,6 @@ public class DependencyQueueTests
         var entryB0 = queue.Enqueue("b0", value: new(), provides: ["b"]);
         var entryB1 = queue.Enqueue("b1", value: new(), provides: ["b"]);
         var entryC  = queue.Enqueue("c",  value: new());
-
-        queue.ShouldBeValid();
 
         (await queue.DequeueAsync()).ShouldBeSameAs(entryB0);
         (await queue.DequeueAsync()).ShouldBeSameAs(entryB1);
@@ -640,8 +639,6 @@ public class DependencyQueueTests
 
         var entry = queue.Enqueue("a", value: new());
 
-        queue.ShouldBeValid();
-
         var testedValues = new ConcurrentQueue<Value>();
 
         bool ReturnTrueOnSecondInvocation(Value value)
@@ -672,8 +669,6 @@ public class DependencyQueueTests
 
         var entryA = queue.Enqueue("a", value: new(), requires: ["b"]);
         var entryB = queue.Enqueue("b", value: new());
-
-        queue.ShouldBeValid();
 
         (await queue.DequeueAsync()).ShouldBeSameAs(entryB);
 
@@ -728,7 +723,6 @@ public class DependencyQueueTests
 
         var entry = queue.Enqueue("a", value: new());
 
-        queue.ShouldBeValid();
         queue.Dequeue().ShouldBeSameAs(entry);
         queue.Dispose();
 

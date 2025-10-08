@@ -23,6 +23,9 @@ internal static class Errors
     internal static Exception CollectionEmpty()
         => new InvalidOperationException("The collection is empty.");
 
+    internal static Exception QueueInvalid(IReadOnlyList<DependencyQueueError> errors)
+        => new InvalidDependencyQueueException(errors);
+
     internal static Exception EnumeratorNoCurrentItem()
         => new InvalidOperationException(
             "The enumerator is positioned before the first element " +
@@ -33,11 +36,5 @@ internal static class Errors
         => new InvalidOperationException(
             "The builder does not have a current entry.  " +
             "Use the NewEntry method to begin building an entry."
-        );
-
-    internal static Exception NotValid()
-        => new InvalidOperationException(
-            "The queue state is invalid or has not been validated.  " +
-            "Use the Validate method and correct any errors it returns."
         );
 }
