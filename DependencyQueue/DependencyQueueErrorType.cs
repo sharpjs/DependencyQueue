@@ -9,7 +9,7 @@ namespace DependencyQueue;
 public enum DependencyQueueErrorType
 {
     /// <summary>
-    ///   One or more entries require a topic that no entries provide.
+    ///   One or more items require a topic that no items provide.
     ///   The error object is a <see cref="DependencyQueueUnprovidedTopicError{T}"/>.
     /// </summary>
     UnprovidedTopic,

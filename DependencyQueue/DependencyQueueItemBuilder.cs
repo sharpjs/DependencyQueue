@@ -4,35 +4,35 @@
 namespace DependencyQueue;
 
 /// <summary>
-///   A builder that can incrementally create and enqueue entries in a
+///   A builder that can incrementally create and enqueue items in a
 ///   <see cref="DependencyQueue{T}"/>.
 /// </summary>
 /// <typeparam name="T">
-///   The type of object contained in an entry.
+///   The type of object contained in an item.
 /// </typeparam>
 /// <remarks>
 ///   Members of this type are <strong>not</strong> thread-safe.  To build
-///   entries in parallel, use a separate builder for each thread.
+///   items in parallel, use a separate builder for each thread.
 /// </remarks>
-public class DependencyQueueEntryBuilder<T>
+public class DependencyQueueItemBuilder<T>
 {
-    // The current entry being built
-    private DependencyQueueEntry<T>? _entry;
+    // The current item being built
+    private DependencyQueueItem<T>? _item;
 
-    // The queue to which the builder will enqueue entries
+    // The queue to which the builder will enqueue items
     private readonly DependencyQueue<T> _queue;
 
     /// <summary>
-    ///   Initializes a new <see cref="DependencyQueueEntryBuilder{T}"/>
+    ///   Initializes a new <see cref="DependencyQueueItemBuilder{T}"/>
     ///   instance for the specified queue.
     /// </summary>
     /// <param name="queue">
-    ///   The queue to which the builder will enqueue entries.
+    ///   The queue to which the builder will enqueue items.
     /// </param>
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="queue"/> is <see langword="null"/>.
     /// </exception>
-    internal DependencyQueueEntryBuilder(DependencyQueue<T> queue)
+    internal DependencyQueueItemBuilder(DependencyQueue<T> queue)
     {
         if (queue is null)
             throw Errors.ArgumentNull(nameof(queue));
@@ -41,33 +41,33 @@ public class DependencyQueueEntryBuilder<T>
     }
 
     /// <summary>
-    ///   ⚠ <strong>For testing only.</strong>
-    ///   Gets the current entry being built, or <see langword="null"/> if
-    ///   there is no current etry.
+    ///   ⚠ <strong>For testing.</strong>
+    ///   Gets the current item being built, or <see langword="null"/> if there
+    ///   is no current item.
     /// </summary>
-    internal DependencyQueueEntry<T>? CurrentEntry => _entry;
+    internal DependencyQueueItem<T>? CurrentItem => _item;
 
     /// <summary>
-    ///   ⚠ <strong>For testing only.</strong>
-    ///   Gets the queue to which the builder will enqueue entries.
+    ///   ⚠ <strong>For testing.</strong>
+    ///   Gets the queue to which the builder will enqueue items.
     /// </summary>
     internal DependencyQueue<T>? Queue => _queue;
 
     /// <summary>
-    ///   Begins building a new entry with the specified name and value.
+    ///   Begins building a new item with the specified name and value.
     /// </summary>
     /// <param name="name">
-    ///   The name of the entry.  Cannot be <see langword="null"/> or empty.
+    ///   The name of the item.  Cannot be <see langword="null"/> or empty.
     /// </param>
     /// <param name="value">
-    ///   The value to store in the entry.
+    ///   The value to store in the item.
     /// </param>
     /// <returns>
     ///   The builder, to enable chaining of method invocations.
     /// </returns>
     /// <remarks>
-    ///   If the builder is building an entry already, the builder discards
-    ///   that entry.
+    ///   If the builder is building an item already, the builder discards that
+    ///   item.
     /// </remarks>
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="name"/> is <see langword="null"/>.
@@ -75,25 +75,25 @@ public class DependencyQueueEntryBuilder<T>
     /// <exception cref="ArgumentException">
     ///   <paramref name="name"/> is empty.
     /// </exception>
-    public DependencyQueueEntryBuilder<T> NewEntry(string name, T value)
+    public DependencyQueueItemBuilder<T> NewItem(string name, T value)
     {
-        _entry = new(name, value, _queue.Comparer);
+        _item = new(name, value, _queue.Comparer);
         return this;
     }
 
     /// <summary>
-    ///   Declares that the current entry provides the specified topics.
+    ///   Declares that the current item provides the specified topics.
     /// </summary>
     /// <param name="names">
-    ///   The names of topics that the entry provides.  A name cannot be
+    ///   The names of topics that the item provides.  A name cannot be
     ///   <see langword="null"/> or empty.
     /// </param>
     /// <returns>
     ///   The builder, to enable chaining of method invocations.
     /// </returns>
     /// <remarks>
-    ///   This method is valid only when building an entry.
-    ///   Use <see cref="NewEntry"/> to begin building an entry.
+    ///   This method is valid only when building an item.
+    ///   Use <see cref="NewItem"/> to begin building an item.
     /// </remarks>
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="names"/> is <see langword="null"/>.
@@ -103,32 +103,32 @@ public class DependencyQueueEntryBuilder<T>
     ///   name.
     /// </exception>
     /// <exception cref="InvalidOperationException">
-    ///   The builder does not have a current entry.
-    ///   Use <see cref="NewEntry"/> to begin building an entry.
+    ///   The builder does not have a current item.
+    ///   Use <see cref="NewItem"/> to begin building an item.
     /// </exception>
-    public DependencyQueueEntryBuilder<T> AddProvides(IEnumerable<string> names)
+    public DependencyQueueItemBuilder<T> AddProvides(IEnumerable<string> names)
     {
-        RequireCurrentEntry().AddProvides(names);
+        RequireCurrentItem().AddProvides(names);
         return this;
     }
 
     /// <inheritdoc cref="AddProvides(IEnumerable{string})"/>>
-    public DependencyQueueEntryBuilder<T> AddProvides(params string[] names)
+    public DependencyQueueItemBuilder<T> AddProvides(params string[] names)
         => AddProvides((IEnumerable<string>) names);
 
     /// <summary>
-    ///   Declares that the current entry requires the specified topics.
+    ///   Declares that the current item requires the specified topics.
     /// </summary>
     /// <param name="names">
-    ///   The names of topics that the entry requires.  A name cannot be
+    ///   The names of topics that the item requires.  A name cannot be
     ///   <see langword="null"/> or empty.
     /// </param>
     /// <returns>
     ///   The builder, to enable chaining of method invocations.
     /// </returns>
     /// <remarks>
-    ///   This method is valid only when building an entry.
-    ///   Use <see cref="NewEntry"/> to begin building an entry.
+    ///   This method is valid only when building an item.
+    ///   Use <see cref="NewItem"/> to begin building an item.
     /// </remarks>
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="names"/> is <see langword="null"/>.
@@ -138,54 +138,54 @@ public class DependencyQueueEntryBuilder<T>
     ///   name.
     /// </exception>
     /// <exception cref="InvalidOperationException">
-    ///   The builder does not have a current entry.
-    ///   Use <see cref="NewEntry"/> to begin building an entry.
+    ///   The builder does not have a current item.
+    ///   Use <see cref="NewItem"/> to begin building an item.
     /// </exception>
-    public DependencyQueueEntryBuilder<T> AddRequires(IEnumerable<string> names)
+    public DependencyQueueItemBuilder<T> AddRequires(IEnumerable<string> names)
     {
-        RequireCurrentEntry().AddRequires(names);
+        RequireCurrentItem().AddRequires(names);
         return this;
     }
 
     /// <inheritdoc cref="AddRequires(IEnumerable{string})"/>>
-    public DependencyQueueEntryBuilder<T> AddRequires(params string[] names)
+    public DependencyQueueItemBuilder<T> AddRequires(params string[] names)
         => AddRequires((IEnumerable<string>) names);
 
     /// <summary>
-    ///   Completes building the current entry and adds it to the queue.
+    ///   Completes building the current item and adds it to the queue.
     /// </summary>
     /// <returns>
     ///   The builder, to enable chaining of method invocations.
     /// </returns>
     /// <remarks>
-    ///   This method is valid only when building an entry.  After this method
-    ///   returns, the builder is no longer building an entry.  Use
-    ///   <see cref="NewEntry"/> to begin building another entry.
+    ///   This method is valid only when building an item.  After this method
+    ///   returns, the builder is no longer building an item.
+    ///   Use <see cref="NewItem"/> to begin building another item.
     /// </remarks>
     /// <exception cref="InvalidOperationException">
-    ///   The builder does not have a current entry.
-    ///   Use <see cref="NewEntry"/> to begin building an entry.
+    ///   The builder does not have a current item.
+    ///   Use <see cref="NewItem"/> to begin building an item.
     /// </exception>
-    public DependencyQueueEntryBuilder<T> Enqueue()
+    public DependencyQueueItemBuilder<T> Enqueue()
     {
         return Enqueue(out _);
     }
 
     /// <inheritdoc cref="Enqueue()"/>
-    /// <param name="entry">
-    ///   When this method returns, contains the entry that was added to the
+    /// <param name="item">
+    ///   When this method returns, contains the item that was added to the
     ///   queue.
     /// </param>
-    public DependencyQueueEntryBuilder<T> Enqueue(out DependencyQueueEntry<T> entry)
+    public DependencyQueueItemBuilder<T> Enqueue(out DependencyQueueItem<T> item)
     {
-        entry = RequireCurrentEntry();
-        _queue.Enqueue(entry);
-        _entry = null;
+        item = RequireCurrentItem();
+        _queue.Enqueue(item);
+        _item = null;
         return this;
     }
 
-    private DependencyQueueEntry<T> RequireCurrentEntry()
+    private DependencyQueueItem<T> RequireCurrentItem()
     {
-        return _entry ?? throw Errors.NoCurrentEntry();
+        return _item ?? throw Errors.BuilderNoCurrentItem();
     }
 }

@@ -11,10 +11,10 @@ using Lock       = AsyncMonitor.Lock;
 
 [TestFixture]
 internal class DependencyQueueTopicDictionaryViewKeysTests
-    : EnumerableViewTests<Collection, Item, View, Item, View.Enumerator>
+    : EnumerableViewTests<Collection, string, View, string, View.Enumerator>
 {
-    private protected override Item ItemA { get; } = "a";
-    private protected override Item ItemB { get; } = "b";
+    private protected override string ItemA { get; } = "a";
+    private protected override string ItemB { get; } = "b";
 
     private protected override Collection CreateCollection()
         => CreateDictionary().Keys;
@@ -28,6 +28,6 @@ internal class DependencyQueueTopicDictionaryViewKeysTests
     private protected override Collection Unwrap(View view)
         => view.Keys;
 
-    private protected override Item Unwrap(Item item)
+    private protected override string Unwrap(string item)
         => item;
 }

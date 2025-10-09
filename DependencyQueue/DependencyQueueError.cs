@@ -17,10 +17,10 @@ public abstract class DependencyQueueError
 
     /// <summary>
     ///   Creates a <see cref="DependencyQueueError"/> instance to report that
-    ///   one or more entries require a topic that no entries provide.
+    ///   one or more items require a topic that no items provide.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of values contained in queue entries.
+    ///   The type of values contained in queue items.
     /// </typeparam>
     /// <param name="topic">
     ///   The topic that is required but not provided.
@@ -37,23 +37,23 @@ public abstract class DependencyQueueError
     ///   cycle in the dependency graph.
     /// </summary>
     /// <typeparam name="T">
-    ///   The type of values contained in queue entries.
+    ///   The type of values contained in queue items.
     /// </typeparam>
-    /// <param name="requiringEntry">
-    ///   The entry whose requirement of <paramref name="requiredTopic"/>
+    /// <param name="requiringItem">
+    ///   The item whose requirement of <paramref name="requiredTopic"/>
     ///   creates a cycle in the dependency graph.
     /// </param>
     /// <param name="requiredTopic">
-    ///   The topic whose requirement by <paramref name="requiringEntry"/>
+    ///   The topic whose requirement by <paramref name="requiringItem"/>
     ///   creates a cycle in the dependency graph.
     /// </param>
     /// <exception cref="ArgumentNullException">
-    ///   <paramref name="requiringEntry"/> and/or
+    ///   <paramref name="requiringItem"/> and/or
     ///   <paramref name="requiredTopic"/> is <see langword="null"/>.
     /// </exception>
     public static DependencyQueueCycleError<T>
         Cycle<T>(
-            DependencyQueueEntry<T> requiringEntry,
+            DependencyQueueItem<T>  requiringItem,
             DependencyQueueTopic<T> requiredTopic)
-        => new(requiringEntry, requiredTopic);
+        => new(requiringItem, requiredTopic);
 }

@@ -92,18 +92,18 @@ public class DependencyQueueTopicTests
     {
         var topic = new Topic("a");
 
-        var entries = new[]
+        var items = new[]
         {
-            new Entry("a0", new()),
-            new Entry("a1", new()),
-            new Entry("a2", new())
+            new Item("a0", new()),
+            new Item("a1", new()),
+            new Item("a2", new())
         };
 
-        topic.ProvidedBy.AddRange(entries);
+        topic.ProvidedBy.AddRange(items);
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.ProvidedBy.Select(v => v.Entry).Should().Equal(entries);
+        h.View.ProvidedBy.Select(v => v.Item).Should().Equal(items);
 
         h.Dispose();
 
@@ -115,18 +115,18 @@ public class DependencyQueueTopicTests
     {
         var topic = new Topic("a");
 
-        var entries = new[]
+        var items = new[]
         {
-            new Entry("a0", new()),
-            new Entry("a1", new()),
-            new Entry("a2", new())
+            new Item("a0", new()),
+            new Item("a1", new()),
+            new Item("a2", new())
         };
 
-        topic.RequiredBy.AddRange(entries);
+        topic.RequiredBy.AddRange(items);
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.RequiredBy.Select(v => v.Entry).Should().Equal(entries);
+        h.View.RequiredBy.Select(v => v.Item).Should().Equal(items);
 
         h.Dispose();
 
@@ -158,13 +158,13 @@ public class DependencyQueueTopicTests
 
         topic.ProvidedBy.AddRange(new[]
         {
-            new Entry("b", new())
+            new Item("b", new())
         });
 
         topic.RequiredBy.AddRange(new[]
         {
-            new Entry("c", new()),
-            new Entry("d", new())
+            new Item("c", new()),
+            new Item("d", new())
         });
 
         new Topic("a").ToString().Should().Be("a");

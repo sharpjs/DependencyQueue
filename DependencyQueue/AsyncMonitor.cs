@@ -54,9 +54,9 @@ internal class AsyncMonitor : IDisposable
     /// </param>
     /// <returns>
     ///   A task that represents the asynchronous operation.  When the task
-    ///   completes, its <see cref="Task{T}.Result"/> property is set to a
-    ///   disposable object representing the lock held on the monitor.
-    ///   Disposing the object releases the lock.
+    ///   completes, its <see cref="Task{T}.Result"/> is a disposable object
+    ///   representing the lock held on the monitor.  Disposing the object
+    ///   releases the lock.
     /// </returns>
     /// <remarks>
     ///   This method is the asynchronous analog of

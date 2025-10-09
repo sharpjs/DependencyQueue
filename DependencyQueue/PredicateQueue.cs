@@ -10,6 +10,9 @@ namespace DependencyQueue;
 ///   A generally first-in, first-out collection of objects in which the
 ///   dequeue operation removes the first item that matches a predicate.
 /// </summary>
+/// <typeparam name="T">
+///   The type of items contained in the queue.
+/// </typeparam>
 internal class PredicateQueue<T> : IReadOnlyCollection<T>
 {
     // Special indexes

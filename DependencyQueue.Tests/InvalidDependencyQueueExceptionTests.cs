@@ -19,12 +19,12 @@ public class InvalidDependencyQueueExceptionTests
     {
         var topicA = new DependencyQueueTopic<Value>("a");
         var topicB = new DependencyQueueTopic<Value>("b");
-        var entryC = new DependencyQueueEntry<Value>("c", value: new(), StringComparer.Ordinal);
+        var itemC  = new DependencyQueueItem <Value>("c", value: new(), StringComparer.Ordinal);
 
         var errors = new DependencyQueueError[]
         {
-            new DependencyQueueUnprovidedTopicError<Value>(topicA),
-            new DependencyQueueCycleError<Value>(entryC, topicB)
+            DependencyQueueError.UnprovidedTopic(topicA),
+            DependencyQueueError.Cycle(itemC, topicB)
         };
 
         var exception = new InvalidDependencyQueueException(errors);

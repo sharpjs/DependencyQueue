@@ -17,33 +17,33 @@ public class ExampleTests
         // Create a queue
         using var queue = new DependencyQueue<Step>();
 
-        // Create a builder for queue entries
-        var builder = queue.CreateEntryBuilder();
+        // Create a builder for queue items
+        var builder = queue.CreateItemBuilder();
 
-        // Add entries in any order
+        // Add items in any order
         // First, we know we have to assemble the burger
         builder
-            .NewEntry("Assembly", burgerAssembler)
+            .NewItem("Assembly", burgerAssembler)
             .AddRequires("GrilledPatty", "ToastedBun", "Condiments", "Sauce")
             .Enqueue();
 
         // Gotta cook the patty
         builder
-            .NewEntry("Grilling", griller)
+            .NewItem("Grilling", griller)
             .AddRequires("Patty")
             .AddProvides("GrilledPatty")
             .Enqueue();
 
         // Gotta toast the bun, too
         builder
-            .NewEntry("Toasting", toaster)
+            .NewItem("Toasting", toaster)
             .AddRequires("Bun")
             .AddProvides("ToastedBun")
             .Enqueue();
 
         // We have to get the ingredients somewhere
         builder
-            .NewEntry("Gathering", fridgeRaider)
+            .NewItem("Gathering", fridgeRaider)
             .AddProvides("Patty", "Bun", "Condiments", "Sauce")
             .Enqueue();
 
@@ -53,15 +53,15 @@ public class ExampleTests
             throw new InvalidBurgerException(errors);
 
         // Now build the burger
-        while (queue.Dequeue() is { } entry)
+        while (queue.Dequeue() is { } item)
         {
-            Console.WriteLine($"Executing: {entry.Name}");
+            Console.WriteLine($"Executing: {item.Name}");
 
             // Execute the burger-making step
-            entry.Value.Execute();
+            item.Value.Execute();
 
             // Tell the queue that the step is done
-            queue.Complete(entry);
+            queue.Complete(item);
         }
     }
 
@@ -76,33 +76,33 @@ public class ExampleTests
         // Create a queue
         using var queue = new DependencyQueue<Step>();
 
-        // Create a builder for queue entries
-        var builder = queue.CreateEntryBuilder();
+        // Create a builder for queue items
+        var builder = queue.CreateItemBuilder();
 
-        // Add entries in any order
+        // Add items in any order
         // First, we know we have to assemble the burger
         builder
-            .NewEntry("Assembly", burgerAssembler)
+            .NewItem("Assembly", burgerAssembler)
             .AddRequires("GrilledPatty", "ToastedBun", "Condiments", "Sauce")
             .Enqueue();
 
         // Gotta cook the patty
         builder
-            .NewEntry("Grilling", griller)
+            .NewItem("Grilling", griller)
             .AddRequires("Patty")
             .AddProvides("GrilledPatty")
             .Enqueue();
 
         // Gotta toast the bun, too
         builder
-            .NewEntry("Toasting", toaster)
+            .NewItem("Toasting", toaster)
             .AddRequires("Bun")
             .AddProvides("ToastedBun")
             .Enqueue();
 
         // We have to get the ingredients somewhere
         builder
-            .NewEntry("Gathering", fridgeRaider)
+            .NewItem("Gathering", fridgeRaider)
             .AddProvides("Patty", "Bun", "Condiments", "Sauce")
             .Enqueue();
 
@@ -125,15 +125,15 @@ public class ExampleTests
         // so that the caller can continue creating more workers
         await Task.Yield();
 
-        while (await queue.DequeueAsync(cancellation) is { } entry)
+        while (await queue.DequeueAsync(cancellation) is { } item)
         {
-            Console.WriteLine($"Worker {n} executing: {entry.Name}");
+            Console.WriteLine($"Worker {n} executing: {item.Name}");
 
             // Execute the burger-making step
-            await entry.Value.ExecuteAsync(cancellation);
+            await item.Value.ExecuteAsync(cancellation);
 
             // Tell the queue that the step is done
-            queue.Complete(entry);
+            queue.Complete(item);
         }
     }
 

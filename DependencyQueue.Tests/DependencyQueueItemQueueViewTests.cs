@@ -3,14 +3,14 @@
 
 namespace DependencyQueue;
 
-using Collection = PredicateQueue<DependencyQueueEntry<Value>>;
-using View       = DependencyQueueEntryQueueView<Value>;
-using Inner      = DependencyQueueEntry<Value>;
-using Outer      = DependencyQueueEntry<Value>.View;
+using Collection = PredicateQueue<DependencyQueueItem<Value>>;
+using View       = DependencyQueueItemQueueView<Value>;
+using Inner      = DependencyQueueItem<Value>;
+using Outer      = DependencyQueueItem<Value>.View;
 using Lock       = AsyncMonitor.Lock;
 
 [TestFixture]
-internal class DependencyQueueEntryQueueViewTests
+internal class DependencyQueueItemQueueViewTests
     : CollectionViewTests<Collection, Inner, View, Outer, View.Enumerator>
 {
     [Test]
@@ -41,11 +41,11 @@ internal class DependencyQueueEntryQueueViewTests
         h.View.Invoking(v => v.Peek()).Should().Throw<ObjectDisposedException>();
     }
 
-    private protected override Inner ItemA { get; } = new Entry("a");
-    private protected override Inner ItemB { get; } = new Entry("b");
+    private protected override Inner ItemA { get; } = new Item("a");
+    private protected override Inner ItemB { get; } = new Item("b");
 
     private protected override Collection CreateCollection()
-        => new(new[] { ItemA, ItemB });
+        => new([ItemA, ItemB]);
 
     private protected override View CreateView(Collection collection, Lock @lock)
         => new(collection, @lock);
@@ -54,5 +54,5 @@ internal class DependencyQueueEntryQueueViewTests
         => view.Queue;
 
     private protected override Inner Unwrap(Outer view)
-        => view.Entry;
+        => view.Item;
 }

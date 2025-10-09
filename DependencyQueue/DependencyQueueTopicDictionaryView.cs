@@ -10,6 +10,9 @@ namespace DependencyQueue;
 ///   A read-only view over an exclusively-locked dictionary that maps topic
 ///   name keys to <see cref="DependencyQueueTopic{T}"/> values.
 /// </summary>
+/// <typeparam name="T">
+///   The type of values stored in the queue items.
+/// </typeparam>
 public readonly struct DependencyQueueTopicDictionaryView<T>
     : IReadOnlyDictionary<string, DependencyQueueTopic<T>.View>
 {

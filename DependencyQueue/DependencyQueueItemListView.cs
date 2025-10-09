@@ -2,32 +2,34 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 
 namespace DependencyQueue;
 
 /// <summary>
-///   A read-only view over an exclusively-locked queue of
-///   <see cref="DependencyQueueEntry{T}"/> objects.
+///   A read-only view over an exclusively-locked list of
+///   <see cref="DependencyQueueItem{T}"/> objects.
 /// </summary>
-public readonly struct DependencyQueueEntryQueueView<T>
-    : IReadOnlyCollection<DependencyQueueEntry<T>.View>
+/// <typeparam name="T">
+///   The type of values stored in the queue items.
+/// </typeparam>
+public readonly struct DependencyQueueItemListView<T>
+    : IReadOnlyList<DependencyQueueItem<T>.View>
 {
-    private readonly PredicateQueue<DependencyQueueEntry<T>> _queue;
-    private readonly AsyncMonitor.Lock                       _lock;
+    private readonly List<DependencyQueueItem<T>> _list;
+    private readonly AsyncMonitor.Lock            _lock;
 
-    internal DependencyQueueEntryQueueView(
-        PredicateQueue<DependencyQueueEntry<T>> queue,
-        AsyncMonitor.Lock                       @lock)
+    internal DependencyQueueItemListView(
+        List<DependencyQueueItem<T>> list,
+        AsyncMonitor.Lock            @lock)
     {
-        _queue = queue;
-        _lock  = @lock;
+        _list = list;
+        _lock = @lock;
     }
 
     /// <summary>
-    ///   Gets the underlying queue.
+    ///   Gets the underlying list.
     /// </summary>
-    internal PredicateQueue<DependencyQueueEntry<T>> Queue => _queue;
+    internal List<DependencyQueueItem<T>> List => _list;
 
     /// <inheritdoc/>
     /// <exception cref="ObjectDisposedException">
@@ -38,30 +40,21 @@ public readonly struct DependencyQueueEntryQueueView<T>
         get
         {
             _lock.RequireNotDisposed();
-            return _queue.Count;
+            return _list.Count;
         }
     }
 
-    /// <inheritdoc cref="PredicateQueue{T}.Peek" />
+    /// <inheritdoc/>
     /// <exception cref="ObjectDisposedException">
     ///   The underlying lock has been released.
     /// </exception>
-    public DependencyQueueEntry<T>.View Peek()
+    public DependencyQueueItem<T>.View this[int index]
     {
-        _lock.RequireNotDisposed();
-        return new(_queue.Peek(), _lock);
-    }
-
-    /// <inheritdoc cref="PredicateQueue{T}.TryPeek(out T)" />
-    /// <exception cref="ObjectDisposedException">
-    ///   The underlying lock has been released.
-    /// </exception>
-    public bool TryPeek([MaybeNullWhen(false)] out DependencyQueueEntry<T>.View result)
-    {
-        _lock.RequireNotDisposed();
-        return _queue.TryPeek(out var obj)
-            ? (r: true,  result = new(obj, _lock)).r
-            : (r: false, result = default).r;
+        get
+        {
+            _lock.RequireNotDisposed();
+            return new(_list[index], _lock);
+        }
     }
 
     /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
@@ -71,15 +64,15 @@ public readonly struct DependencyQueueEntryQueueView<T>
     public Enumerator GetEnumerator()
     {
         _lock.RequireNotDisposed();
-        return new(_queue.GetEnumerator(), _lock);
+        return new(_list.GetEnumerator(), _lock);
     }
 
     /// <inheritdoc/>
     /// <exception cref="ObjectDisposedException">
     ///   The underlying lock has been released.
     /// </exception>
-    IEnumerator<DependencyQueueEntry<T>.View>
-        IEnumerable<DependencyQueueEntry<T>.View>.GetEnumerator()
+    IEnumerator<DependencyQueueItem<T>.View>
+        IEnumerable<DependencyQueueItem<T>.View>.GetEnumerator()
         => GetEnumerator();
 
     /// <inheritdoc/>
@@ -90,17 +83,17 @@ public readonly struct DependencyQueueEntryQueueView<T>
         => GetEnumerator();
 
     /// <summary>
-    ///   A enumerator over an exclusively-locked queue of
-    ///   <see cref="DependencyQueueEntry{T}"/> objects.
+    ///   A enumerator over an exclusively-locked list of
+    ///   <see cref="DependencyQueueItem{T}"/> objects.
     /// </summary>
-    public struct Enumerator : IEnumerator<DependencyQueueEntry<T>.View>
+    public struct Enumerator : IEnumerator<DependencyQueueItem<T>.View>
     {
-        private PredicateQueue<DependencyQueueEntry<T>>.Enumerator _enumerator;
-        private readonly AsyncMonitor.Lock                         _lock;
+        private List<DependencyQueueItem<T>>.Enumerator _enumerator;
+        private readonly AsyncMonitor.Lock              _lock;
 
         internal Enumerator(
-            PredicateQueue<DependencyQueueEntry<T>>.Enumerator enumerator,
-            AsyncMonitor.Lock                                  @lock)
+            List<DependencyQueueItem<T>>.Enumerator enumerator,
+            AsyncMonitor.Lock                       @lock)
         {
             _enumerator = enumerator;
             _lock       = @lock;
@@ -110,7 +103,7 @@ public readonly struct DependencyQueueEntryQueueView<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        public readonly DependencyQueueEntry<T>.View Current
+        public readonly DependencyQueueItem<T>.View Current
         {
             get
             {

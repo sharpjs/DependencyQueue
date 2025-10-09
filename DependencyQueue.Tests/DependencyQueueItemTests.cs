@@ -4,12 +4,12 @@
 namespace DependencyQueue;
 
 [TestFixture]
-public class DependencyQueueEntryTests
+public class DependencyQueueItemTests
 {
     [Test]
     public void Construct_NullName()
     {
-        Invoking(() => new Entry(null!))
+        Invoking(() => new Item(null!))
             .Should().ThrowExactly<ArgumentNullException>()
             .Where(e => e.ParamName == "name");
     }
@@ -17,7 +17,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void Construct_EmptyName()
     {
-        Invoking(() => new Entry(""))
+        Invoking(() => new Item(""))
             .Should().ThrowExactly<ArgumentException>()
             .Where(e => e.ParamName == "name");
     }
@@ -25,7 +25,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void Construct_NullComparer()
     {
-        Invoking(() => new Entry("x", new(), null!))
+        Invoking(() => new Item("x", new(), null!))
             .Should().ThrowExactly<ArgumentNullException>()
             .Where(e => e.ParamName == "comparer");
     }
@@ -33,26 +33,26 @@ public class DependencyQueueEntryTests
     [Test]
     public void CreateView()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
-        h.View.Entry.Should().BeSameAs(entry);
+        h.View.Item.Should().BeSameAs(item);
 
         h.Dispose();
 
-        h.View.Entry.Should().BeSameAs(entry);
+        h.View.Item.Should().BeSameAs(item);
     }
 
     [Test]
     public void Name_Get()
     {
         var name  = "x";
-        var entry = new Entry(name);
+        var item = new Item(name);
 
-        entry.Name.Should().BeSameAs(name);
+        item.Name.Should().BeSameAs(name);
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Name.Should().BeSameAs(name);
 
@@ -65,11 +65,11 @@ public class DependencyQueueEntryTests
     public void Value_Get()
     {
         var value = new Value();
-        var entry = new Entry("x", value);
+        var item = new Item("x", value);
 
-        entry.Value.Should().BeSameAs(value);
+        item.Value.Should().BeSameAs(value);
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Value.Should().BeSameAs(value);
 
@@ -81,11 +81,11 @@ public class DependencyQueueEntryTests
     [Test]
     public void Provides_Get()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.Provides.Should().NotBeNull().And.BeEquivalentTo("x");
+        item.Provides.Should().NotBeNull().And.BeEquivalentTo("x");
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().NotBeNull().And.BeEquivalentTo("x");
 
@@ -97,11 +97,11 @@ public class DependencyQueueEntryTests
     [Test]
     public void Requires_Get()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.Requires.Should().NotBeNull().And.BeEmpty();
+        item.Requires.Should().NotBeNull().And.BeEmpty();
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Requires.Should().NotBeNull().And.BeEmpty();
 
@@ -113,7 +113,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddProvides_NullNameCollection()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.AddProvides(null!))
             .Should().ThrowExactly<ArgumentNullException>()
             .Where(e => e.ParamName == "names");
@@ -122,7 +122,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddProvides_NullName()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.AddProvides(new[] { null as string }!))
             .Should().ThrowExactly<ArgumentException>()
             .Where(e => e.ParamName == "names");
@@ -131,7 +131,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddProvides_EmptyName()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.AddProvides(new[] { "" }))
             .Should().ThrowExactly<ArgumentException>()
             .Where(e => e.ParamName == "names");
@@ -140,14 +140,14 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddProvides_Ok()
     {
-        var entry = new Entry("b");
+        var item = new Item("b");
 
-        entry.AddProvides(new[] { "A", "C" });
+        item.AddProvides(new[] { "A", "C" });
 
-        entry.Provides.Should().BeEquivalentTo("A", "b", "C");
-        entry.Requires.Should().BeEmpty();
+        item.Provides.Should().BeEquivalentTo("A", "b", "C");
+        item.Requires.Should().BeEmpty();
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("A", "b", "C");
         h.View.Requires.Should().BeEmpty();
@@ -156,14 +156,14 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddProvides_Duplicate()
     {
-        var entry = new Entry("a");
+        var item = new Item("a");
 
-        entry.AddProvides(new[] { "A", "a", "A" });
+        item.AddProvides(new[] { "A", "a", "A" });
 
-        entry.Provides.Should().BeEquivalentTo("a");
-        entry.Requires.Should().BeEmpty();
+        item.Provides.Should().BeEquivalentTo("a");
+        item.Requires.Should().BeEmpty();
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("a");
         h.View.Requires.Should().BeEmpty();
@@ -172,15 +172,15 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddProvides_Required()
     {
-        var entry = new Entry("b");
+        var item = new Item("b");
 
-        entry.AddRequires(new[] { "a" });
-        entry.AddProvides(new[] { "A" });
+        item.AddRequires(new[] { "a" });
+        item.AddProvides(new[] { "A" });
 
-        entry.Provides.Should().BeEquivalentTo("A", "b");
-        entry.Requires.Should().BeEmpty();
+        item.Provides.Should().BeEquivalentTo("A", "b");
+        item.Requires.Should().BeEmpty();
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("A", "b");
         h.View.Requires.Should().BeEmpty();
@@ -189,7 +189,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_NullNameCollection()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.AddRequires(null!))
             .Should().ThrowExactly<ArgumentNullException>()
             .Where(e => e.ParamName == "names");
@@ -198,7 +198,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_NullName()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.AddRequires(new[] { null as string }!))
             .Should().ThrowExactly<ArgumentException>()
             .Where(e => e.ParamName == "names");
@@ -207,7 +207,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_EmptyName()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.AddRequires(new[] { "" }))
             .Should().ThrowExactly<ArgumentException>()
             .Where(e => e.ParamName == "names");
@@ -216,14 +216,14 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_Ok()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.AddRequires(new[] { "A", "b", "C" });
+        item.AddRequires(new[] { "A", "b", "C" });
 
-        entry.Provides.Should().BeEquivalentTo("x");
-        entry.Requires.Should().BeEquivalentTo("A", "b", "C");
+        item.Provides.Should().BeEquivalentTo("x");
+        item.Requires.Should().BeEquivalentTo("A", "b", "C");
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("x");
         h.View.Requires.Should().BeEquivalentTo("A", "b", "C");
@@ -232,14 +232,14 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_Duplicate()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.AddRequires(new[] { "a", "A" });
+        item.AddRequires(new[] { "a", "A" });
 
-        entry.Provides.Should().BeEquivalentTo("x");
-        entry.Requires.Should().BeEquivalentTo("a");
+        item.Provides.Should().BeEquivalentTo("x");
+        item.Requires.Should().BeEquivalentTo("a");
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("x");
         h.View.Requires.Should().BeEquivalentTo("a");
@@ -248,15 +248,15 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_Provided()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.AddProvides(new[] { "A" });
-        entry.AddRequires(new[] { "a" });
+        item.AddProvides(new[] { "A" });
+        item.AddRequires(new[] { "a" });
 
-        entry.Provides.Should().BeEquivalentTo("x");
-        entry.Requires.Should().BeEquivalentTo("a");
+        item.Provides.Should().BeEquivalentTo("x");
+        item.Requires.Should().BeEquivalentTo("a");
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("x");
         h.View.Requires.Should().BeEquivalentTo("a");
@@ -265,14 +265,14 @@ public class DependencyQueueEntryTests
     [Test]
     public void AddRequires_OwnName()
     {
-        var entry = new Entry("a");
+        var item = new Item("a");
 
-        entry.AddRequires(new[] { "A" });
+        item.AddRequires(new[] { "A" });
 
-        entry.Provides.Should().BeEquivalentTo("a");
-        entry.Requires.Should().BeEmpty(); // NOTE: x did *not* become required
+        item.Provides.Should().BeEquivalentTo("a");
+        item.Requires.Should().BeEmpty(); // NOTE: x did *not* become required
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("a");
         h.View.Requires.Should().BeEmpty(); // NOTE: x did *not* become required
@@ -281,7 +281,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void RemoveRequires_NullName()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.RemoveRequires(null!))
             .Should().ThrowExactly<ArgumentNullException>()
             .Where(e => e.ParamName == "name");
@@ -290,7 +290,7 @@ public class DependencyQueueEntryTests
     [Test]
     public void RemoveRequires_EmptyName()
     {
-        new Entry("x")
+        new Item("x")
             .Invoking(e => e.RemoveRequires(""))
             .Should().ThrowExactly<ArgumentException>()
             .Where(e => e.ParamName == "name");
@@ -299,15 +299,15 @@ public class DependencyQueueEntryTests
     [Test]
     public void RemoveRequires_Ok()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.AddRequires(new[] { "a" });
-        entry.RemoveRequires("A");
+        item.AddRequires(new[] { "a" });
+        item.RemoveRequires("A");
 
-        entry.Provides.Should().BeEquivalentTo("x");
-        entry.Requires.Should().BeEmpty();
+        item.Provides.Should().BeEquivalentTo("x");
+        item.Requires.Should().BeEmpty();
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("x");
         h.View.Requires.Should().BeEmpty();
@@ -316,16 +316,16 @@ public class DependencyQueueEntryTests
     [Test]
     public void RemoveRequires_Duplicate()
     {
-        var entry = new Entry("x");
+        var item = new Item("x");
 
-        entry.AddRequires(new[] { "a" });
-        entry.RemoveRequires("A");
-        entry.RemoveRequires("A");
+        item.AddRequires(new[] { "a" });
+        item.RemoveRequires("A");
+        item.RemoveRequires("A");
 
-        entry.Provides.Should().BeEquivalentTo("x");
-        entry.Requires.Should().BeEmpty();
+        item.Provides.Should().BeEquivalentTo("x");
+        item.Requires.Should().BeEmpty();
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.Provides.Should().BeEquivalentTo("x");
         h.View.Requires.Should().BeEmpty();
@@ -334,19 +334,19 @@ public class DependencyQueueEntryTests
     [Test]
     public void ToString_Ok()
     {
-        var entry = new Entry("a");
+        var item = new Item("a");
 
-        entry.AddProvides(new[] { "b", "c" });
-        entry.AddRequires(new[] { "x", "y" });
+        item.AddProvides(new[] { "b", "c" });
+        item.AddRequires(new[] { "x", "y" });
 
-        entry.ToString().Should().Be(string.Concat(
-            "a {", entry.Value.ToString(), "}"
+        item.ToString().Should().Be(string.Concat(
+            "a {", item.Value.ToString(), "}"
         ));
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.ToString().Should().Be(string.Concat(
-            "a (Provides: a, b, c; Requires: x, y) {", entry.Value.ToString(), "}"
+            "a (Provides: a, b, c; Requires: x, y) {", item.Value.ToString(), "}"
         ));
 
         h.Dispose();
@@ -357,11 +357,11 @@ public class DependencyQueueEntryTests
     [Test]
     public void ToString_NullValue()
     {
-        var entry = new Entry("a", null!);
+        var item = new Item("a", null!);
 
-        entry.ToString().Should().Be("a {null}");
+        item.ToString().Should().Be("a {null}");
 
-        using var h = new ViewTestHarness(entry);
+        using var h = new ViewTestHarness(item);
 
         h.View.ToString().Should().Be("a (Provides: a; Requires: none) {null}");
 
@@ -372,11 +372,11 @@ public class DependencyQueueEntryTests
 
     private class ViewTestHarness : ViewTestHarnessBase
     {
-        public Entry.View View { get; }
+        public Item.View View { get; }
 
-        public ViewTestHarness(Entry entry)
+        public ViewTestHarness(Item item)
         {
-            View = new Entry.View(entry, Lock);
+            View = new Item.View(item, Lock);
         }
     }
 }

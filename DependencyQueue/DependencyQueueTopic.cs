@@ -6,11 +6,11 @@ using System.Text;
 namespace DependencyQueue;
 
 /// <summary>
-///   A name which queue entries can provide or require in order to express
+///   A name which queue items can provide or require in order to express
 ///   edges in a dependency graph.
 /// </summary>
 /// <typeparam name="T">
-///   The type of values contained in queue entries.
+///   The type of values contained in queue items.
 /// </typeparam>
 public class DependencyQueueTopic<T>
 {
@@ -39,14 +39,14 @@ public class DependencyQueueTopic<T>
     public string Name { get; }
 
     /// <summary>
-    ///   Gets the set of entries that provide the topic.
+    ///   Gets the set of items that provide the topic.
     /// </summary>
-    internal List<DependencyQueueEntry<T>> ProvidedBy { get; }
+    internal List<DependencyQueueItem<T>> ProvidedBy { get; }
 
     /// <summary>
-    ///   Gets the set of entries that require the topic.
+    ///   Gets the set of items that require the topic.
     /// </summary>
-    internal List<DependencyQueueEntry<T>> RequiredBy { get; }
+    internal List<DependencyQueueItem<T>> RequiredBy { get; }
 
     /// <inheritdoc/>
     public override string ToString()
@@ -81,7 +81,7 @@ public class DependencyQueueTopic<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        public DependencyQueueEntryListView<T> ProvidedBy
+        public DependencyQueueItemListView<T> ProvidedBy
         {
             get
             {
@@ -94,7 +94,7 @@ public class DependencyQueueTopic<T>
         /// <exception cref="ObjectDisposedException">
         ///   The underlying lock has been released.
         /// </exception>
-        public DependencyQueueEntryListView<T> RequiredBy
+        public DependencyQueueItemListView<T> RequiredBy
         {
             get
             {

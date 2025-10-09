@@ -5,10 +5,10 @@ namespace DependencyQueue;
 
 /// <summary>
 ///   A <see cref="DependencyQueue{T}"/> validation error that occurs when one
-///   or more entries require a topic that no entries provide.
+///   or more items require a topic that no items provide.
 /// </summary>
 /// <typeparam name="T">
-///   The type of values contained in queue entries.
+///   The type of values contained in queue items.
 /// </typeparam>
 public class DependencyQueueUnprovidedTopicError<T> : DependencyQueueError
 {

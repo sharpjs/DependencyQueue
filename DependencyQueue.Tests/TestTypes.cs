@@ -44,21 +44,21 @@ class Topic : DependencyQueueTopic<Value>
     { }
 }
 
-class Entry : DependencyQueueEntry<Value>
+class Item : DependencyQueueItem<Value>
 {
-    internal Entry()
+    internal Item()
         : base(GenerateName(), new(), Comparer)
     { }
 
-    internal Entry(string name)
+    internal Item(string name)
         : base(name, new(), Comparer)
     { }
 
-    internal Entry(string name, Value value)
+    internal Item(string name, Value value)
         : base(name, value, Comparer)
     { }
 
-    internal Entry(string name, Value value, StringComparer comparer)
+    internal Item(string name, Value value, StringComparer comparer)
         : base(name, value, comparer)
     { }
 
@@ -66,23 +66,9 @@ class Entry : DependencyQueueEntry<Value>
         => TestContext.CurrentContext.Random.GetString(6);
 }
 
-class Builder : DependencyQueueEntryBuilder<Value>
+class Builder : DependencyQueueItemBuilder<Value>
 {
     internal Builder(Queue queue)
         : base(queue)
     { }
 }
-
-#if REMOVED
-class Context : DependencyQueueContext<Value, Data>
-{
-    internal Context(
-        IQueue            queue,
-        Guid              runId,
-        int               workerId,
-        Data              data,
-        CancellationToken cancellation = default)
-        : base(queue, runId, workerId, data, cancellation)
-    { }
-}
-#endif

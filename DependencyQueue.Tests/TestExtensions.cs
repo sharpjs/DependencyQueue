@@ -10,16 +10,16 @@ internal static class TestExtensions
         queue.Validate().ShouldBeEmpty();
     }
 
-    public static void ShouldNotHaveReadyEntries<T>(this DependencyQueue<T> queue)
+    public static void ShouldNotHaveReadyItems<T>(this DependencyQueue<T> queue)
     {
-        queue.ReadyEntries.ShouldBeEmpty();
+        queue.ReadyItems.ShouldBeEmpty();
     }
 
-    public static void ShouldHaveReadyEntries<T>(
-        this DependencyQueue<T>          queue,
-        params DependencyQueueEntry<T>[] entries)
+    public static void ShouldHaveReadyItems<T>(
+        this DependencyQueue<T>         queue,
+        params DependencyQueueItem<T>[] items)
     {
-        queue.ReadyEntries.ShouldBe(entries);
+        queue.ReadyItems.ShouldBe(items);
     }
 
     public static void ShouldHaveTopicCount<T>(this DependencyQueue<T> queue, int expected)
@@ -28,10 +28,10 @@ internal static class TestExtensions
     }
 
     public static void ShouldHaveTopic<T>(
-        this DependencyQueue<T>    queue,
-        string                     name,
-        DependencyQueueEntry<T>[]? providedBy = null,
-        DependencyQueueEntry<T>[]? requiredBy = null)
+        this DependencyQueue<T>   queue,
+        string                    name,
+        DependencyQueueItem<T>[]? providedBy = null,
+        DependencyQueueItem<T>[]? requiredBy = null)
     {
         var topics = queue.Topics;
         topics.Keys.Should().Contain(name);

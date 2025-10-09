@@ -8,21 +8,21 @@ namespace DependencyQueue;
 ///   dependency graph contains a cycle.
 /// </summary>
 /// <typeparam name="T">
-///   The type of values contained in queue entries.
+///   The type of values contained in queue items.
 /// </typeparam>
 public class DependencyQueueCycleError<T> : DependencyQueueError
 {
     internal DependencyQueueCycleError(
-        DependencyQueueEntry<T> requiringEntry,
+        DependencyQueueItem<T>  requiringItem,
         DependencyQueueTopic<T> requiredTopic)
     {
-        if (requiringEntry is null)
-            throw Errors.ArgumentNull(nameof(requiringEntry));
+        if (requiringItem is null)
+            throw Errors.ArgumentNull(nameof(requiringItem));
         if (requiredTopic is null)
             throw Errors.ArgumentNull(nameof(requiredTopic));
 
-        RequiringEntry = requiringEntry;
-        RequiredTopic  = requiredTopic;
+        RequiringItem = requiringItem;
+        RequiredTopic = requiredTopic;
     }
 
     /// <inheritdoc/>
@@ -30,13 +30,13 @@ public class DependencyQueueCycleError<T> : DependencyQueueError
         => DependencyQueueErrorType.Cycle;
 
     /// <summary>
-    ///   Gets the entry whose requirement of <see cref="RequiredTopic"/>
+    ///   Gets the item whose requirement of <see cref="RequiredTopic"/>
     ///   creates a cycle in the dependency graph.
     /// </summary>
-    public DependencyQueueEntry<T> RequiringEntry { get; }
+    public DependencyQueueItem<T> RequiringItem { get; }
 
     /// <summary>
-    ///   Gets the topic whose requirement by <see cref="RequiringEntry"/>
+    ///   Gets the topic whose requirement by <see cref="RequiringItem"/>
     ///   creates a cycle in the dependency graph.
     /// </summary>
     public DependencyQueueTopic<T> RequiredTopic { get; }
@@ -45,11 +45,11 @@ public class DependencyQueueCycleError<T> : DependencyQueueError
     public override string ToString()
     {
         return string.Format(
-            "The entry '{0}' cannot require topic '{1}' because " +
-            "an entry providing that topic already requires entry '{0}'. " +
+            "The item '{0}' cannot require topic '{1}' because " +
+            "an item providing that topic already requires item '{0}'. " +
             "The dependency graph does not permit cycles.",
-            RequiringEntry.Name,
-            RequiredTopic .Name
+            RequiringItem.Name,
+            RequiredTopic.Name
         );
     }
 }

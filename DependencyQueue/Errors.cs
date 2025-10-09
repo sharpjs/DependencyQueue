@@ -32,9 +32,9 @@ internal static class Errors
             "of the collection or after the last element."
         );
 
-    internal static Exception NoCurrentEntry()
+    internal static Exception BuilderNoCurrentItem()
         => new InvalidOperationException(
-            "The builder does not have a current entry.  " +
-            "Use the NewEntry method to begin building an entry."
+            "The builder does not have a current item.  " +
+            "Use the NewItem method to begin building an item."
         );
 }

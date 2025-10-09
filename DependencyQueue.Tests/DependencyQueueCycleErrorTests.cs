@@ -10,17 +10,17 @@ using ErrorType = DependencyQueueErrorType;
 public class DependencyQueueCycleErrorTests
 {
     [Test]
-    public void Create_NullRequiringEntry()
+    public void Create_NullRequiringItem()
     {
         Invoking(() => Error.Cycle(null!, new Topic("b")))
             .Should().Throw<ArgumentNullException>()
-            .Where(e => e.ParamName == "requiringEntry");
+            .Where(e => e.ParamName == "requiringItem");
     }
 
     [Test]
     public void Create_NullRequiredTopic()
     {
-        Invoking(() => Error.Cycle(new Entry("a"), null!))
+        Invoking(() => Error.Cycle(new Item("a"), null!))
             .Should().Throw<ArgumentNullException>()
             .Where(e => e.ParamName == "requiredTopic");
     }
@@ -28,29 +28,29 @@ public class DependencyQueueCycleErrorTests
     [Test]
     public void Type_Get()
     {
-        var entry = new Entry("a");
+        var item  = new Item ("a");
         var topic = new Topic("b");
-        var error = Error.Cycle(entry, topic);
+        var error = Error.Cycle(item, topic);
 
         error.Type.Should().Be(ErrorType.Cycle);
     }
 
     [Test]
-    public void RequiringEntry_Get()
+    public void RequiringItem_Get()
     {
-        var entry = new Entry("a");
+        var item  = new Item ("a");
         var topic = new Topic("b");
-        var error = Error.Cycle(entry, topic);
+        var error = Error.Cycle(item, topic);
 
-        error.RequiringEntry.Should().BeSameAs(entry);
+        error.RequiringItem.Should().BeSameAs(item);
     }
 
     [Test]
     public void RequiredTopic_Get()
     {
-        var entry = new Entry("a");
+        var item  = new Item ("a");
         var topic = new Topic("b");
-        var error = Error.Cycle(entry, topic);
+        var error = Error.Cycle(item, topic);
 
         error.RequiredTopic.Should().BeSameAs(topic);
     }
@@ -59,13 +59,13 @@ public class DependencyQueueCycleErrorTests
     [SetCulture("")] // invariant culture
     public void ToStringMethod()
     {
-        var entry = new Entry("a");
+        var item  = new Item ("a");
         var topic = new Topic("b");
-        var error = Error.Cycle(entry, topic);
+        var error = Error.Cycle(item, topic);
 
         error.ToString().Should().Be(
-            "The entry 'a' cannot require topic 'b' because " +
-            "an entry providing that topic already requires entry 'a'. " +
+            "The item 'a' cannot require topic 'b' because " +
+            "an item providing that topic already requires item 'a'. " +
             "The dependency graph does not permit cycles."
         );
     }
