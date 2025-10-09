@@ -6,7 +6,6 @@ namespace DependencyQueue;
 using Dictionary = Dictionary<string, DependencyQueueTopic<Value>>;
 using Collection = Dictionary<string, DependencyQueueTopic<Value>>.KeyCollection;
 using View       = DependencyQueueTopicDictionaryView<Value>.KeyCollectionView;
-using Item       = String;
 using Lock       = AsyncMonitor.Lock;
 
 [TestFixture]

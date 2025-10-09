@@ -21,7 +21,7 @@ public class DependencyQueueItem<T>
     ///   The name of the item.
     /// </param>
     /// <param name="value">
-    ///   The value to contain in the item.
+    ///   The value to store in the item.
     /// </param>
     /// <param name="comparer">
     ///   The comparer to use for topic names.
@@ -50,7 +50,7 @@ public class DependencyQueueItem<T>
     public string Name { get; }
 
     /// <summary>
-    ///   Gets the value contained in the item.
+    ///   Gets the value store in the item.
     /// </summary>
     public T Value { get; }
 

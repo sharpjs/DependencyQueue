@@ -38,17 +38,17 @@ using var queue = new DependencyQueue<Step>();
 ```
 
 Because the queue class implements `IDisposable`, make sure to guarantee
-eventual disposal of queue instances, via a `using` block or other means.
+eventual disposal of queue instances via a `using` block or other means.
 
 ### Enqueueing Items
 
 A `DependencyQueue<T>` instance accepts element values of type `T`.  Each
 element value is wrapped in a `DependencyQueueItem<T>` object — an *item* —
 which also tracks how that item relates dependency-wise to the other items in
-the queue.  DependencyQueue provides two ways to create and enqueue items: an
-`Enqueue()` method and builder objects.
+the queue.  DependencyQueue provides two ways to create and enqueue (add)
+items: an `Enqueue()` method and a builder pattern.
 
-#### Enqueueing Items With Builders
+#### Enqueueing Items With a Builder
 
 To obtain a builder object, call `CreateItemBuilder()`.
 
@@ -56,9 +56,14 @@ To obtain a builder object, call `CreateItemBuilder()`.
 var builder = queue.CreateItemBuilder();
 ```
 
+The builder uses a fluent interface to build and enqueue an item incrementally.
+Each method returns the builder itself, enabling the developer to chain
+multiple method calls together.
+
 To begin a new item, call `NewItem()` on the builder, passing both a name for
-the item and the item the item should contain.  To add the item to the
-queue, call `Enqueue()`.  The builder is then reusable for another item.
+the item and a value to store in the item.  To add the item to the queue, call
+`Enqueue()` on the builder.  The builder then becomes reusable for another
+item.
 
 ```csharp
 builder
@@ -67,8 +72,8 @@ builder
 ```
 
 To indicate that an item requires some other item to be dequeued first, call
-`AddRequires()` on the builder, passing one or more names of items on which
-the current item will depend.
+`AddRequires()` on the builder, passing one or more names on which the current
+item will depend.
 
 ```csharp
 builder
@@ -92,12 +97,16 @@ builder
     .Enqueue();
 ```
 
-#### Enqueueing Items With The Enqueue Method
+`CreateItemBuilder()` is thread-safe, but the builder object it returns is not.
+To build and enqueue items in parallel, create a separate builder for each
+thread.
+
+#### Enqueueing Items With the Enqueue Method
 
 As an alternative to the builder pattern, DependencyQueue also provides an
 `Enqueue()` method that can create and enqueue an item in one call.  The
-tradeoff is that all the information about the item must be specified in that
-one call.
+tradeoff is that all of the information about the item must be specified in
+that one call.
 
 ```csharp
 queue.Enqueue(
@@ -107,6 +116,8 @@ queue.Enqueue(
     provides: ["BigThingIAmPartOf", "MyAlias", "AnotherAlias"]
 );
 ```
+
+`Enqueue()` is thread-safe.
 
 #### Other Details About Enqueueing
 
@@ -130,8 +141,8 @@ constructor.
 
 ### Dequeueing Items
 
-To dequeue items, call `Dequeue()` or `DequeueAsync()`.  Both methods yield
-the next item in the queue, or `null` if the queue is empty.
+To dequeue (remove) an item, call `Dequeue()` or `DequeueAsync()`.  Both
+methods yield the next item in the queue, or `null` if the queue is empty.
 
 ```csharp
 var item = queue.Dequeue();
@@ -149,19 +160,15 @@ call `Complete()` to inform the queue.
 queue.Complete(item);
 ```
 
-Once an item is completed, any items that depended on the completed item become
-available to be dequeued if they have no other outstanding dependencies.
-
-`Dequeue()`, `DequeueAsync()`, and `Complete()` are thread-safe.  For full
-thread safety information, see the [Thread Safety](#thread-safety) section
-below.
+Once an item is completed, any other items that depended on it become available
+to be dequeued if those items have no other outstanding dependencies.
 
 The dequeue methods support an optional predicate parameter.  If the caller
 provides a predicate, the queue tests the `Value` of each ready-to-dequeue item
 against the predicate and yields the first item for which the predicate returns
 `true`.  If the predicate does not return `true` for any ready-to-dequeue item,
-then the dequeue method blocks until an item becomes available that does
-satisfy the predicate.
+then the dequeue method waits until an item becomes available that does satisfy
+the predicate.
 
 ```csharp
 var item = await queue.DequeueAsync(
@@ -170,11 +177,13 @@ var item = await queue.DequeueAsync(
 );
 ```
 
-To remove all items from a queue, call `Clear()`.  This method is thread-safe.
+To remove all items from a queue, call `Clear()`.
 
 ```csharp
 queue.Clear();
 ```
+
+`Dequeue()`, `DequeueAsync()`, `Complete()`, and `Clear()` are thread-safe.
 
 ### Validation
 
@@ -194,7 +203,7 @@ reasons why the queue is invalid.
 
 To validate a queue explicitly without dequeuing any items, call
 `Validate()`, which returns a list of errors found in the queue.  if the list
-is empty, then the queue is valid.
+is empty, then the queue is valid.  `Validate()` is thread-safe.
 
 ```csharp
 var errors = queue.Validate();
@@ -221,8 +230,7 @@ foreach (var error in errors)
 
 To peek into a queue, the `DependencyQueue<T>` class provides the `Inspect()`
 and `InspectAsync()` methods.  These methods acquire an exclusive lock on the
-queue and return a read-only view of the queue.  The view holds the exclusive
-lock until disposed.
+queue and return a read-only view of the queue.  Because the view holds the exclusive lock until disposed, queue inspection is thread-safe.
 
 ```csharp
 using var view = queue.Inspect();
@@ -241,48 +249,25 @@ _ = view.Topics["Foo"].RequiredBy;    // Items that require topic "Foo"
 
 Most members of `DependencyQueue<T>` are thread-safe.  Specifically:
 
-- The `Comparer` and `Count` properties.
+- The `Comparer` and `Count` properties are thread-safe.
 
 - The `Enqueue()` method is thread-safe.
 
-- ⚠ The object returned by `CreateItemBuilder()` is **not** thread-safe, but
-  multiple threads can each use their own builder instance to enqueue items in
-  parallel.
-
-- The `Validate()` method is thread-safe.
+- ⚠ The `CreateItemBuilder()` method is thread-safe, but the object it returns
+  is **not** thread-safe.  Multiple threads can each use their own builder
+  instance to enqueue items in parallel.
 
 - The dequeue methods (`Dequeue()`, `DequeueAsync()`, and `Complete()`)
   are thread-safe.
 
-- The inspection methods (`Inspect()` and `InspectAsync()`) are thread-safe, as
-  are the objects they return.
+- The `Validate()` method is thread-safe.
 
 - The `Clear()` method is thread-safe.
 
+- The inspection methods (`Inspect()` and `InspectAsync()`) are thread-safe.
+  The view objects they return also are thread-safe.
+
 - ⚠ The `Dispose()` method is <strong>not</strong> thread-safe.
-
-## How DependencyQueue Works
-
-<details>
-<summary>Technical details are in here</summary>
-
-To complete an item, the queue updates each topic the item provides, removing
-the item from the topic's provided-by list.
-
-as no longer outstanding.  Once all
-
-items providing a topic have been dequeued and completed, the queue considers the
-topic itself complete.  The queue then removes that topic from the 
-
-item.  If all items providing a topic have been completed, the queue completes
-the topic itself.
-
-items that provide a topic 
-to reflect that
-the item is no longer outstanding.  This may cause other items that were waiting
-to be dequeued to become ready.
-
-</details>
 
 ## Examples
 
