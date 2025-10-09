@@ -55,8 +55,9 @@ public class ExampleTests
         // Now build the burger
         while (queue.Dequeue() is { } item)
         {
+#if ENABLE_NOISY_TESTS
             Console.WriteLine($"Executing: {item.Name}");
-
+#endif
             // Execute the burger-making step
             item.Value.Execute();
 
@@ -127,8 +128,9 @@ public class ExampleTests
 
         while (await queue.DequeueAsync(cancellation) is { } item)
         {
+#if ENABLE_NOISY_TESTS
             Console.WriteLine($"Worker {n} executing: {item.Name}");
-
+#endif
             // Execute the burger-making step
             await item.Value.ExecuteAsync(cancellation);
 
