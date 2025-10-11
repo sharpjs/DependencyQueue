@@ -50,10 +50,10 @@ items: an `Enqueue()` method and a builder pattern.
 
 #### Enqueueing Items With a Builder
 
-To obtain a builder object, call `CreateItemBuilder()`.
+To obtain a builder object, call `CreateBuilder()`.
 
 ```csharp
-var builder = queue.CreateItemBuilder();
+var builder = queue.CreateBuilder();
 ```
 
 The builder uses a fluent interface to build and enqueue an item incrementally.
@@ -97,9 +97,8 @@ builder
     .Enqueue();
 ```
 
-`CreateItemBuilder()` is thread-safe, but the builder object it returns is not.
-To build and enqueue items in parallel, create a separate builder for each
-thread.
+`CreateBuilder()` is thread-safe, but the builder object it returns is not.  To
+build and enqueue items in parallel, create a separate builder for each thread.
 
 #### Enqueueing Items With the Enqueue Method
 
@@ -253,8 +252,8 @@ Most members of `DependencyQueue<T>` are thread-safe.  Specifically:
 
 - The `Enqueue()` method is thread-safe.
 
-- ⚠ The `CreateItemBuilder()` method is thread-safe, but the object it returns
-  is **not** thread-safe.  Multiple threads can each use their own builder
+- ⚠ The `CreateBuilder()` method is thread-safe, but the object it returns is
+  **not** thread-safe.  Multiple threads can each use their own builder
   instance to enqueue items in parallel.
 
 - The dequeue methods (`Dequeue()`, `DequeueAsync()`, and `Complete()`)
@@ -286,7 +285,7 @@ not important what a step is.  Just imagine that the `Step` class has an
 using var queue = new DependencyQueue<Step>();
 
 // Create a builder for queue items
-var builder = queue.CreateItemBuilder();
+var builder = queue.CreateBuilder();
 
 // Add items in any order
 // First, we know we have to assemble the burger

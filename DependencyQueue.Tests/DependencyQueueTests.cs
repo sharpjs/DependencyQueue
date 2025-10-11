@@ -68,11 +68,11 @@ public class DependencyQueueTests
     }
 
     [Test]
-    public void CreateItemBuilder()
+    public void CreateBuilder()
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         builder      .ShouldNotBeNull();
         builder.Queue.ShouldBeSameAs(queue);

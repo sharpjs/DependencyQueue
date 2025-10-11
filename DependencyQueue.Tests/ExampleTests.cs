@@ -18,7 +18,7 @@ public class ExampleTests
         using var queue = new DependencyQueue<Step>();
 
         // Create a builder for queue items
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         // Add items in any order
         // First, we know we have to assemble the burger
@@ -78,7 +78,7 @@ public class ExampleTests
         using var queue = new DependencyQueue<Step>();
 
         // Create a builder for queue items
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         // Add items in any order
         // First, we know we have to assemble the burger

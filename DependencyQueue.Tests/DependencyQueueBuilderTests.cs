@@ -4,7 +4,7 @@
 namespace DependencyQueue;
 
 [TestFixture]
-public class DependencyQueueItemBuilderTests
+public class DependencyQueueBuilderTests
 {
     [Test]
     public void Construct_NullQueue()
@@ -21,7 +21,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         builder.CurrentItem.ShouldBeNull();
         builder.Queue      .ShouldBeSameAs(queue);
@@ -32,7 +32,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         var value = new Value();
         var item = builder
@@ -51,7 +51,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         Should.Throw<InvalidOperationException>(
             () => builder.AddProvides("a", "b")
@@ -63,7 +63,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         Should.Throw<InvalidOperationException>(
             () => builder.AddProvides((IEnumerable<string>) ["a", "b"])
@@ -75,7 +75,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         var item = builder
             .NewItem("x", value: new())
@@ -91,7 +91,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         var item = builder
             .NewItem("x", value: new())
@@ -107,7 +107,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         Should.Throw<InvalidOperationException>(
             () => builder.AddRequires("a", "b")
@@ -119,7 +119,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         Should.Throw<InvalidOperationException>(
             () => builder.AddRequires((IEnumerable<string>) ["a", "b"])
@@ -131,7 +131,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         var item = builder
             .NewItem("x", value: new())
@@ -147,7 +147,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         var item = builder
             .NewItem("x", value: new())
@@ -163,7 +163,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         Should.Throw<InvalidOperationException>(
             () => builder.Enqueue()
@@ -175,7 +175,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         builder
             .NewItem("x", value: new())
@@ -200,7 +200,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         Should.Throw<InvalidOperationException>(
             () => builder.Enqueue(out _)
@@ -212,7 +212,7 @@ public class DependencyQueueItemBuilderTests
     {
         using var queue = new Queue();
 
-        var builder = queue.CreateItemBuilder();
+        var builder = queue.CreateBuilder();
 
         builder
             .NewItem("x", value: new())

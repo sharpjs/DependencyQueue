@@ -66,7 +66,7 @@ class Item : DependencyQueueItem<Value>
         => TestContext.CurrentContext.Random.GetString(6);
 }
 
-class Builder : DependencyQueueItemBuilder<Value>
+class Builder : DependencyQueueBuilder<Value>
 {
     internal Builder(Queue queue)
         : base(queue)

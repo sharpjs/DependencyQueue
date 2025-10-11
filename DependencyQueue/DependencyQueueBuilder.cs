@@ -14,7 +14,7 @@ namespace DependencyQueue;
 ///   Members of this type are <strong>not</strong> thread-safe.  To build
 ///   items in parallel, use a separate builder for each thread.
 /// </remarks>
-public class DependencyQueueItemBuilder<T>
+public class DependencyQueueBuilder<T>
 {
     // The current item being built
     private DependencyQueueItem<T>? _item;
@@ -23,8 +23,8 @@ public class DependencyQueueItemBuilder<T>
     private readonly DependencyQueue<T> _queue;
 
     /// <summary>
-    ///   Initializes a new <see cref="DependencyQueueItemBuilder{T}"/>
-    ///   instance for the specified queue.
+    ///   Initializes a new <see cref="DependencyQueueBuilder{T}"/> instance
+    ///   for the specified queue.
     /// </summary>
     /// <param name="queue">
     ///   The queue to which the builder will enqueue items.
@@ -32,7 +32,7 @@ public class DependencyQueueItemBuilder<T>
     /// <exception cref="ArgumentNullException">
     ///   <paramref name="queue"/> is <see langword="null"/>.
     /// </exception>
-    internal DependencyQueueItemBuilder(DependencyQueue<T> queue)
+    internal DependencyQueueBuilder(DependencyQueue<T> queue)
     {
         if (queue is null)
             throw Errors.ArgumentNull(nameof(queue));
@@ -75,7 +75,7 @@ public class DependencyQueueItemBuilder<T>
     /// <exception cref="ArgumentException">
     ///   <paramref name="name"/> is empty.
     /// </exception>
-    public DependencyQueueItemBuilder<T> NewItem(string name, T value)
+    public DependencyQueueBuilder<T> NewItem(string name, T value)
     {
         _item = new(name, value, _queue.Comparer);
         return this;
@@ -106,14 +106,14 @@ public class DependencyQueueItemBuilder<T>
     ///   The builder does not have a current item.
     ///   Use <see cref="NewItem"/> to begin building an item.
     /// </exception>
-    public DependencyQueueItemBuilder<T> AddProvides(IEnumerable<string> names)
+    public DependencyQueueBuilder<T> AddProvides(IEnumerable<string> names)
     {
         RequireCurrentItem().AddProvides(names);
         return this;
     }
 
     /// <inheritdoc cref="AddProvides(IEnumerable{string})"/>>
-    public DependencyQueueItemBuilder<T> AddProvides(params string[] names)
+    public DependencyQueueBuilder<T> AddProvides(params string[] names)
         => AddProvides((IEnumerable<string>) names);
 
     /// <summary>
@@ -141,14 +141,14 @@ public class DependencyQueueItemBuilder<T>
     ///   The builder does not have a current item.
     ///   Use <see cref="NewItem"/> to begin building an item.
     /// </exception>
-    public DependencyQueueItemBuilder<T> AddRequires(IEnumerable<string> names)
+    public DependencyQueueBuilder<T> AddRequires(IEnumerable<string> names)
     {
         RequireCurrentItem().AddRequires(names);
         return this;
     }
 
     /// <inheritdoc cref="AddRequires(IEnumerable{string})"/>>
-    public DependencyQueueItemBuilder<T> AddRequires(params string[] names)
+    public DependencyQueueBuilder<T> AddRequires(params string[] names)
         => AddRequires((IEnumerable<string>) names);
 
     /// <summary>
@@ -166,17 +166,15 @@ public class DependencyQueueItemBuilder<T>
     ///   The builder does not have a current item.
     ///   Use <see cref="NewItem"/> to begin building an item.
     /// </exception>
-    public DependencyQueueItemBuilder<T> Enqueue()
-    {
-        return Enqueue(out _);
-    }
+    public DependencyQueueBuilder<T> Enqueue()
+        => Enqueue(out _);
 
     /// <inheritdoc cref="Enqueue()"/>
     /// <param name="item">
     ///   When this method returns, contains the item that was added to the
     ///   queue.
     /// </param>
-    public DependencyQueueItemBuilder<T> Enqueue(out DependencyQueueItem<T> item)
+    public DependencyQueueBuilder<T> Enqueue(out DependencyQueueItem<T> item)
     {
         item = RequireCurrentItem();
         _queue.Enqueue(item);
@@ -185,7 +183,5 @@ public class DependencyQueueItemBuilder<T>
     }
 
     private DependencyQueueItem<T> RequireCurrentItem()
-    {
-        return _item ?? throw Errors.BuilderNoCurrentItem();
-    }
+        => _item ?? throw Errors.BuilderNoCurrentItem();
 }

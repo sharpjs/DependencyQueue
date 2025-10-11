@@ -86,7 +86,7 @@ public class DependencyQueue<T> : IDisposable
     ///   <b>not</b> thread-safe.  To enqueue items incrementally in parallel,
     ///   use one builder per thread.
     /// </remarks>
-    public DependencyQueueItemBuilder<T> CreateItemBuilder()
+    public DependencyQueueBuilder<T> CreateBuilder()
         => new(this);
 
     /// <summary>
@@ -160,7 +160,7 @@ public class DependencyQueue<T> : IDisposable
         }
     }
 
-    // Called by Enqueue and by DependencyQueueItemBuilder
+    // Called by Enqueue and by DependencyQueueBuilder
     internal void Enqueue(DependencyQueueItem<T> item)
     {
         if (item is null)
