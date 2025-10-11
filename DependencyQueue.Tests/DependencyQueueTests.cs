@@ -753,10 +753,12 @@ public class DependencyQueueTests
     {
         using var queue = new Queue();
 
-        //                                           would be invalid; a is unprovided
-        //                                           vvvvvvvvvvvvvvv
-        var itemX = queue.Enqueue("x", value: new(), requires: ["a"], provides: ["b"]);
-        var itemY = queue.Enqueue("y", value: new(), requires: ["b"], provides: ["c"]);
+        //                                               provided by another
+        //                                          required by another    ↓
+        //                       would be invalid; a is unprovided    ↓    ↓
+        //                                                       ↓    ↓    ↓
+        var itemX = queue.Enqueue("x", value: new(), requires: ["a", "j", "k"], provides: ["b"]);
+        var itemY = queue.Enqueue("y", value: new(), requires: ["b", "j"],      provides: ["c", "k"]);
 
         // Complete() works even if the queue is invalid or has not been validated
         //queue.ShouldBeValid();
@@ -766,24 +768,30 @@ public class DependencyQueueTests
 
         // Before
         queue.ShouldNotHaveReadyItems();
-        queue.ShouldHaveTopicCount(5);
+        queue.ShouldHaveTopicCount(7);
         queue.ShouldHaveTopic("a", requiredBy: [itemX]                      );
-        queue.ShouldHaveTopic("b", requiredBy: [itemY], providedBy: [itemX]);
-        queue.ShouldHaveTopic("c",                      providedBy: [itemY]);
-        queue.ShouldHaveTopic("x",                      providedBy: [itemX]);
-        queue.ShouldHaveTopic("y",                      providedBy: [itemY]);
+        queue.ShouldHaveTopic("b", requiredBy: [itemY],        providedBy: [itemX]);
+        queue.ShouldHaveTopic("c",                             providedBy: [itemY]);
+        queue.ShouldHaveTopic("j", requiredBy: [itemX, itemY]                     );
+        queue.ShouldHaveTopic("k", requiredBy: [itemX],        providedBy: [itemY]);
+        queue.ShouldHaveTopic("x",                             providedBy: [itemX]);
+        queue.ShouldHaveTopic("y",                             providedBy: [itemY]);
 
         // Complete an item that has been enqueued but not dequeued
         queue.Complete(itemX);
         // - Removes topic a because nothing else provides or requires it.
         // - Removes topics b and x because their only provider (x) completed.
+        // - Does not remove topic j because it is still required by y
+        // - Does not remove topic k because it is still provided by y
         // - Makes y ready because its only requirement (b) is now provided
 
         // After
-        queue.ShouldHaveReadyItems(itemY);
-        queue.ShouldHaveTopicCount(2);
-        queue.ShouldHaveTopic("c", providedBy: [itemY]);
-        queue.ShouldHaveTopic("y", providedBy: [itemY]);
+        queue.ShouldNotHaveReadyItems();
+        queue.ShouldHaveTopicCount(4);
+        queue.ShouldHaveTopic("c",                      providedBy: [itemY]);
+        queue.ShouldHaveTopic("j", requiredBy: [itemY]                     );
+        queue.ShouldHaveTopic("k",                      providedBy: [itemY]);
+        queue.ShouldHaveTopic("y",                      providedBy: [itemY]);
     }
 
     [Test]
