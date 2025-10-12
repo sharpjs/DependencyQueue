@@ -554,7 +554,11 @@ public class DependencyQueue<T> : IDisposable
         var errors  = new List<DependencyQueueError>();
         var visited = new Dictionary<string, bool>(_topics.Count, _comparer);
 
-        foreach (var topic in _topics.Values)
+        // Ensure topics are visited in a deterministic order
+        var topics = _topics.Values.ToArray();
+        Array.Sort(topics, (a, b) => _comparer.Compare(a.Name, b.Name));
+
+        foreach (var topic in topics)
         {
             if (topic.ProvidedBy.Count == 0)
                 errors.Add(DependencyQueueError.UnprovidedTopic(topic));
