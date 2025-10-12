@@ -18,11 +18,13 @@ internal class DependencyQueueItemQueueViewTests
     {
         using var h = new TestHarness(this);
 
-        h.View.Peek().Apply(Unwrap).Should().Be(ItemA);
+        h.View.Peek().Apply(Unwrap).ShouldBe(ItemA);
 
         h.Dispose();
 
-        h.View.Invoking(v => v.Peek()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.Peek()
+        );
     }
 
     [Test]
@@ -30,15 +32,17 @@ internal class DependencyQueueItemQueueViewTests
     {
         using var h = new TestHarness(this);
 
-        h.View.TryPeek(out var item).Should().BeTrue();
-        item.Apply(Unwrap)          .Should().Be(ItemA);
+        h.View.TryPeek(out var item).ShouldBeTrue();
+        item.Apply(Unwrap)          .ShouldBe(ItemA);
 
         h.Collection.Clear(); // violating thread safety for testing only
-        h.View.TryPeek(out _).Should().BeFalse();
+        h.View.TryPeek(out _).ShouldBeFalse();
 
         h.Dispose();
 
-        h.View.Invoking(v => v.Peek()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.TryPeek(out _)
+        );
     }
 
     private protected override Inner ItemA { get; } = new Item("a");

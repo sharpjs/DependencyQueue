@@ -19,11 +19,13 @@ public abstract class DictionaryViewTests<TDictionary, TKey, TInner, TView, TOut
     {
         using var h = new TestHarness(this);
 
-        h.View[ItemA.Key].Apply(Unwrap).Should().Be(ItemA.Value);
+        h.View[ItemA.Key].Apply(Unwrap).ShouldBe(ItemA.Value);
 
         h.Dispose();
 
-        h.View.Invoking(v => v[ItemA.Key]).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View[ItemA.Key]
+        );
     }
 
     [Test]
@@ -31,12 +33,14 @@ public abstract class DictionaryViewTests<TDictionary, TKey, TInner, TView, TOut
     {
         using var h = new TestHarness(this);
 
-        h.View.ContainsKey(ItemA.Key).Should().BeTrue();
-        h.View.ContainsKey(Other.Key).Should().BeFalse();
+        h.View.ContainsKey(ItemA.Key).ShouldBeTrue();
+        h.View.ContainsKey(Other.Key).ShouldBeFalse();
 
         h.Dispose();
 
-        h.View.Invoking(v => v.ContainsKey(ItemA.Key)).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.ContainsKey(ItemA.Key)
+        );
     }
 
     [Test]
@@ -44,14 +48,16 @@ public abstract class DictionaryViewTests<TDictionary, TKey, TInner, TView, TOut
     {
         using var h = new TestHarness(this);
 
-        h.View.TryGetValue(ItemA.Key, out var value).Should().BeTrue();
-        value!.Apply(Unwrap).Should().Be(ItemA.Value);
+        h.View.TryGetValue(ItemA.Key, out var value).ShouldBeTrue();
+        value!.Apply(Unwrap).ShouldBe(ItemA.Value);
 
-        h.View.TryGetValue(Other.Key, out var _).Should().BeFalse();
+        h.View.TryGetValue(Other.Key, out var _).ShouldBeFalse();
 
         h.Dispose();
 
-        h.View.Invoking(v => v.TryGetValue(ItemA.Key, out value)).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.TryGetValue(ItemA.Key, out _)
+        );
     }
 
     [Test]
@@ -59,11 +65,13 @@ public abstract class DictionaryViewTests<TDictionary, TKey, TInner, TView, TOut
     {
         using var h = new TestHarness(this);
 
-        h.View.Keys.Should().BeEquivalentTo(h.Collection.Keys);
+        h.View.Keys.ShouldBe(h.Collection.Keys);
 
         h.Dispose();
 
-        h.View.Invoking(v => v.Keys).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.Keys
+        );
     }
 
     [Test]
@@ -71,11 +79,13 @@ public abstract class DictionaryViewTests<TDictionary, TKey, TInner, TView, TOut
     {
         using var h = new TestHarness(this);
 
-        h.View.Values.Select(Unwrap).Should().BeEquivalentTo(h.Collection.Values);
+        h.View.Values.Select(Unwrap).ShouldBe(h.Collection.Values);
 
         h.Dispose();
 
-        h.View.Invoking(v => v.Values).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.Values
+        );
     }
 
     private protected abstract KeyValuePair<TKey, TInner> Other { get; }

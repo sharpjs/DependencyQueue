@@ -18,11 +18,11 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var h = new TestHarness(this);
         using var e = h.View.GetEnumerator();
 
-        h.View.Apply(Unwrap).Should().BeSameAs(h.Collection);
+        h.View.Apply(Unwrap).ShouldBeSameAs(h.Collection);
 
         h.Dispose();
 
-        h.View.Apply(Unwrap).Should().BeSameAs(h.Collection);
+        h.View.Apply(Unwrap).ShouldBeSameAs(h.Collection);
     }
 
     [Test]
@@ -31,20 +31,22 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var h = new TestHarness(this);
         using var e = h.View.GetEnumerator();
 
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemA);
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemA);
         e.Reset();
-        e.MoveNext().Should().BeTrue(); //ke.Current.Apply(Unwrap).Should().Be(ItemA);
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemB);
-        e.MoveNext().Should().BeFalse();
+        e.MoveNext().ShouldBeTrue(); //ke.Current.Apply(Unwrap).ShouldBe(ItemA);
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemB);
+        e.MoveNext().ShouldBeFalse();
         e.Reset();
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemA);
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemB);
-        e.MoveNext().Should().BeFalse();
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemA);
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemB);
+        e.MoveNext().ShouldBeFalse();
 
         e.Dispose();
         h.Dispose();
 
-        h.View.Invoking(v => v.GetEnumerator()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.GetEnumerator()
+        );
     }
 
     [Test]
@@ -53,20 +55,22 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var h = new TestHarness(this);
         using var e = h.View.GetGenericEnumerator();
 
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemA);
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemA);
         e.Reset();
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemA);
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemB);
-        e.MoveNext().Should().BeFalse();
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemA);
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemB);
+        e.MoveNext().ShouldBeFalse();
         e.Reset();
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemA);
-        e.MoveNext().Should().BeTrue(); e.Current.Apply(Unwrap).Should().Be(ItemB);
-        e.MoveNext().Should().BeFalse();
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemA);
+        e.MoveNext().ShouldBeTrue(); e.Current.Apply(Unwrap).ShouldBe(ItemB);
+        e.MoveNext().ShouldBeFalse();
 
         e.Dispose();
         h.Dispose();
 
-        h.View.Invoking(v => v.GetEnumerator()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.GetGenericEnumerator()
+        );
     }
 
     [Test]
@@ -75,19 +79,21 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var h = new TestHarness(this);
         var e = h.View.GetNonGenericEnumerator();
 
-        e.MoveNext().Should().BeTrue(); e.Current.As<TOuter>().Apply(Unwrap).Should().Be(ItemA);
+        e.MoveNext().ShouldBeTrue(); ((TOuter) e.Current).Apply(Unwrap).ShouldBe(ItemA);
         e.Reset();
-        e.MoveNext().Should().BeTrue(); e.Current.As<TOuter>().Apply(Unwrap).Should().Be(ItemA);
-        e.MoveNext().Should().BeTrue(); e.Current.As<TOuter>().Apply(Unwrap).Should().Be(ItemB);
-        e.MoveNext().Should().BeFalse();
+        e.MoveNext().ShouldBeTrue(); ((TOuter) e.Current).Apply(Unwrap).ShouldBe(ItemA);
+        e.MoveNext().ShouldBeTrue(); ((TOuter) e.Current).Apply(Unwrap).ShouldBe(ItemB);
+        e.MoveNext().ShouldBeFalse();
         e.Reset();
-        e.MoveNext().Should().BeTrue(); e.Current.As<TOuter>().Apply(Unwrap).Should().Be(ItemA);
-        e.MoveNext().Should().BeTrue(); e.Current.As<TOuter>().Apply(Unwrap).Should().Be(ItemB);
-        e.MoveNext().Should().BeFalse();
+        e.MoveNext().ShouldBeTrue(); ((TOuter) e.Current).Apply(Unwrap).ShouldBe(ItemA);
+        e.MoveNext().ShouldBeTrue(); ((TOuter) e.Current).Apply(Unwrap).ShouldBe(ItemB);
+        e.MoveNext().ShouldBeFalse();
 
         h.Dispose();
 
-        h.View.Invoking(v => v.GetEnumerator()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.GetNonGenericEnumerator()
+        );
     }
 
     [Test]
@@ -97,7 +103,9 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var e = h.View.GetEnumerator();
         h.Dispose();
 
-        e.Invoking(e => e.Current).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => e.Current
+        );
     }
 
     [Test]
@@ -107,7 +115,9 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var e = h.View.GetEnumerator();
         h.Dispose();
 
-        e.As<IEnumerator>().Invoking(e => e.Current).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => ((IEnumerator) e).Current
+        );
     }
 
     [Test]
@@ -117,7 +127,9 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var e = h.View.GetEnumerator();
         h.Dispose();
 
-        e.Invoking(e => e.MoveNext()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => e.MoveNext()
+        );
     }
 
     [Test]
@@ -127,7 +139,9 @@ public abstract class EnumerableViewTests<TCollection, TInner, TView, TOuter, TE
         using var e = h.View.GetEnumerator();
         h.Dispose();
 
-        e.Invoking(e => e.Reset()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => e.Reset()
+        );
     }
 
     private protected abstract TInner ItemA { get; }

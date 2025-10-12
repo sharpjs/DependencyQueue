@@ -12,9 +12,9 @@ public class DependencyQueueUnprovidedTopicErrorTests
     [Test]
     public void Create_NullRequiredTopic()
     {
-        Invoking(() => Error.UnprovidedTopic<Topic>(null!))
-            .Should().Throw<ArgumentNullException>()
-            .Where(e => e.ParamName == "topic");
+        Should.Throw<ArgumentNullException>(
+            () => Error.UnprovidedTopic<Value>(null!)
+        ).ParamName.ShouldBe("topic");
     }
 
     [Test]
@@ -23,7 +23,7 @@ public class DependencyQueueUnprovidedTopicErrorTests
         var topic = new Topic("a");
         var error = Error.UnprovidedTopic(topic);
 
-        error.Type.Should().Be(ErrorType.UnprovidedTopic);
+        error.Type.ShouldBe(ErrorType.UnprovidedTopic);
     }
 
     [Test]
@@ -32,7 +32,7 @@ public class DependencyQueueUnprovidedTopicErrorTests
         var topic = new Topic("a");
         var error = Error.UnprovidedTopic(topic);
 
-        error.Topic.Should().BeSameAs(topic);
+        error.Topic.ShouldBeSameAs(topic);
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class DependencyQueueUnprovidedTopicErrorTests
         var topic = new Topic("a");
         var error = Error.UnprovidedTopic(topic);
 
-        error.ToString().Should().Be(
+        error.ToString().ShouldBe(
             "The topic 'a' is required but not provided."
         );
     }

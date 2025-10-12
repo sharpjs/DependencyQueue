@@ -14,10 +14,12 @@ public abstract class CollectionViewTests<TCollection, TInner, TView, TOuter, TE
     {
         using var h = new TestHarness(this);
 
-        h.View.Count.Should().Be(h.Collection.Count);
+        h.View.Count.ShouldBe(h.Collection.Count);
 
         h.Dispose();
 
-        h.View.Invoking(v => v.Count).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.Count
+        );
     }
 }

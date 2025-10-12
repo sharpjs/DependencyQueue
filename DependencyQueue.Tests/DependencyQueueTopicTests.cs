@@ -9,19 +9,17 @@ public class DependencyQueueTopicTests
     [Test]
     public void Construct_NullName()
     {
-        Invoking(() => new Topic(null!))
-            .Should()
-            .Throw<ArgumentNullException>()
-            .Where(e => e.ParamName == "name");
+        Should.Throw<ArgumentNullException>(
+            () => new Topic(null!)
+        ).ParamName.ShouldBe("name");
     }
 
     [Test]
     public void Construct_EmptyName()
     {
-        Invoking(() => new Topic(""))
-            .Should()
-            .ThrowExactly<ArgumentException>()
-            .Where(e => e.ParamName == "name");
+        Should.Throw<ArgumentException>(
+            () => new Topic("")
+        ).ParamName.ShouldBe("name");
     }
 
     [Test]
@@ -31,11 +29,11 @@ public class DependencyQueueTopicTests
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.Topic.Should().BeSameAs(topic);
+        h.View.Topic.ShouldBeSameAs(topic);
 
         h.Dispose();
 
-        h.View.Topic.Should().BeSameAs(topic);
+        h.View.Topic.ShouldBeSameAs(topic);
     }
 
     [Test]
@@ -44,15 +42,15 @@ public class DependencyQueueTopicTests
         var name  = "a";
         var topic = new Topic(name);
 
-        topic.Name.Should().BeSameAs(name);
+        topic.Name.ShouldBeSameAs(name);
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.Name.Should().BeSameAs(name);
+        h.View.Name.ShouldBeSameAs(name);
 
         h.Dispose();
 
-        h.View.Name.Should().BeSameAs(name);
+        h.View.Name.ShouldBeSameAs(name);
     }
 
     [Test]
@@ -60,15 +58,15 @@ public class DependencyQueueTopicTests
     {
         var topic = new Topic("a");
 
-        topic.ProvidedBy.Should().BeEmpty();
+        topic.ProvidedBy.ShouldBeEmpty();
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.ProvidedBy.Should().BeEmpty();
+        h.View.ProvidedBy.ShouldBeEmpty();
 
         h.Dispose();
 
-        h.View.Invoking(v => v.ProvidedBy).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(() => h.View.ProvidedBy);
     }
 
     [Test]
@@ -76,15 +74,15 @@ public class DependencyQueueTopicTests
     {
         var topic = new Topic("a");
 
-        topic.RequiredBy.Should().BeEmpty();
+        topic.RequiredBy.ShouldBeEmpty();
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.RequiredBy.Should().BeEmpty();
+        h.View.RequiredBy.ShouldBeEmpty();
 
         h.Dispose();
 
-        h.View.Invoking(v => v.RequiredBy).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(() => h.View.RequiredBy);
     }
 
     [Test]
@@ -103,11 +101,11 @@ public class DependencyQueueTopicTests
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.ProvidedBy.Select(v => v.Item).Should().Equal(items);
+        h.View.ProvidedBy.Select(v => v.Item).ShouldBe(items);
 
         h.Dispose();
 
-        h.View.Invoking(v => v.ProvidedBy).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(() => h.View.ProvidedBy);
     }
 
     [Test]
@@ -126,11 +124,11 @@ public class DependencyQueueTopicTests
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.RequiredBy.Select(v => v.Item).Should().Equal(items);
+        h.View.RequiredBy.Select(v => v.Item).ShouldBe(items);
 
         h.Dispose();
 
-        h.View.Invoking(v => v.RequiredBy).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(() => h.View.RequiredBy);
     }
 
     [Test]
@@ -138,17 +136,17 @@ public class DependencyQueueTopicTests
     {
         var topic = new Topic("a");
 
-        new Topic("a").ToString().Should().Be("a");
+        new Topic("a").ToString().ShouldBe("a");
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.ToString().Should().Be(
+        h.View.ToString().ShouldBe(
             "a (ProvidedBy: none; RequiredBy: none)"
         );
 
         h.Dispose();
 
-        h.View.Invoking(v => v.ToString()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(() => h.View.ToString());
     }
 
     [Test]
@@ -167,17 +165,17 @@ public class DependencyQueueTopicTests
             new Item("d", new())
         });
 
-        new Topic("a").ToString().Should().Be("a");
+        new Topic("a").ToString().ShouldBe("a");
 
         using var h = new ViewTestHarness(topic);
 
-        h.View.ToString().Should().Be(
+        h.View.ToString().ShouldBe(
             "a (ProvidedBy: b; RequiredBy: c, d)"
         );
 
         h.Dispose();
 
-        h.View.Invoking(v => v.ToString()).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(() => h.View.ToString());
     }
 
     private class ViewTestHarness : ViewTestHarnessBase

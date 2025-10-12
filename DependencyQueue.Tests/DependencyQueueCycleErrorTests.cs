@@ -12,17 +12,17 @@ public class DependencyQueueCycleErrorTests
     [Test]
     public void Create_NullRequiringItem()
     {
-        Invoking(() => Error.Cycle(null!, new Topic("b")))
-            .Should().Throw<ArgumentNullException>()
-            .Where(e => e.ParamName == "requiringItem");
+        Should.Throw<ArgumentNullException>(
+            () => Error.Cycle(null!, new Topic("b"))
+        ).ParamName.ShouldBe("requiringItem");
     }
 
     [Test]
     public void Create_NullRequiredTopic()
     {
-        Invoking(() => Error.Cycle(new Item("a"), null!))
-            .Should().Throw<ArgumentNullException>()
-            .Where(e => e.ParamName == "requiredTopic");
+        Should.Throw<ArgumentNullException>(
+            () => Error.Cycle(new Item("a"), null!)
+        ).ParamName.ShouldBe("requiredTopic");
     }
 
     [Test]
@@ -32,7 +32,7 @@ public class DependencyQueueCycleErrorTests
         var topic = new Topic("b");
         var error = Error.Cycle(item, topic);
 
-        error.Type.Should().Be(ErrorType.Cycle);
+        error.Type.ShouldBe(ErrorType.Cycle);
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class DependencyQueueCycleErrorTests
         var topic = new Topic("b");
         var error = Error.Cycle(item, topic);
 
-        error.RequiringItem.Should().BeSameAs(item);
+        error.RequiringItem.ShouldBeSameAs(item);
     }
 
     [Test]
@@ -52,7 +52,7 @@ public class DependencyQueueCycleErrorTests
         var topic = new Topic("b");
         var error = Error.Cycle(item, topic);
 
-        error.RequiredTopic.Should().BeSameAs(topic);
+        error.RequiredTopic.ShouldBeSameAs(topic);
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class DependencyQueueCycleErrorTests
         var topic = new Topic("b");
         var error = Error.Cycle(item, topic);
 
-        error.ToString().Should().Be(
+        error.ToString().ShouldBe(
             "The item 'a' cannot require topic 'b' because " +
             "an item providing that topic already requires item 'a'. " +
             "The dependency graph does not permit cycles."

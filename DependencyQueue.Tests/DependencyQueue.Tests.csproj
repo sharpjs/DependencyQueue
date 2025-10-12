@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <Using Include="DependencyQueue.TestGlobals" Static="true" />
+    <Using Remove="FluentAssertions" />
   </ItemGroup>
 
 </Project>

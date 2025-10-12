@@ -34,7 +34,7 @@ internal static class TestExtensions
         DependencyQueueItem<T>[]? requiredBy = null)
     {
         var topics = queue.Topics;
-        topics.Keys.Should().Contain(name);
+        topics.Keys.ShouldContain(name);
 
         var topic = topics[name];
         topic.Name      .ShouldBe(name);

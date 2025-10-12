@@ -14,10 +14,12 @@ public abstract class ListViewTests<TCollection, TInner, TView, TOuter, TEnumera
     {
         using var h = new TestHarness(this);
 
-        h.View[0].Apply(Unwrap).Should().Be(h.Collection[0]);
+        h.View[0].Apply(Unwrap).ShouldBe(h.Collection[0]);
 
         h.Dispose();
 
-        h.View.Invoking(v => v[0]).Should().Throw<ObjectDisposedException>();
+        Should.Throw<ObjectDisposedException>(
+            () => h.View[0]
+        );
     }
 }
