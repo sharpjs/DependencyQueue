@@ -99,14 +99,14 @@ public class DependencyQueue<T> : IDisposable
     /// <param name="value">
     ///   The object to store in the queue item.
     /// </param>
-    /// <param name="requires">
-    ///   An optional collection of names of the topics that the queue item
-    ///   requires.  A name cannot be <see langword="null"/> or empty.
-    /// </param>
     /// <param name="provides">
     ///   An optional collection of names of the topics that the queue item
     ///   provides in addition to the specified <paramref name="name"/>.  A
     ///   name cannot be <see langword="null"/> or empty.
+    /// </param>
+    /// <param name="requires">
+    ///   An optional collection of names of the topics that the queue item
+    ///   requires.  A name cannot be <see langword="null"/> or empty.
     /// </param>
     /// <returns>
     ///   The item that was added to the queue.
@@ -128,21 +128,21 @@ public class DependencyQueue<T> : IDisposable
     public DependencyQueueItem<T> Enqueue(
         string               name,
         T                    value,
-        IEnumerable<string>? requires = null,
-        IEnumerable<string>? provides = null)
+        IEnumerable<string>? provides = null,
+        IEnumerable<string>? requires = null)
     {
         var item = new DependencyQueueItem<T>(name, value, Comparer);
-
-        if (requires is not null)
-        {
-            RequireValidNames(requires, nameof(requires));
-            item.AddRequires(requires);
-        }
 
         if (provides is not null)
         {
             RequireValidNames(provides, nameof(provides));
             item.AddProvides(provides);
+        }
+
+        if (requires is not null)
+        {
+            RequireValidNames(requires, nameof(requires));
+            item.AddRequires(requires);
         }
 
         Enqueue(item);
