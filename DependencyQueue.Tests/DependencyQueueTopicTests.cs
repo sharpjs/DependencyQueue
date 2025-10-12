@@ -66,7 +66,9 @@ public class DependencyQueueTopicTests
 
         h.Dispose();
 
-        Should.Throw<ObjectDisposedException>(() => h.View.ProvidedBy);
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.ProvidedBy
+        );
     }
 
     [Test]
@@ -82,7 +84,9 @@ public class DependencyQueueTopicTests
 
         h.Dispose();
 
-        Should.Throw<ObjectDisposedException>(() => h.View.RequiredBy);
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.RequiredBy
+        );
     }
 
     [Test]
@@ -105,7 +109,9 @@ public class DependencyQueueTopicTests
 
         h.Dispose();
 
-        Should.Throw<ObjectDisposedException>(() => h.View.ProvidedBy);
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.ProvidedBy
+        );
     }
 
     [Test]
@@ -128,7 +134,9 @@ public class DependencyQueueTopicTests
 
         h.Dispose();
 
-        Should.Throw<ObjectDisposedException>(() => h.View.RequiredBy);
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.RequiredBy
+        );
     }
 
     [Test]
@@ -146,7 +154,9 @@ public class DependencyQueueTopicTests
 
         h.Dispose();
 
-        Should.Throw<ObjectDisposedException>(() => h.View.ToString());
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.ToString()
+        );
     }
 
     [Test]
@@ -175,7 +185,9 @@ public class DependencyQueueTopicTests
 
         h.Dispose();
 
-        Should.Throw<ObjectDisposedException>(() => h.View.ToString());
+        Should.Throw<ObjectDisposedException>(
+            () => h.View.ToString()
+        );
     }
 
     private class ViewTestHarness : ViewTestHarnessBase

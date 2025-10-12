@@ -29,10 +29,9 @@ public class PredicateQueueTests
     [Test]
     public void Construct_Enumerable_Null()
     {
-        Should.Throw<ArgumentNullException>(() =>
-        {
-            _ = new PredicateQueue<string>(null!);
-        });
+        Should.Throw<ArgumentNullException>(
+            () => new PredicateQueue<string>(null!)
+        );
     }
 
     [Test]
@@ -64,7 +63,9 @@ public class PredicateQueueTests
     {
         var queue = new PredicateQueue<string>();
 
-        Should.Throw<InvalidOperationException>(queue.Peek);
+        Should.Throw<InvalidOperationException>(
+            () => queue.Peek()
+        );
     }
 
     [Test]
@@ -172,10 +173,9 @@ public class PredicateQueueTests
     {
         var queue = new PredicateQueue<string>(["a"]);
 
-        Should.Throw<ArgumentNullException>(() =>
-        {
-            queue.TryDequeue<string>(null!, _ => true, out _);
-        });
+        Should.Throw<ArgumentNullException>(
+            () => queue.TryDequeue<string>(null!, _ => true, out _)
+        );
     }
 
     [Test]
@@ -183,10 +183,9 @@ public class PredicateQueueTests
     {
         var queue = new PredicateQueue<string>(["a"]);
 
-        Should.Throw<ArgumentNullException>(() =>
-        {
-            queue.TryDequeue(s => s, null!, out _);
-        });
+        Should.Throw<ArgumentNullException>(
+            () => queue.TryDequeue(s => s, null!, out _)
+        );
     }
 
     [Test]
@@ -250,7 +249,9 @@ public class PredicateQueueEnumeratorTests
 
         using var enumerator = queue.GetEnumerator();
 
-        Should.Throw<InvalidOperationException>(() => { _ = enumerator.Current; });
+        Should.Throw<InvalidOperationException>(
+            () => enumerator.Current
+        );
     }
 
     [Test]
@@ -263,7 +264,9 @@ public class PredicateQueueEnumeratorTests
         enumerator.MoveNext();
         enumerator.MoveNext(); // Move past end
         
-        Should.Throw<InvalidOperationException>(() => { _ = enumerator.Current; });
+        Should.Throw<InvalidOperationException>(
+            () => enumerator.Current
+        );
     }
 
     [Test]
@@ -285,7 +288,9 @@ public class PredicateQueueEnumeratorTests
 
         using var enumerator = queue.GetEnumerator();
 
-        Should.Throw<InvalidOperationException>(() => { _ = ((IEnumerator) enumerator).Current; });
+        Should.Throw<InvalidOperationException>(
+            () => ((IEnumerator) enumerator).Current
+        );
     }
 
     [Test]
@@ -298,7 +303,9 @@ public class PredicateQueueEnumeratorTests
         enumerator.MoveNext();
         enumerator.MoveNext(); // Move past end
         
-        Should.Throw<InvalidOperationException>(() => { _ = ((IEnumerator) enumerator).Current; });
+        Should.Throw<InvalidOperationException>(
+            () => ((IEnumerator) enumerator).Current
+        );
     }
 
     [Test]
