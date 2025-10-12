@@ -7,21 +7,12 @@ static class TestGlobals
 {
     internal static StringComparer Comparer
         => StringComparer.OrdinalIgnoreCase;
-
-    internal static T[] Items<T>(params T[] items)
-        => items;
 }
 
 class Value
 {
     public override string ToString()
         => Invariant($"Value{GetHashCode():X4}");
-}
-
-class Data
-{
-    public override string ToString()
-        => Invariant($"Data{GetHashCode():X4}");
 }
 
 class Queue : DependencyQueue<Value>
