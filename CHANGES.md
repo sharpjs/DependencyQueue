@@ -13,7 +13,7 @@ Future release.
 -->
 
 ## [1.0.0](https://github.com/sharpjs/DependencyQueue/tree/release/1.0.0)
-Future release.
+Initial release.
 
 <!--
   Copyright Subatomix Research Inc.
