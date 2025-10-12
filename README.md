@@ -34,7 +34,7 @@ The queue class is the generic `DependencyQueue<T>`, which supports simple
 creation via its constructor.
 
 ```csharp
-using var queue = new DependencyQueue<Step>();
+using var queue = new DependencyQueue<Foo>();
 ```
 
 Because the queue class implements `IDisposable`, make sure to guarantee
@@ -67,7 +67,7 @@ item.
 
 ```csharp
 builder
-    .NewItem("MyItem", theItem)
+    .NewItem("MyItem", someValue)
     .Enqueue();
 ```
 
@@ -77,7 +77,7 @@ item will depend.
 
 ```csharp
 builder
-    .NewItem("MyItem", theItem)
+    .NewItem("MyItem", someValue)
     .AddRequires("ThingINeedA", "ThingINeedB")  // accepts multiple names
     .AddRequires("ThingINeedC")                 // can use multiple times
     .Enqueue();
@@ -91,9 +91,23 @@ names for the item.
 
 ```csharp
 builder
-    .NewItem("MyItem", theItem)
+    .NewItem("MyItem", someValue)
     .AddProvides("BigThingIAmPartOf", "MyAlias")  // accepts multiple names
     .AddProvides("AnotherAlias")                  // can use multiple times
+    .Enqueue();
+```
+
+The chain of method calls to build and enqueue item may contain any number of
+`AddProvides()` and `AddRequires()` invocations in any order.  That flexibility
+makes the builder pattern appropriate for cases when information about an item
+arrives in pieces, such as from user input or from processing a file.
+
+```csharp
+builder
+    .NewItem("MyItem", someValue)
+    .AddProvides("BigThingIAmPartOf")
+    .AddRequires("ThingINeed")
+    // ...and more, in any order...
     .Enqueue();
 ```
 
@@ -110,9 +124,9 @@ that one call.
 ```csharp
 queue.Enqueue(
     name:     "MyItem",
-    value:    theItem,
-    requires: ["ThingINeedA", "ThingINeedB", "ThingINeedC"],
-    provides: ["BigThingIAmPartOf", "MyAlias", "AnotherAlias"]
+    value:    someValue,
+    provides: ["BigThingIAmPartOf", "MyAlias", "AnotherAlias"],
+    requires: ["ThingINeedA", "ThingINeedB", "ThingINeedC"]
 );
 ```
 
@@ -211,12 +225,12 @@ foreach (var error in errors)
 {
     switch (error)
     {
-        case DependencyQueueUnprovidedTopicError<Step> unprovided:
+        case DependencyQueueUnprovidedTopicError<Foo> unprovided:
             // Available properties:
             _ = unprovided.Topic;       // The topic required but not provided
             break;
 
-        case DependencyQueueCycleError<Step> cycle:
+        case DependencyQueueCycleError<Foo> cycle:
             // Available properties:
             _ = cycle.RequiringItem;    // The item that caused the cycle
             _ = cycle.RequiredTopic;    // What it required, causing the cycle
