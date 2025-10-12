@@ -152,6 +152,9 @@ By default, topic names use case-sensitive ordinal comparison.  To use
 different comparison rules, pass a `StringComparer` instance to the queue
 constructor.
 
+While typical uses of DependencyQueue involve separate enqueue and dequeue
+phases, the queue supports interleaved enqueue and dequeue operations.
+
 ### Dequeueing Items
 
 To dequeue (remove) an item, call `Dequeue()` or `DequeueAsync()`.  Both

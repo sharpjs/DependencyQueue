@@ -826,6 +826,46 @@ public class DependencyQueueTests
     }
 
     [Test]
+    public void DequeueThenEnqueue()
+    {
+        using var queue = new Queue();
+
+        var itemA = queue.Enqueue("a", value: new());
+        var itemB = queue.Enqueue("b", value: new(), requires: ["a"]);
+
+        queue.Dequeue().ShouldBeSameAs(itemA);
+
+        // Pretend that processing of itemA enqueues itemC
+        var itemC = queue.Enqueue("c", value: new(), requires: ["b"]);
+
+        // Dequeueing should still work
+        queue.Complete(itemA);
+        queue.Dequeue().ShouldBeSameAs(itemB);
+        queue.Complete(itemB);
+        queue.Dequeue().ShouldBeSameAs(itemC);
+
+        // Pretend that processing of itemC enqueues itemD, which is invalid
+        //                                            unprovided ↓
+        var itemD = queue.Enqueue("d", value: new(), requires: ["k"]);
+
+        // Dequeueing should report the invalidity
+        queue.Complete(itemC);
+        Should.Throw<InvalidDependencyQueueException>(() => queue.Dequeue())
+            .Errors
+            .ShouldHaveSingleItem()
+            .ShouldBeOfType<DependencyQueueUnprovidedTopicError<Value>>()
+            .Topic.Name.ShouldBe("k");
+
+        // Now enqueue itemK, which resolves the invalidity
+        var itemK = queue.Enqueue("k", value: new());
+
+        // Dequeueing should now work
+        queue.Dequeue().ShouldBeSameAs(itemK); queue.Complete(itemK);
+        queue.Dequeue().ShouldBeSameAs(itemD); queue.Complete(itemD);
+        queue.Dequeue().ShouldBeNull();
+    }
+
+    [Test]
     public void Clear_Ok()
     {
         using var queue = new Queue();
